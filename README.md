@@ -22,7 +22,7 @@ The DeepDive library can then be imported from a local Python console using:
 
 ```
 >>> import deepdive as dd
->>> dd.__version__()
+>>> dd.__version__
 
 ```
 
