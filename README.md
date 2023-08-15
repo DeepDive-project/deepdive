@@ -1,5 +1,34 @@
 # DeepDive 
 
+### Installing DeepDive in a virtual environment
+You can install DeepDive in a virtual environment to make sure all the compatible dependencies are included without affecting your system Python installation following the steps below:  
+Before you start, make sure Python (v.3.9 or above) is installed in your computer  
+
+1. Create a virtual environment typing in a terminal console (on Windows use `py` instead of `python`): 
+```
+python -m venv desired_path_to_env/dd_env
+```  
+2. activate the virtual environment using on MacOS/UNIX: 
+```
+source desired_path_to_env/dd_env/bin/activate
+```
+or on Windows:
+```
+.\desired_path_to_env\dd_env\Scripts\activate
+```  
+3. install DeepDive in the virtual env (on Windows use `py` instead of `python`):
+```
+python -m pip install path_to_deepdive
+```
+
+The DeepDive library can now be imported after starting a Python console using:
+
+```
+>>> import deepdive as dd
+>>> dd.__version__ # check version number
+```
+
+---
 DeepDive is a Python library compatible with Python v. 3.8 or greater. Running the library requires the following dependencies:
 
 ```
