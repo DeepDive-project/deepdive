@@ -6,7 +6,7 @@ import pandas as pd
 import seaborn as sns
 import matplotlib
 import matplotlib.pyplot as plt
-from matplotlib.backends import backend_pdf  # saves pdfs
+from matplotlib.backends import backend_pdf
 from matplotlib.gridspec import GridSpec
 from .extract_properties import *
 
@@ -27,27 +27,20 @@ def plot_trajectories(sim_obj,
     plt.plot(mid_time_bins, simulation['global_fossil_trajectory'], '-', label="Sampled diversity")
     plt.xlabel("Time (Ma)")
     plt.ylabel("Diversity (no. species)")
-    # plt.legend(loc=1)
     plt.gca().set_title("A) Simulated Global Diversity Trajectories", fontweight="bold", fontsize=fontsize)
-    # plt.grid(True)
 
-    # LOCAL DIV PLOTS
     fig.add_subplot(232)
     plt.plot(mid_time_bins, simulation['local_true_trajectory'].T, '-')
     plt.xlabel("Time (Ma)")
     plt.ylabel("Diversity (No. species)")
-    # plt.legend(loc=1)
     plt.gca().set_title("B) Simulated True Diversity Trajectories By Area", fontweight="bold", fontsize=fontsize)
-    # plt.grid(True)
 
-    # plot second local fossil data
+    # plot local fossil data
     fig.add_subplot(233)
     plt.plot(mid_time_bins, simulation['local_fossil_trajectory'].T, '-')
     plt.xlabel("Time (Ma)")
     plt.ylabel("Diversity (No. species)")
-    # plt.legend(loc=1)
     plt.gca().set_title("C) Simulated Fossil Diversity Trajectories By Area", fontweight="bold", fontsize=fontsize)
-    # plt.grid(True)
 
     # plot number of localities
     fig.add_subplot(234)
@@ -55,14 +48,13 @@ def plot_trajectories(sim_obj,
     plt.xlabel("Time (Ma)")
     plt.ylabel("No. localities")
     plt.gca().set_title("D) Simulated number of fossil localities per area", fontweight="bold", fontsize=fontsize)
-    # plt.grid(True)
 
     fig.add_subplot(235)
     plt.plot(mid_time_bins, simulation['n_localities_w_fossils'].T, '-')
     plt.xlabel("Time (Ma)")
     plt.ylabel("No. localities")
-    plt.gca().set_title("E) Simulated number of sampled fossil localities per area", fontweight="bold", fontsize=fontsize)
-    # plt.grid(True)
+    plt.gca().set_title("E) Simulated number of sampled fossil localities per area", fontweight="bold",
+                        fontsize=fontsize)
 
     fig.add_subplot(236)
     plt.plot(mid_time_bins, n_occs_per_area_time(simulation).T, '-')
@@ -70,12 +62,10 @@ def plot_trajectories(sim_obj,
     plt.ylabel("No. occurrences")
     plt.gca().set_title("F) Number of fossil occurrences per area", fontweight="bold", fontsize=fontsize)
 
-    # fig.tight_layout()
     if show:
         plt.show()
     else:
         plot_div = matplotlib.backends.backend_pdf.PdfPages(file_name)
-        # fig.subplots_adjust(top=0.92)
         plot_div.savefig(fig)
         plot_div.close()
         print("Plot saved as:", file_name)
@@ -93,26 +83,12 @@ def plot_properties(fossil_sim, sim, show=False):
     plt.gca().set_title("Species", fontweight="bold", fontsize=10)
     plt.grid(True)
 
-    # fig.add_subplot(432)
-    # plt.plot(fossil_sim.mid_time_bins, var_species(sim), '-')
-    # plt.xlabel("Time (Ma)")
-    # plt.ylabel("Variance in number of species")
-    # plt.gca().set_title("Variance in Number of Species", fontweight="bold", fontsize=10)
-    # plt.grid(True)
-
     fig.add_subplot(242)
     plt.plot(-fossil_sim.mid_time_bins, count_occurrences(sim), '-', color="teal")
     plt.xlabel("Time (Ma)")
     plt.ylabel("Number of Occurrences")
     plt.gca().set_title("Occurrences", fontweight="bold", fontsize=10)
     plt.grid(True)
-
-    # fig.add_subplot(243)
-    # plt.plot(fossil_sim.mid_time_bins, var_occurrences(sim), '-')
-    # plt.xlabel("Time (Ma)")
-    # plt.ylabel("Variance in Number of Occurrences")
-    # plt.gca().set_title("Variance in Occurrences", fontweight="bold", fontsize=10)
-    # plt.grid(True)
 
     fig.add_subplot(243)
     plt.plot(-fossil_sim.mid_time_bins, count_sampled_localities(sim), '-', color="orange")
@@ -121,13 +97,6 @@ def plot_properties(fossil_sim, sim, show=False):
     plt.gca().set_title("Sampled Localities", fontweight="bold", fontsize=10)
     plt.grid(True)
 
-    # fig.add_subplot(436)
-    # plt.plot(fossil_sim.mid_time_bins, var_sampled_localities(sim), '-')
-    # plt.xlabel("Time (Ma)")
-    # plt.ylabel("Variance in Number of Localities")
-    # plt.gca().set_title("Variance in Sampled Localities", fontweight="bold", fontsize=10)
-    # plt.grid(True)
-
     fig.add_subplot(244)
     plt.plot(-fossil_sim.mid_time_bins, count_singletons(sim), '-', color="red")
     plt.xlabel("Time (Ma)")
@@ -135,26 +104,12 @@ def plot_properties(fossil_sim, sim, show=False):
     plt.gca().set_title("Number of Singletons", fontweight="bold", fontsize=10)
     plt.grid(True)
 
-    # fig.add_subplot(245)
-    # plt.plot(fossil_sim.mid_time_bins, var_singletons(sim), '-')
-    # plt.xlabel("Time (Ma)")
-    # plt.ylabel("Variance in number of singletons")
-    # plt.gca().set_title("Variance in number of singletons", fontweight="bold", fontsize=10)
-    # plt.grid(True)
-
     fig.add_subplot(245)
     plt.plot(-fossil_sim.mid_time_bins, count_endemics(sim), '-', color="green")
     plt.xlabel("Time (Ma)")
     plt.ylabel("Endemic Diversity (no. species)")
     plt.gca().set_title("Endemic Diversity", fontweight="bold", fontsize=10)
     plt.grid(True)
-
-    # fig.add_subplot(4310)
-    # plt.plot(fossil_sim.mid_time_bins, var_endemics(sim), '-')
-    # plt.xlabel("Time (Ma)")
-    # plt.ylabel("Variance in Endemics")
-    # plt.gca().set_title("Variance in Endemic Diversity", fontweight="bold", fontsize=10)
-    # plt.grid(True)
 
     fig.add_subplot(246)
     plt.plot(-fossil_sim.mid_time_bins, time_bins_duration(sim), '-', color="purple")
@@ -169,13 +124,6 @@ def plot_properties(fossil_sim, sim, show=False):
     plt.ylabel("Range-through Diversity (no. species)")
     plt.gca().set_title("Range-through Diversity", fontweight="bold", fontsize=10)
     plt.grid(True)
-
-    # fig.add_subplot(4313)
-    # plt.plot(fossil_sim.mid_time_bins, count_occurrences_per_sp(sim), '-', color="green")
-    # plt.xlabel("Time (Ma)")
-    # plt.ylabel("Occurrences per species")
-    # plt.gca().set_title("Occurrences per Species", fontweight="bold", fontsize=10)
-    # plt.grid(True)
 
     if show:
         fig.show()
@@ -212,7 +160,8 @@ def plot_training_history(history, criterion='val_loss', b=0, show=True, wd='', 
     stopping_point = np.argmin(history.history[criterion])
     fig = plt.figure(figsize=(10, 5))
     plt.plot(history.history['loss'][b:], label='Training loss (%s)' % np.round(np.min(history.history['loss']), 2))
-    plt.plot(history.history['val_loss'][b:], label='Validation loss (%s)' % np.round(np.min(history.history['val_loss']), 2))
+    plt.plot(history.history['val_loss'][b:],
+             label='Validation loss (%s)' % np.round(np.min(history.history['val_loss']), 2))
     plt.axvline(stopping_point, linestyle='--', color='red', label='Early stopping point')
     plt.grid(axis='y', linestyle='dashed', which='major', zorder=0)
     plt.xlabel('Training epoch')
@@ -264,7 +213,6 @@ def plot_prediction(predicted=None,
     plt.plot(mid_time_bins, transf(predicted)[index][::-1].reshape(predicted[index].shape[0]), '-', label="Predicted")
     plt.plot(mid_time_bins, transf(sampled)[index][::-1], '-', label="Sampled")
     plt.xlim(xlimit)
-    # plt.plot(mid_time_bins, transf(range_through)[index][::-1], '-', label="range-through Y")
     if sqs_6 is not None:
         sqs_6 = np.array(sqs_6)
         sqs_6 = sqs_6[index, :]
@@ -275,8 +223,6 @@ def plot_prediction(predicted=None,
     #    plt.plot(mid_time_bins, transf(sqs_4)[::-1], '-', label="SQS=0.4")
     plt.xlabel("Time (Ma)")
     plt.ylabel("Diversity")
-    # plt.legend(loc='upper left')
-    # plt.grid(True)
     if title is None:
         plt.gca().set_title("Simulation n. %s" % index, fontweight="bold", fontsize=12)
     else:
@@ -301,7 +247,6 @@ def plot_dd_prediction(predicted=None,
                        sampled=None,
                        # range_through=None,
                        sqs_6=None,
-                       # sqs_4=None,
                        index=0,
                        exp_transform=False,
                        log10_transform=False,
@@ -361,9 +306,6 @@ def plot_dd_prediction(predicted=None,
         if upper_local is not None:
             lower_local[mid_time_bins > -abs(min_age)] = None
             upper_local[mid_time_bins > -abs(min_age)] = None
-    # print(lower)
-    # print(upper)
-    # print(predicted)
     fig = plt.figure(figsize=(8, 4))
     if true is not None:
         plt.plot(mid_time_bins, transf(true), linestyle='-', label="True")
@@ -378,15 +320,11 @@ def plot_dd_prediction(predicted=None,
         plt.plot(mid_time_bins, transf(sampled_local), '-', label="Sampled", color='#636363')
     plt.plot(mid_time_bins, transf(predicted_local).reshape(predicted_local.shape[0]), '-',
              label="Predicted", color="orange")
-    # plt.plot(mid_time_bins, transf(range_through)[index][::-1], '-', label="range-through Y")
     if sqs_6 is not None:
         sqs_6 = np.array(sqs_6)
         sqs_6 = sqs_6[index, :]
         plt.plot(mid_time_bins, transf(sqs_6), '-', label="SQS=0.6")
-    # if sqs_4 is not None:
-    #    sqs_4 = np.array(sqs_4)
-    #    sqs_4 = sqs_4[index, :]
-    #    plt.plot(mid_time_bins, transf(sqs_4)[::-1], '-', label="SQS=0.4")
+
     plt.xlabel("Time (Ma)")
     if rescale01:
         plt.ylabel("Relative diversity")
@@ -423,57 +361,6 @@ def plot_dd_prediction(predicted=None,
         plot_div.savefig(fig)
         plot_div.close()
         print("Plot saved as:", file_name)
-
-
-# Plot the true, fossil and predicted diversity per area (do we have this info or not predicted?)
-# def plot_prediction_areas(predicted,
-#                           true=None,
-#                           sampled=None,
-#                           # range_through=None,
-#                           sqs_6=None,
-#                           # sqs_4=None,
-#                           index=0,
-#                           log=False,
-#                           show=True,
-#                           wd='',
-#                           name=''):
-#     if log:
-#         def transf(x):
-#             return x
-#     else:
-#         def transf(x):
-#             return np.exp(x)
-#
-#     fig = plt.figure(figsize=(8, 4))
-#     if true is not None:
-#         plt.plot(transf(true)[index], '-', label="true Y")  # local true trajectories not passed to the keys
-#     if predicted is not None:
-#         plt.plot(transf(predicted)[index].reshape(predicted[index].shape[0]), '-', label="predicted Y")  # not sure a prediction exists for the areas
-#     if sampled is not None:
-#         plt.plot(transf(sampled)[index], '-', label="sampled Y")  # fossil true trajectories not passed to the keys
-#     # plt.plot(transf(range_through)[index], '-', label="range-through Y")
-#     if sqs_6 is not None:
-#         sqs_6 = np.array(sqs_6)
-#         sqs_6 = sqs_6[index, :]
-#         plt.plot(transf(sqs_6), '-', label="SQS=0.6")
-#     # if sqs_4 is not None:
-#     #    sqs_4 = np.array(sqs_4)
-#     #    sqs_4 = sqs_4[index, :]
-#     #    plt.plot(transf(sqs_4), '-', label="SQS=0.4")
-#     plt.xlabel("Time")
-#     plt.ylabel("Number of Species")
-#     plt.legend(loc=1)
-#     plt.grid(True)
-#     plt.gca().set_title("Simulation n. %s" % index, fontweight="bold", fontsize=12)
-#     if show:
-#         fig.show()
-#     else:
-#         file_name = os.path.join(wd, "prediction_area_plots_%s.pdf" % name)
-#         plot_div = matplotlib.backends.backend_pdf.PdfPages(file_name)
-#         fig.subplots_adjust(top=0.92)
-#         plot_div.savefig(fig)
-#         plot_div.close()
-#         print("Plot saved as:", file_name)
 
 
 def plot_true_sim(true=None,
@@ -532,27 +419,6 @@ def plot_true_sim(true=None,
     plt.ylabel("Diversity")
     plt.grid(True)
     # plt.gca().set_title("Sim n. %s" % (index+5), fontweight="bold", fontsize=12)
-    #
-    # fig.add_subplot(337)
-    # plt.plot(mid_time_bins, transf(true)[index+6][::-1], '-', label="true Y")
-    # plt.xlabel("Time (Ma)")
-    # plt.ylabel("Diversity")
-    # plt.grid(True)
-    # # plt.gca().set_title("Sim n. %s" % (index+6), fontweight="bold", fontsize=12)
-    #
-    # fig.add_subplot(338)
-    # plt.plot(mid_time_bins, transf(true)[index+7][::-1], '-', label="true Y")
-    # plt.xlabel("Time (Ma)")
-    # plt.ylabel("Diversity")
-    # plt.grid(True)
-    # # plt.gca().set_title("Sim n. %s" % (index+7), fontweight="bold", fontsize=12)
-    #
-    # fig.add_subplot(339)
-    # plt.plot(mid_time_bins, transf(true)[index+8][::-1], '-', label="true Y")
-    # plt.xlabel("Time (Ma)")
-    # plt.ylabel("Diversity")
-    # plt.grid(True)
-    # # plt.gca().set_title("Sim n. %s" % (index+8), fontweight="bold", fontsize=12)
 
     if show:
         fig.show()
@@ -598,9 +464,6 @@ def plot_scatter(predicted,
     # add ticks in log space with labels showing their value (not log transformed)
     plt.xticks(ticks=np.log(ticks), labels=ticks)
     plt.yticks(ticks=np.log(ticks), labels=ticks)
-    # plt.grid(True)
-    # if log:
-    #    plt.set_yscale('log')
     plt.xlabel("True Diversity")
     if dd:
         plt.ylabel("DeepDive Diversity")
@@ -616,7 +479,6 @@ def plot_scatter(predicted,
         plt.gca().set_title("True vs SQS diversity", fontweight="bold", fontsize=12)
     m, c = np.polyfit(true_i, predicted_i, 1)
     plt.plot(true_i, m*true_i+c, color="orange")
-    # plt.plot(true_i, 1 * true_i, color="red")
     if show:
         fig.show()
     else:
@@ -637,16 +499,6 @@ def occ_per_sp(sim):
     plt.xlabel('Number of occurrences per species')
     plt.ylabel('Frequency')
     plt.show()
-
-# alternative
-# def bar_occ_per_sp(fossil_sim, sim):
-#    n_occs_per_sp = np.einsum('sat -> s', sim['fossil_data'])
-#    sp = sp
-#    plt.bar(, n_occs_per_sp)
-#    plt.title('Number of occurrences per species')
-#    plt.xlabel('Species')
-#    plt.ylabel('Occurrences')
-#    plt.show()
 
 
 # PLOTS OF DISTRIBUTION OF RESULTS
@@ -690,14 +542,7 @@ def plot_comp(results,
     comp = np.divide(all_p, all_t)
     sns.kdeplot(comp, shade=True, fill=True, color="mediumturquoise", clip=(min_x, max_x))
     plt.xlabel("Completeness")
-    # plt.hist(comp)
-    # plt.grid(True)
-    # plt.ylabel("Frequency")
-    # plt.xlabel("Completeness")
-    # plt.gca().set_title("Completeness", fontweight="bold", fontsize=12)
     print("median completeness is ", np.median(comp))
-    # plt.plot(true, m*true+c, color="orange")
-    # plt.plot(true, 1 * true, color="red")
     if show:
         fig.show()
     else:
@@ -727,11 +572,6 @@ def plot_pres(results,
     p = np.divide(all_occs, all_br)
     sns.kdeplot(p, shade=True, fill=True, color="cornflowerblue", clip=(min_x, max_x))
     plt.xlabel("Preservation rate")
-    # plt.hist(p)
-    # plt.grid(True)
-    # plt.ylabel("Frequency")
-    # plt.xlabel("Preservation rate")
-    # plt.gca().set_title("Preservation rate", fontweight="bold", fontsize=12)
     print("median preservation rate is ", np.median(p))
     if show:
         fig.show()
@@ -765,8 +605,6 @@ def plot_richness(results,
     plt.ylabel("Frequency")
     plt.xlabel("Number of Species"+name)
     plt.gca().set_title("Species Richness", fontweight="bold", fontsize=12)
-    # plt.plot(true, m*true+c, color="orange")
-    # plt.plot(true, 1 * true, color="red")
     if show:
         fig.show()
     else:
@@ -825,8 +663,6 @@ def plot_occs_per_sp(results,
     plt.ylabel("Frequency")
     plt.xlabel("Number of Occurrences per Species"+name)
     plt.gca().set_title("Occurrences per Species", fontweight="bold", fontsize=12)
-    # plt.plot(true, m*true+c, color="orange")
-    # plt.plot(true, 1 * true, color="red")
     if show:
         fig.show()
     else:
@@ -856,7 +692,6 @@ def plot_loc_rates(sim,
     plt.plot(sim_0['locality_rate'][4])
     plt.xlabel("Time (Ma)", fontsize=15)
     plt.ylabel("Number of localities", fontsize=15)
-    # plt.suptitle("Rate at which localities are drawn per area", fontweight="bold", fontsize=20)
 
     sim_1 = sim[index+1]
     sim_1['locality_rate'][sim_1['locality_rate'] == 0] = np.nan
@@ -978,7 +813,6 @@ def plot_r2(r2_dd,
         ax = sns.boxplot(data=[r2_dd, r2_sqs])
         ax.set_xticklabels(["DeepDive", "SQS"])
         plt.yscale("log")
-        # ax.set(yscale="log")
     if show:
         fig.show()
     else:
@@ -999,13 +833,9 @@ def plot_mse(rmse_dd,
              name=''):
     fig = plt.figure(figsize=(8, 4))
     if plot_type == "Density":
-        # ticks_x = np.array([0, 0.1, 0.2, 0.5])
         sns.kdeplot(rmse_dd, shade=True, fill=True, clip=(min_x, max_x))
         sns.kdeplot(rmse_sqs, shade=True, fill=True, color="C3", clip=(min_x, max_x))
         plt.xscale("log")
-        # plt.yscale("log")
-        # add ticks in log space with labels showing their value (not log transformed)
-        # plt.xticks(ticks=np.log(ticks_x), labels=ticks_x)
         plt.xlabel("Relative MSE")
     if plot_type == "Violin":
         ax = sns.violinplot(data=[rmse_dd, rmse_sqs], shade=True, fill=True, cut=0, split=True)
@@ -1015,7 +845,6 @@ def plot_mse(rmse_dd,
         ax = sns.boxplot(data=[rmse_dd, rmse_sqs])
         ax.set_xticklabels(["DeepDive", "SQS"])
         plt.yscale("log")
-        # ax.set(yscale="log")
     if show:
         fig.show()
     else:
@@ -1049,7 +878,6 @@ def plot_durations(t,
         plt.xlabel("Clade duration")
     plt.grid(True)
     plt.ylabel("MSE")
-    # plt.gca().set_title("Completeness vs MSE", fontweight="bold", fontsize=12)
     if show:
         fig.show()
     else:
@@ -1079,7 +907,6 @@ def plot_completeness(results,
     plt.grid(True)
     plt.ylabel("MSE")
     plt.xlabel("Completeness")
-    # plt.gca().set_title("Completeness vs MSE", fontweight="bold", fontsize=12)
     if show:
         fig.show()
     else:
@@ -1105,12 +932,10 @@ def plot_preservation(results,
     all_br = np.array(all_br)
     all_occs = np.array(all_occs)
     p = np.divide(all_occs, all_br)
-    # plt.hist(p)
     plt.scatter(p, mse, color="cornflowerblue", alpha=0.5)
     plt.grid(True)
     plt.ylabel("MSE")
     plt.xlabel("Preservation rate")
-    # plt.gca().set_title("Preservation vs MSE", fontweight="bold", fontsize=12)
     if show:
         fig.show()
     else:
@@ -1188,7 +1013,6 @@ def plot_comp_r2(results,
     plt.grid(True)
     plt.ylabel("R2")
     plt.xlabel("Completeness")
-    # plt.gca().set_title("Completeness vs R2", fontweight="bold", fontsize=12)
     if show:
         fig.show()
     else:
@@ -1209,8 +1033,7 @@ def figure_2(true_dd,
              rmse_dd,
              rmse_sqs,
              show=False,
-             wd='',
-             name='',):
+             wd=''):
 
     fig = plt.figure(figsize=(12, 7), layout="constrained")
 
@@ -1248,7 +1071,6 @@ def figure_2(true_dd,
     ax3 = sns.boxplot(data=[r2_dd, r2_sqs], palette={'C3', '#1f77b4'})
     ax3.set_xticklabels(["DeepDive", "SQS"])
     plt.ylabel("R$^{2}$")
-    # plt.yscale("log")
     ax3.annotate("C", xy=(-0.15, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
 
     ax4 = fig.add_subplot(224)
@@ -1256,17 +1078,13 @@ def figure_2(true_dd,
     ax4.set_xticklabels(["DeepDive", "SQS"])
     ax4.set_yscale("log")
     ax4.set_yticks([0.001, 0.01, 0.1, 1])
-    # ticks = np.array([])  # define x-axis ticks for plotting
-    # plt.yticks(ticks=np.log(ticks), labels=ticks)
     plt.ylabel("rMSE")
-    # plt.yscale("log")
     ax4.annotate("D", xy=(-0.15, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
 
     if show:
         fig.show()
     else:
         file_name = os.path.join(wd, "figure_2.png")
-        # plot_2 = matplotlib.backends.backend_pdf.PdfPages(file_name)
         plt.savefig("figure_2.png", dpi=300)
         plt.close()
         print("Plot saved as:", file_name)
@@ -1278,17 +1096,13 @@ def figure_3(predicted=None,
              lower=None,
              upper=None,
              sampled=None,
-             xlimit=None,
              sqs_6=None,
              index1=106,
              index2=999,
              index3=7,
              index4=232,
-             log=False,
              show=True,
-             wd='',
-             name='',
-             title=None):
+             wd=''):
 
     fig = plt.figure(figsize=(12, 7), layout="constrained")
 
@@ -1600,7 +1414,7 @@ def plot_example_trajectories(predicted=None,
     ax1 = fig.add_subplot(221)
     plt.plot(mid_time_bins, transf(true)[index_1][::-1], linestyle='-', label="true Y", color=color)
     # if lower is not None:
-        # print(transf(lower)[index][::-1].reshape(predicted[index].shape[0]))
+    #     print(transf(lower)[index][::-1].reshape(predicted[index].shape[0]))
     #     plt.fill_between(x=mid_time_bins,
     #                      y1=transf(lower)[index][::-1].reshape(predicted[index].shape[0]),
     #                      y2=transf(upper)[index][::-1].reshape(predicted[index].shape[0]),
@@ -1608,7 +1422,8 @@ def plot_example_trajectories(predicted=None,
     #     print(transf(upper)[index][::-1].reshape(predicted[index].shape[0]))
     #
     # if predicted is not None:
-    #     plt.plot(mid_time_bins, transf(predicted)[index][::-1].reshape(predicted[index].shape[0]), '-', label="Predicted")
+    #     plt.plot(mid_time_bins, transf(predicted)[index][::-1].reshape(predicted[index].shape[0]), '-',
+    #     label="Predicted")
     # if sampled is not None:
     #     plt.plot(mid_time_bins, transf(sampled)[index][::-1], '-', label="Sampled")
     #
@@ -1658,7 +1473,6 @@ def plot_example_trajectories(predicted=None,
 
 # PLOT DEEPDIVE, BIAS TESTS AND SQS
 def plot_comparison(true_dd,
-                    true_sqs,
                     predicted_dd,
                     predicted_sqs,
                     r2_dd,
@@ -1670,25 +1484,17 @@ def plot_comparison(true_dd,
                     r2_dd_taxa,
                     r2_sqs_taxa,
                     show=False,
-                    wd='',
-                    name='',):
+                    wd=''):
 
     fig = plt.figure(figsize=(12, 7), layout="constrained")
 
     gs = GridSpec(2, 4, figure=fig)
 
     ax1 = fig.add_subplot(gs[0, 0:2])
-    # def transf(x): return np.exp(x)
-    # true_i = transf(true_dd)
-    #predicted_i = transf(predicted_dd).reshape((predicted_dd.shape[0], predicted_dd.shape[1]))
-    # true = np.einsum('st, s -> st', true_i, 1/np.max(true_i, axis=1))
-    # true = true.flatten()
     Ytest_01 = np.einsum('sb,s->sb', true_dd, 1 / np.max(true_dd, 1))  # rescale values to range [0, 1]
     Ytest_01[Ytest_01 == 0] = np.nan  # remove zeros
     Ytest_pred_natural_scale_01 = np.einsum('sb,s->sb', predicted_dd,
                                             1 / np.max(predicted_dd, 1))
-    # predicted = np.einsum('st, s -> st', predicted_i, 1/np.max(predicted_i, axis=1))
-    # predicted = predicted.flatten()
     plt.scatter(Ytest_01.flatten(), Ytest_pred_natural_scale_01.flatten(), alpha=0.01)  # non rescaled DD
     plt.plot(Ytest_01.flatten(), Ytest_01.flatten(), color="black")
     plt.xlim(left=0, right=1)
@@ -1698,15 +1504,6 @@ def plot_comparison(true_dd,
     ax1.annotate("A", xy=(-0.15, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
 
     ax2 = fig.add_subplot(gs[0, 2:4])
-    # indices = np.where(np.isnan(predicted_sqs).all(axis=1))  # find indices of rows where all values are nan
-    # predicted_sqs = predicted_sqs[~np.isnan(predicted_sqs).all(axis=1)]  # remove rows where all values are nan
-    #true_i = transf(true_sqs)
-    # predicted_i = transf(predicted_sqs).reshape((predicted_sqs.shape[0], predicted_sqs.shape[1]))
-    # true_sqs = np.delete(true_sqs, indices, axis=0)  # remove rows where sqs doesn't make any estimate
-    # true = np.einsum('st, s -> st', true_sqs, 1/np.nanmax(true_sqs, axis=1))
-    #true = true.flatten()
-    # predicted = np.einsum('st, s -> st', predicted_i, 1/np.nanmax(predicted_i, axis=1))
-    # ticks = np.array([10, 100, 1000, 5000])  # define x-axis ticks for plotting
     sqs_6_01 = np.einsum('sb,s->sb', predicted_sqs, 1 / np.nanmax(predicted_sqs, 1))
     sqs_6_01[sqs_6_01 == 0] = np.nan
     plt.scatter(Ytest_01.flatten(), sqs_6_01.flatten(), color="C3", alpha=0.01)
@@ -1740,24 +1537,13 @@ def plot_comparison(true_dd,
     ax6 = sns.violinplot(data=[r2_dd_area, r2_sqs_area], palette=my_pal, shade=True, fill=True, cut=0, split=True)
     plt.ylabel("$R^2$")
     ax6.set_xticklabels(["DeepDive", "SQS"])
-    #, "DeepDive temporal bias test", "SQS temporal bias test",
-                          #"DeepDive taxonomic bias test", "SQS taxonomic bias test", "DeepDive area bias test",
-                         #"SQS area bias test"])
     plt.ylabel("R$^{2}$")
     ax6.annotate("F", xy=(-0.15, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
 
     if show:
         fig.show()
-    # else:
-    #     file_name = os.path.join("comparison_plot.pdf")
-    #     plot_comp = matplotlib.backends.backend_pdf.PdfPages(file_name)
-    #     fig.subplots_adjust(top=0.92)
-    #     plot_comp.savefig(fig)
-    #     plot_comp.close()
-    #     print("Plot saved as:", file_name)
     else:
         file_name = os.path.join(wd, "compariston_plot.png")
-        # plot_2 = matplotlib.backends.backend_pdf.PdfPages(file_name)
         plt.savefig("comparison_plot.png", dpi=300)
         plt.close()
         print("Plot saved as:", file_name)
@@ -1772,8 +1558,7 @@ def plot_relative_mse(rmse_dd,
                       rmse_dd_tax,
                       rmse_sqs_tax,
                       show=False,
-                      wd='',
-                      name=''):
+                      wd=''):
 
     fig = plt.figure(figsize=(15, 7), layout="constrained")
 
@@ -1813,11 +1598,9 @@ def plot_relative_mse(rmse_dd,
         fig.show()
     else:
         file_name = os.path.join(wd, "relative_mse_tests.pdf")
-        # plot_2 = matplotlib.backends.backend_pdf.PdfPages(file_name)
         plt.savefig("relative_mse_tests.pdf", dpi=300)
         plt.close()
         print("Plot saved as:", file_name)
-
 
 
 # HISTOGRAMS
@@ -1828,8 +1611,7 @@ def plot_hists(results,
                n_taxa,
                n_occs,
                show=False,
-               wd="",
-               name=""):
+               wd=""):
 
     fig = plt.figure(figsize=(12, 7), layout="constrained")
 
@@ -1843,7 +1625,6 @@ def plot_hists(results,
     all_occs = np.array(all_occs)
     all_p = np.array(all_p)
     occs_per_sp = all_occs/all_p
-
 
     ax1 = fig.add_subplot(221)
     plt.hist(all_occs, bins=30, alpha=0.5, log=True)
@@ -1873,7 +1654,6 @@ def plot_hists(results,
         fig.show()
     else:
         file_name = os.path.join(wd, "hists.png")
-        # plot_2 = matplotlib.backends.backend_pdf.PdfPages(file_name)
         plt.savefig("hists.png", dpi=300)
         plt.close()
         print("Plot saved as:", file_name)
@@ -1882,8 +1662,8 @@ def plot_hists(results,
 def plot_feature_hists(test_features,
                        empirical_features,
                        show=False,
-                       wd="",
-                       name=""):
+                       file_name="features",
+                       wd=""):
 
     fig = plt.figure(figsize=(12, 7), layout="constrained")
 
@@ -1891,7 +1671,6 @@ def plot_feature_hists(test_features,
     bins1 = np.linspace(start=0, stop=7500, num=30)
     plt.hist(test_features[:, :, 0].flatten(), bins=bins1, alpha=0.5, density=True, log=True)
     plt.hist(empirical_features[:, 0], bins=bins1, alpha=0.5, density=True, log=True)
-    # plt.xscale("log")
     plt.xlabel("Taxa")
     plt.ylabel("Frequency")
     ax1.annotate("A", xy=(-0.15, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
@@ -1909,7 +1688,6 @@ def plot_feature_hists(test_features,
     bins3 = np.linspace(start=0, stop=2750, num=30)
     plt.hist(test_features[:, :, 2].flatten(), bins=bins3, alpha=0.5, density=True, log=True)
     plt.hist(empirical_features[:, 2], bins=bins3, alpha=0.5, density=True, log=True)
-    # plt.xscale("log")
     plt.xlabel("Singletons")
     plt.ylabel("Frequency")
     ax3.annotate("C", xy=(-0.15, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
@@ -1918,7 +1696,6 @@ def plot_feature_hists(test_features,
     bins4 = np.linspace(start=0, stop=6400, num=30)
     plt.hist(test_features[:, :, 3].flatten(), bins=bins4, alpha=0.5, density=True, log=True)
     plt.hist(empirical_features[:, 3], bins=bins4, alpha=0.5, density=True, log=True)
-    # plt.xscale("log")
     plt.xlabel("Endemic taxa")
     plt.ylabel("Frequency")
     ax4.annotate("D", xy=(-0.15, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
@@ -1927,7 +1704,6 @@ def plot_feature_hists(test_features,
     bins5 = np.linspace(start=0, stop=7450, num=30)
     plt.hist(test_features[:, :, 5].flatten(), bins=bins5, alpha=0.5, density=True, log=True)
     plt.hist(empirical_features[:, 5], bins=bins5, alpha=0.5, density=True, log=True)
-    # plt.xscale("log")
     plt.xlabel("Range-through diversity")
     plt.ylabel("Frequency")
     ax5.annotate("E", xy=(-0.15, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
@@ -1936,7 +1712,6 @@ def plot_feature_hists(test_features,
     bins6 = np.linspace(start=0, stop=2160, num=30)
     plt.hist(test_features[:, :, 6].flatten(), bins=bins6, alpha=0.5, density=True, log=True)
     plt.hist(empirical_features[:, 6], bins=bins6, alpha=0.5, density=True, log=True)
-    # plt.xscale("log")
     plt.xlabel("Sampled localities")
     plt.ylabel("Frequency")
     ax6.annotate("F", xy=(-0.15, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
@@ -1945,7 +1720,6 @@ def plot_feature_hists(test_features,
     bins7 = np.linspace(start=0, stop=7450, num=30)
     plt.hist(test_features[:, :, 7:12].flatten(), bins=bins7, alpha=0.5, density=True, log=True)
     plt.hist(empirical_features[:, 7:12].flatten(), bins=bins7, alpha=0.5, density=True, log=True)
-    # plt.xscale("log")
     plt.xlabel("Global Taxa")
     plt.ylabel("Frequency")
     ax7.annotate("G", xy=(-0.15, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
@@ -1967,13 +1741,11 @@ def plot_feature_hists(test_features,
     plt.ylabel("Frequency")
     ax9.annotate("I", xy=(-0.15, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
 
-
     if show:
         fig.show()
     else:
-        file_name = os.path.join(wd, "remake_feature_hists.png")
-        # plot_2 = matplotlib.backends.backend_pdf.PdfPages(file_name)
-        plt.savefig("remake_feature_hists.png", dpi=300)
+        file_name = os.path.join(wd, file_name + ".png")
+        plt.savefig(file_name, dpi=300)
         plt.close()
         print("Plot saved as:", file_name)
 
@@ -1981,8 +1753,7 @@ def plot_feature_hists(test_features,
 def plot_feature_hists1(test_features,
                         empirical_features,
                         show=False,
-                        wd="",
-                        name=""):
+                        wd=""):
 
     fig = plt.figure(figsize=(12, 7), layout="constrained")
 
@@ -2038,7 +1809,6 @@ def plot_feature_hists1(test_features,
         fig.show()
     else:
         file_name = os.path.join(wd, "remake_feature_hists1.png")
-        # plot_2 = matplotlib.backends.backend_pdf.PdfPages(file_name)
         plt.savefig("remake_feature_hists1.png", dpi=300)
         plt.close()
         print("Plot saved as:", file_name)
@@ -2047,8 +1817,7 @@ def plot_feature_hists1(test_features,
 def plot_feature_hists2(test_features,
                         empirical_features,
                         show=False,
-                        wd="",
-                        name=""):
+                        wd=""):
 
     fig = plt.figure(figsize=(12, 7), layout="constrained")
 
@@ -2104,7 +1873,6 @@ def plot_feature_hists2(test_features,
         fig.show()
     else:
         file_name = os.path.join(wd, "remake_feature_hists2.png")
-        # plot_2 = matplotlib.backends.backend_pdf.PdfPages(file_name)
         plt.savefig("remake_feature_hists2.png", dpi=300)
         plt.close()
         print("Plot saved as:", file_name)
@@ -2113,8 +1881,7 @@ def plot_feature_hists2(test_features,
 def plot_feature_hists3(test_features,
                         empirical_features,
                         show=False,
-                        wd="",
-                        name=""):
+                        wd=""):
 
     fig = plt.figure(figsize=(12, 7), layout="constrained")
 
@@ -2170,18 +1937,15 @@ def plot_feature_hists3(test_features,
         fig.show()
     else:
         file_name = os.path.join(wd, "remake_feature_hists3.png")
-        # plot_2 = matplotlib.backends.backend_pdf.PdfPages(file_name)
         plt.savefig("remake_feature_hists3.png", dpi=300)
         plt.close()
         print("Plot saved as:", file_name)
 
 
-
 def plot_feature_hists_ele(test_features,
                            empirical_features,
                            show=False,
-                           wd="",
-                           name=""):
+                           wd=""):
 
     fig = plt.figure(figsize=(12, 7), layout="constrained")
 
@@ -2189,7 +1953,6 @@ def plot_feature_hists_ele(test_features,
     bins1 = np.linspace(start=0, stop=260, num=30)
     plt.hist(test_features[:, :, 0].flatten(), bins=bins1, alpha=0.5, density=True, log=True)
     plt.hist(empirical_features[:, 0], bins=bins1, alpha=0.5, density=True, log=True)
-    # plt.xscale("log")
     plt.xlabel("Taxa")
     plt.ylabel("Frequency")
     ax1.annotate("A", xy=(-0.15, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
@@ -2207,7 +1970,6 @@ def plot_feature_hists_ele(test_features,
     bins3 = np.linspace(start=0, stop=42, num=30)
     plt.hist(test_features[:, :, 2].flatten(), bins=bins3, alpha=0.5, density=True, log=True)
     plt.hist(empirical_features[:, 2], bins=bins3, alpha=0.5, density=True, log=True)
-    # plt.xscale("log")
     plt.xlabel("Singletons")
     plt.ylabel("Frequency")
     ax3.annotate("C", xy=(-0.15, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
@@ -2216,7 +1978,6 @@ def plot_feature_hists_ele(test_features,
     bins4 = np.linspace(start=0, stop=260, num=30)
     plt.hist(test_features[:, :, 3].flatten(), bins=bins4, alpha=0.5, density=True, log=True)
     plt.hist(empirical_features[:, 3], bins=bins4, alpha=0.5, density=True, log=True)
-    # plt.xscale("log")
     plt.xlabel("Endemic taxa")
     plt.ylabel("Frequency")
     ax4.annotate("D", xy=(-0.15, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
@@ -2225,7 +1986,6 @@ def plot_feature_hists_ele(test_features,
     bins5 = np.linspace(start=0, stop=285, num=30)
     plt.hist(test_features[:, :, 5].flatten(), bins=bins5, alpha=0.5, density=True, log=True)
     plt.hist(empirical_features[:, 5], bins=bins5, alpha=0.5, density=True, log=True)
-    # plt.xscale("log")
     plt.xlabel("Range-through diversity")
     plt.ylabel("Frequency")
     ax5.annotate("E", xy=(-0.15, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
@@ -2234,7 +1994,6 @@ def plot_feature_hists_ele(test_features,
     bins6 = np.linspace(start=0, stop=400, num=30)
     plt.hist(test_features[:, :, 6].flatten(), bins=bins6, alpha=0.5, density=True, log=True)
     plt.hist(empirical_features[:, 6], bins=bins6, alpha=0.5, density=True, log=True)
-    # plt.xscale("log")
     plt.xlabel("Sampled localities")
     plt.ylabel("Frequency")
     ax6.annotate("F", xy=(-0.15, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
@@ -2243,7 +2002,6 @@ def plot_feature_hists_ele(test_features,
     bins7 = np.linspace(start=0, stop=260, num=30)
     plt.hist(test_features[:, :, 7:12].flatten(), bins=bins7, alpha=0.5, density=True, log=True)
     plt.hist(empirical_features[:, 7:12].flatten(), bins=bins7, alpha=0.5, density=True, log=True)
-    # plt.xscale("log")
     plt.xlabel("Global Taxa")
     plt.ylabel("Frequency")
     ax7.annotate("G", xy=(-0.15, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
@@ -2265,12 +2023,10 @@ def plot_feature_hists_ele(test_features,
     plt.ylabel("Frequency")
     ax9.annotate("I", xy=(-0.15, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
 
-
     if show:
         fig.show()
     else:
         file_name = os.path.join(wd, "feature_hists_ele.png")
-        # plot_2 = matplotlib.backends.backend_pdf.PdfPages(file_name)
         plt.savefig("feature_hists_ele.png", dpi=300)
         plt.close()
         print("Plot saved as:", file_name)

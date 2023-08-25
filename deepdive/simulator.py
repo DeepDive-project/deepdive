@@ -198,6 +198,9 @@ class bd_simulator():
             print(ltt)
         return ts_te.T
 
+    def reset_s_species(self, s):
+        self.s_species = s
+
 
 class fossil_simulator():
     def __init__(self,
