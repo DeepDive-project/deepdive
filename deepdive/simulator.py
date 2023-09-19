@@ -20,12 +20,15 @@ class bd_simulator():
                  scale=100.,
                  p_mass_extinction=[0, 0.00924],
                  magnitude_mass_ext=[0.8, 0.95],
+                 fixed_mass_extinction=None, # list of ME ages
                  p_mass_speciation=0,
                  magnitude_mass_sp=[0.5, 0.95],
                  poiL=3,
                  poiM=3,
                  p_constant_bd=0.05,
                  p_equilibrium=0.1,
+                 p_dd_model=0,
+                 dd_K=100,
                  log_uniform_rates=False,
                  seed=0,
                  vectorize=False):
@@ -43,11 +46,14 @@ class bd_simulator():
         self.p_mass_extinction = p_mass_extinction
         self.magnitude_mass_ext = np.sort(magnitude_mass_ext)
         self.p_mass_speciation = p_mass_speciation
+        self.fixed_mass_extinction = fixed_mass_extinction
         self.magnitude_mass_sp = np.sort(magnitude_mass_sp)
         self.poiL = poiL
         self.poiM = poiM
         self.p_constant_bd = p_constant_bd
         self.p_equilibrium = p_equilibrium
+        self.p_dd_model = p_dd_model
+        self.dd_K = dd_K
         self.log_uniform_rates = log_uniform_rates
         self.vectorize = vectorize
         if seed:
@@ -57,6 +63,18 @@ class bd_simulator():
         ts = list()
         te = list()
         L, M, root = L / self.scale, M / self.scale, int(root * self.scale)
+
+        if self.p_dd_model > np.random.random():
+            dd_model = True
+            M = np.random.uniform(np.min(self.rangeM), np.max(self.rangeM), 1)  / self.scale
+            if isinstance(self.dd_K, Iterable):
+                k_cap = np.random.random_integers(np.min(self.dd_K), np.max(self.dd_K))
+            else:
+                k_cap = self.dd_K
+        else:
+            dd_model = False
+
+
 
         if isinstance(self.p_mass_extinction, Iterable):
             mass_extinction_prob = np.random.choice(self.p_mass_extinction) / self.scale
@@ -75,12 +93,13 @@ class bd_simulator():
                 te.append(0)
 
         for t in range(root, 0):  # time
-            for j in range(len(timesL) - 1):
-                if -t / self.scale <= timesL[j] and -t / self.scale > timesL[j + 1]:
-                    l = L[j]
-            for j in range(len(timesM) - 1):
-                if -t / self.scale <= timesM[j] and -t / self.scale > timesM[j + 1]:
-                    m = M[j]
+            if not dd_model:
+                for j in range(len(timesL) - 1):
+                    if -t / self.scale <= timesL[j] and -t / self.scale > timesL[j + 1]:
+                        l = L[j]
+                for j in range(len(timesM) - 1):
+                    if -t / self.scale <= timesM[j] and -t / self.scale > timesM[j + 1]:
+                        m = M[j]
 
             # if t % 100 ==0: print t/scale, -times[j], -times[j+1], l, m
             TE = len(te)
@@ -91,6 +110,23 @@ class bd_simulator():
 
             no = np.random.random(2)  # draw a random number
             no_extant_lineages = len(te_extant)  # the number of currently extant species
+
+            if dd_model:
+                m = M[0]
+                l = m * k_cap / np.max([1, no_extant_lineages])
+                # print("DD", l, m, no_extant_lineages)
+
+            if self.fixed_mass_extinction is not None:
+                if np.min(np.abs(np.abs(t) - np.array(self.fixed_mass_extinction) * self.scale)) < 1:
+                    no[0] = 0
+                    # print(np.abs(t), np.array(self.fixed_mass_extinction) * self.scale,
+                    #       self.scale , no[0])
+                    if verbose:
+                        print(np.abs(t), np.array(self.fixed_mass_extinction) * self.scale)
+                        print("Mass extinction", t / self.scale, mass_extinction_prob, no[0])
+                    # increased loss of species: increased ext probability for this time bin
+                    m = np.random.uniform(self.magnitude_mass_ext[0], self.magnitude_mass_ext[1])
+
             if no[0] < mass_extinction_prob and no_extant_lineages > 10 and t > root:  # mass extinction condition
                 if verbose:
                     print("Mass extinction", t / self.scale, mass_extinction_prob, no[0])
