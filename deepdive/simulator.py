@@ -29,6 +29,7 @@ class bd_simulator():
                  p_equilibrium=0.1,
                  p_dd_model=0,
                  dd_K=100,
+                 dd_maxL=None, # max speciation rate
                  log_uniform_rates=False,
                  seed=0,
                  vectorize=False):
@@ -54,6 +55,7 @@ class bd_simulator():
         self.p_equilibrium = p_equilibrium
         self.p_dd_model = p_dd_model
         self.dd_K = dd_K
+        self.dd_maxL = dd_maxL
         self.log_uniform_rates = log_uniform_rates
         self.vectorize = vectorize
         if seed:
@@ -114,6 +116,8 @@ class bd_simulator():
             if dd_model:
                 m = M[0]
                 l = m * k_cap / np.max([1, no_extant_lineages])
+                if self.dd_maxL is not None:
+                    l = np.min([l, self.dd_maxL / self.scale])
                 # print("DD", l, m, no_extant_lineages)
 
             if self.fixed_mass_extinction is not None:
