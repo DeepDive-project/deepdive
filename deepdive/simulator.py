@@ -61,22 +61,17 @@ class bd_simulator():
         if seed:
             np.random.seed(seed)
 
-    def simulate(self, L, M, timesL, timesM, root, verbose=False):
+    def simulate(self, L, M, timesL, timesM, root, dd_model=False, verbose=False):
         ts = list()
         te = list()
         L, M, root = L / self.scale, M / self.scale, int(root * self.scale)
 
-        if self.p_dd_model > np.random.random():
-            dd_model = True
+        if dd_model:
             M = np.random.uniform(np.min(self.rangeM), np.max(self.rangeM), 1)  / self.scale
             if isinstance(self.dd_K, Iterable):
                 k_cap = np.random.random_integers(np.min(self.dd_K), np.max(self.dd_K))
             else:
                 k_cap = self.dd_K
-        else:
-            dd_model = False
-
-
 
         if isinstance(self.p_mass_extinction, Iterable):
             mass_extinction_prob = np.random.choice(self.p_mass_extinction) / self.scale
@@ -214,13 +209,18 @@ class bd_simulator():
         LOtrue = [0]
         n_extinct = -0
         n_extant = -0
+        if self.p_dd_model > np.random.random():
+            dd_model = True
+        else:
+            dd_model = False
+
         while len(LOtrue) < self.minSP or len(LOtrue) > self.maxSP or n_extinct < self.minEX_SP or n_extant < self.minEXTANT_SP or n_extant > self.maxEXTANT_SP:
             if isinstance(self.root_r, Iterable):
                 root = -np.random.uniform(np.min(self.root_r), np.max(self.root_r))  # ROOT AGES
             else:
                 root = -self.root_r
             timesL, timesM, L, M = self.get_random_settings(root)
-            FAtrue, LOtrue = self.simulate(L, M, timesL, timesM, root, verbose=print_res)
+            FAtrue, LOtrue = self.simulate(L, M, timesL, timesM, root, dd_model=dd_model, verbose=print_res)
             n_extinct = len(LOtrue[LOtrue > 0])
             n_extant = len(LOtrue[LOtrue == 0])
             # print(n_extant, n_extinct, len(LOtrue))
