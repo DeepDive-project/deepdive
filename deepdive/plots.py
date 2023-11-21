@@ -6,8 +6,9 @@ import pandas as pd
 import seaborn as sns
 import matplotlib
 import matplotlib.pyplot as plt
-from matplotlib.backends import backend_pdf
+from matplotlib.backends import backend_pdf  # saves pdfs
 from matplotlib.gridspec import GridSpec
+import matplotlib.patches as mpatches
 from .extract_properties import *
 
 
@@ -29,13 +30,14 @@ def plot_trajectories(sim_obj,
     plt.ylabel("Diversity (no. species)")
     plt.gca().set_title("A) Simulated Global Diversity Trajectories", fontweight="bold", fontsize=fontsize)
 
+    # LOCAL DIV PLOTS
     fig.add_subplot(232)
     plt.plot(mid_time_bins, simulation['local_true_trajectory'].T, '-')
     plt.xlabel("Time (Ma)")
     plt.ylabel("Diversity (No. species)")
     plt.gca().set_title("B) Simulated True Diversity Trajectories By Area", fontweight="bold", fontsize=fontsize)
 
-    # plot local fossil data
+    # plot second local fossil data
     fig.add_subplot(233)
     plt.plot(mid_time_bins, simulation['local_fossil_trajectory'].T, '-')
     plt.xlabel("Time (Ma)")
@@ -53,8 +55,7 @@ def plot_trajectories(sim_obj,
     plt.plot(mid_time_bins, simulation['n_localities_w_fossils'].T, '-')
     plt.xlabel("Time (Ma)")
     plt.ylabel("No. localities")
-    plt.gca().set_title("E) Simulated number of sampled fossil localities per area", fontweight="bold",
-                        fontsize=fontsize)
+    plt.gca().set_title("E) Simulated number of sampled fossil localities per area", fontweight="bold", fontsize=fontsize)
 
     fig.add_subplot(236)
     plt.plot(mid_time_bins, n_occs_per_area_time(simulation).T, '-')
@@ -62,6 +63,7 @@ def plot_trajectories(sim_obj,
     plt.ylabel("No. occurrences")
     plt.gca().set_title("F) Number of fossil occurrences per area", fontweight="bold", fontsize=fontsize)
 
+    # fig.tight_layout()
     if show:
         plt.show()
     else:
@@ -96,6 +98,7 @@ def plot_properties(fossil_sim, sim, show=False):
     plt.ylabel("Number of Localities")
     plt.gca().set_title("Sampled Localities", fontweight="bold", fontsize=10)
     plt.grid(True)
+
 
     fig.add_subplot(244)
     plt.plot(-fossil_sim.mid_time_bins, count_singletons(sim), '-', color="red")
@@ -136,32 +139,11 @@ def plot_properties(fossil_sim, sim, show=False):
         print("Plot saved as:", file_name)
 
 
-# def plot_area_size(fossil_sim, sim_i, show=True):
-#    fig = plt.figure(figsize=(15, 10))
-#    plt.plot(sim_i["area_size"], '.')
-    # plt.plot(sim_i["carrying_capacities"]*sim_i["n_areas"], '.')
-    # plt.plot(count_localities(sim_i), '.') #change this also.
-    # plt.plot(sim_i['global_fossil_trajectory'], '.') #how many species there are per area - geo_table and sum
-#    plt.ylabel("Size of area")
-#    plt.gca().set_title("Relative Area Sizes and Carrying Capacities", fontweight="bold", fontsize=10)
-#    plt.grid(True)
-#    if show:
-#        fig.show()
-#    else:
-#        file_name = "area_size_plots.pdf"
-#        plot_div = matplotlib.backends.backend_pdf.PdfPages(file_name)
-#        fig.subplots_adjust(top=0.92)
-#        plot_div.savefig(fig)
-#        plot_div.close()
-#       print("Plot saved as:", file_name)
-
-
 def plot_training_history(history, criterion='val_loss', b=0, show=True, wd='', filename=""):
     stopping_point = np.argmin(history.history[criterion])
     fig = plt.figure(figsize=(10, 5))
     plt.plot(history.history['loss'][b:], label='Training loss (%s)' % np.round(np.min(history.history['loss']), 2))
-    plt.plot(history.history['val_loss'][b:],
-             label='Validation loss (%s)' % np.round(np.min(history.history['val_loss']), 2))
+    plt.plot(history.history['val_loss'][b:], label='Validation loss (%s)' % np.round(np.min(history.history['val_loss']), 2))
     plt.axvline(stopping_point, linestyle='--', color='red', label='Early stopping point')
     plt.grid(axis='y', linestyle='dashed', which='major', zorder=0)
     plt.xlabel('Training epoch')
@@ -186,9 +168,7 @@ def plot_prediction(predicted=None,
                     upper=None,
                     sampled=None,
                     xlimit=None,
-                    # range_through=None,
                     sqs_6=None,
-                    # sqs_4=None,
                     index=0,
                     log=False,
                     show=True,
@@ -213,14 +193,11 @@ def plot_prediction(predicted=None,
     plt.plot(mid_time_bins, transf(predicted)[index][::-1].reshape(predicted[index].shape[0]), '-', label="Predicted")
     plt.plot(mid_time_bins, transf(sampled)[index][::-1], '-', label="Sampled")
     plt.xlim(xlimit)
+    # plt.plot(mid_time_bins, transf(range_through)[index][::-1], '-', label="range-through Y")
     if sqs_6 is not None:
         sqs_6 = np.array(sqs_6)
         sqs_6 = sqs_6[index, :]
         plt.plot(mid_time_bins, transf(sqs_6)[::-1], '-', label="SQS=0.6")
-    # if sqs_4 is not None:
-    #    sqs_4 = np.array(sqs_4)
-    #    sqs_4 = sqs_4[index, :]
-    #    plt.plot(mid_time_bins, transf(sqs_4)[::-1], '-', label="SQS=0.4")
     plt.xlabel("Time (Ma)")
     plt.ylabel("Diversity")
     if title is None:
@@ -245,7 +222,6 @@ def plot_dd_prediction(predicted=None,
                        upper=None,
                        vert=None,
                        sampled=None,
-                       # range_through=None,
                        sqs_6=None,
                        index=0,
                        exp_transform=False,
@@ -320,11 +296,11 @@ def plot_dd_prediction(predicted=None,
         plt.plot(mid_time_bins, transf(sampled_local), '-', label="Sampled", color='#636363')
     plt.plot(mid_time_bins, transf(predicted_local).reshape(predicted_local.shape[0]), '-',
              label="Predicted", color="orange")
+    # plt.plot(mid_time_bins, transf(range_through)[index][::-1], '-', label="range-through Y")
     if sqs_6 is not None:
         sqs_6 = np.array(sqs_6)
         sqs_6 = sqs_6[index, :]
         plt.plot(mid_time_bins, transf(sqs_6), '-', label="SQS=0.6")
-
     plt.xlabel("Time (Ma)")
     if rescale01:
         plt.ylabel("Relative diversity")
@@ -345,7 +321,7 @@ def plot_dd_prediction(predicted=None,
         plt.yticks(np.log10(ylt), labels=ylt)
 
     if title is None:
-        pass  # plt.gca().set_title("Simulation n. %s" % index, fontweight="bold", fontsize=12)
+        pass
     else:
         plt.gca().set_title(title, fontweight="bold", fontsize=12)
     if max_age is not None:
@@ -383,42 +359,36 @@ def plot_true_sim(true=None,
     plt.xlabel("Time (Ma)")
     plt.ylabel("Diversity")
     plt.grid(True)
-    # plt.gca().set_title("Sim n. %s" % index, fontweight="bold", fontsize=12)
 
     fig.add_subplot(232)
     plt.plot(mid_time_bins, transf(true)[index+1][::-1], '-', label="true Y")
     plt.xlabel("Time (Ma)")
     plt.ylabel("Diversity")
     plt.grid(True)
-    # plt.gca().set_title("Sim n. %s" % (index+1), fontweight="bold", fontsize=12)
 
     fig.add_subplot(233)
     plt.plot(mid_time_bins, transf(true)[index+2][::-1], '-', label="true Y")
     plt.xlabel("Time (Ma)")
     plt.ylabel("Diversity")
     plt.grid(True)
-    # plt.gca().set_title("Sim n. %s" % (index+2), fontweight="bold", fontsize=12)
 
     fig.add_subplot(234)
     plt.plot(mid_time_bins, transf(true)[index+3][::-1], '-', label="true Y")
     plt.xlabel("Time (Ma)")
     plt.ylabel("Diversity")
     plt.grid(True)
-    # plt.gca().set_title("Sim n. %s" % (index+3), fontweight="bold", fontsize=12)
 
     fig.add_subplot(235)
     plt.plot(mid_time_bins, transf(true)[index+4][::-1], '-', label="true Y")
     plt.xlabel("Time (Ma)")
     plt.ylabel("Diversity")
     plt.grid(True)
-    # plt.gca().set_title("Sim n. %s" % (index+4), fontweight="bold", fontsize=12)
 
     fig.add_subplot(236)
     plt.plot(mid_time_bins, transf(true)[index+5][::-1], '-', label="true Y")
     plt.xlabel("Time (Ma)")
     plt.ylabel("Diversity")
     plt.grid(True)
-    # plt.gca().set_title("Sim n. %s" % (index+5), fontweight="bold", fontsize=12)
 
     if show:
         fig.show()
@@ -540,7 +510,9 @@ def plot_comp(results,
 
     fig = plt.figure(figsize=(8, 4))
     comp = np.divide(all_p, all_t)
-    sns.kdeplot(comp, shade=True, fill=True, color="mediumturquoise", clip=(min_x, max_x))
+    sns.kdeplot(comp,  fill=True, color="mediumturquoise", clip=(min_x, max_x))
+    plt.xlabel("Completeness")
+    plt.ylabel("Frequency")
     plt.xlabel("Completeness")
     print("median completeness is ", np.median(comp))
     if show:
@@ -570,7 +542,9 @@ def plot_pres(results,
 
     fig = plt.figure(figsize=(8, 4))
     p = np.divide(all_occs, all_br)
-    sns.kdeplot(p, shade=True, fill=True, color="cornflowerblue", clip=(min_x, max_x))
+    sns.kdeplot(p,  fill=True, color="cornflowerblue", clip=(min_x, max_x))
+    plt.xlabel("Preservation rate")
+    plt.ylabel("Frequency")
     plt.xlabel("Preservation rate")
     print("median preservation rate is ", np.median(p))
     if show:
@@ -802,11 +776,12 @@ def plot_r2(r2_dd,
             name=''):
     fig = plt.figure(figsize=(8, 4))
     if plot_type == "Density":
-        sns.kdeplot(r2_dd, shade=True, fill=True, clip=(min_x, max_x))
-        sns.kdeplot(r2_sqs, shade=True, fill=True, color="C3", clip=(min_x, max_x))
+        sns.kdeplot(r2_dd,  fill=True, clip=(min_x, max_x))
+        sns.kdeplot(r2_sqs,  fill=True, color="C3", clip=(min_x, max_x))
         plt.xlabel("$R^{2}$")
     if plot_type == "Violin":
-        ax = sns.violinplot(data=[r2_dd, r2_sqs], shade=True, fill=True, cut=0, split=True)
+        my_pal = {"#1f77b4", "C3"}
+        ax = sns.violinplot(data=[r2_sqs, r2_dd], palette=my_pal,  fill=True, cut=0, split=True)
         ax.set_xticklabels(["DeepDive", "SQS"])
         plt.yscale("log")
     if plot_type == "Boxplot":
@@ -833,12 +808,15 @@ def plot_mse(rmse_dd,
              name=''):
     fig = plt.figure(figsize=(8, 4))
     if plot_type == "Density":
-        sns.kdeplot(rmse_dd, shade=True, fill=True, clip=(min_x, max_x))
-        sns.kdeplot(rmse_sqs, shade=True, fill=True, color="C3", clip=(min_x, max_x))
+        sns.kdeplot(rmse_dd,  fill=True, clip=(min_x, max_x))
+        sns.kdeplot(rmse_sqs,  fill=True, color="C3", clip=(min_x, max_x))
         plt.xscale("log")
+        # add ticks in log space with labels showing their value (not log transformed)
+        # plt.xticks(ticks=np.log(ticks_x), labels=ticks_x)
         plt.xlabel("Relative MSE")
     if plot_type == "Violin":
-        ax = sns.violinplot(data=[rmse_dd, rmse_sqs], shade=True, fill=True, cut=0, split=True)
+        my_pal = {"#1f77b4", "C3"}
+        ax = sns.violinplot(data=[rmse_dd, rmse_sqs], palette=my_pal,  fill=True, cut=0, split=True)
         ax.set_xticklabels(["DeepDive", "SQS"])
         plt.yscale("log")
     if plot_type == "Boxplot":
@@ -1033,7 +1011,8 @@ def figure_2(true_dd,
              rmse_dd,
              rmse_sqs,
              show=False,
-             wd=''):
+             wd='',
+             name='',):
 
     fig = plt.figure(figsize=(12, 7), layout="constrained")
 
@@ -1096,13 +1075,17 @@ def figure_3(predicted=None,
              lower=None,
              upper=None,
              sampled=None,
+             xlimit=None,
              sqs_6=None,
              index1=106,
              index2=999,
              index3=7,
              index4=232,
+             log=False,
              show=True,
-             wd=''):
+             wd='',
+             name='',
+             title=None):
 
     fig = plt.figure(figsize=(12, 7), layout="constrained")
 
@@ -1339,14 +1322,14 @@ def S2(results,
 
     ax1 = fig.add_subplot(121)
     p = np.divide(all_occs, all_br)
-    sns.kdeplot(p, shade=True, fill=True, color="cornflowerblue")  # clip=(min_x, max_x))
+    sns.kdeplot(p,  fill=True, color="cornflowerblue")  # clip=(min_x, max_x))
     plt.xlabel("Preservation rate")
     print("median preservation rate is ", np.median(p))
     ax1.annotate("A", xy=(-0.15, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
 
     ax2 = fig.add_subplot(122)
     comp = np.divide(all_p, all_t)
-    sns.kdeplot(comp, shade=True, fill=True, color="mediumturquoise", clip=(min_x, max_x))
+    sns.kdeplot(comp,  fill=True, color="mediumturquoise", clip=(min_x, max_x))
     plt.xlabel("Completeness")
     print("median completeness is ", np.median(comp))
     ax2.annotate("B", xy=(-0.15, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
@@ -1414,7 +1397,7 @@ def plot_example_trajectories(predicted=None,
     ax1 = fig.add_subplot(221)
     plt.plot(mid_time_bins, transf(true)[index_1][::-1], linestyle='-', label="true Y", color=color)
     # if lower is not None:
-    #     print(transf(lower)[index][::-1].reshape(predicted[index].shape[0]))
+        # print(transf(lower)[index][::-1].reshape(predicted[index].shape[0]))
     #     plt.fill_between(x=mid_time_bins,
     #                      y1=transf(lower)[index][::-1].reshape(predicted[index].shape[0]),
     #                      y2=transf(upper)[index][::-1].reshape(predicted[index].shape[0]),
@@ -1422,8 +1405,7 @@ def plot_example_trajectories(predicted=None,
     #     print(transf(upper)[index][::-1].reshape(predicted[index].shape[0]))
     #
     # if predicted is not None:
-    #     plt.plot(mid_time_bins, transf(predicted)[index][::-1].reshape(predicted[index].shape[0]), '-',
-    #     label="Predicted")
+    #     plt.plot(mid_time_bins, transf(predicted)[index][::-1].reshape(predicted[index].shape[0]), '-', label="Predicted")
     # if sampled is not None:
     #     plt.plot(mid_time_bins, transf(sampled)[index][::-1], '-', label="Sampled")
     #
@@ -1483,68 +1465,112 @@ def plot_comparison(true_dd,
                     r2_sqs_time,
                     r2_dd_taxa,
                     r2_sqs_taxa,
+                    r2_dd_spike,
+                    r2_sqs_spike,
+                    r2_dd_ddme,
+                    r2_sqs_ddme,
                     show=False,
-                    wd=''):
+                    wd='',
+                    name=''):
 
     fig = plt.figure(figsize=(12, 7), layout="constrained")
+    red_points = mpatches.Patch(color='C3', label='SQS')
+    blue_points = mpatches.Patch(color='#1f77b4', label='DeepDive')
+    fig.legend(handles=[blue_points, red_points], loc="outside lower center", frameon=False, ncol=2, fontsize=12)
 
-    gs = GridSpec(2, 4, figure=fig)
+    gs = GridSpec(2, 6, figure=fig)
 
-    ax1 = fig.add_subplot(gs[0, 0:2])
+    ax1 = fig.add_subplot(gs[0, 0:3])
     Ytest_01 = np.einsum('sb,s->sb', true_dd, 1 / np.max(true_dd, 1))  # rescale values to range [0, 1]
     Ytest_01[Ytest_01 == 0] = np.nan  # remove zeros
     Ytest_pred_natural_scale_01 = np.einsum('sb,s->sb', predicted_dd,
-                                            1 / np.max(predicted_dd, 1))
+                                             1 / np.max(predicted_dd, 1))
     plt.scatter(Ytest_01.flatten(), Ytest_pred_natural_scale_01.flatten(), alpha=0.01)  # non rescaled DD
     plt.plot(Ytest_01.flatten(), Ytest_01.flatten(), color="black")
     plt.xlim(left=0, right=1)
     plt.ylim(bottom=0, top=1)
-    plt.xlabel("Simulated relative diversity")
-    plt.ylabel("DeepDive estimated relative diversity")
+    plt.xlabel("Simulated relative diversity", fontsize=12)
+    plt.ylabel("DeepDive estimated\nrelative diversity", fontsize=12)
     ax1.annotate("A", xy=(-0.15, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
 
-    ax2 = fig.add_subplot(gs[0, 2:4])
+    ax2 = fig.add_subplot(gs[0, 3:6])
     sqs_6_01 = np.einsum('sb,s->sb', predicted_sqs, 1 / np.nanmax(predicted_sqs, 1))
     sqs_6_01[sqs_6_01 == 0] = np.nan
     plt.scatter(Ytest_01.flatten(), sqs_6_01.flatten(), color="C3", alpha=0.01)
     plt.plot(Ytest_01.flatten(), Ytest_01.flatten(), color="black")
     plt.xlim(left=0, right=1)
     plt.ylim(bottom=0, top=1)
-    plt.xlabel("Simulated relative diversity")
-    plt.ylabel("SQS estimated relative diversity, Q=0.6")
+    plt.xlabel("Simulated relative diversity", fontsize=12)
+    plt.ylabel("SQS estimated\nrelative diversity", fontsize=12)
     ax2.annotate("B", xy=(-0.15, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
 
     ax3 = fig.add_subplot(gs[1, 0])
-    my_pal = {"#1f77b4", "C3"}
-    ax3 = sns.violinplot(data=[r2_dd, r2_sqs], palette=my_pal, shade=True, fill=True, cut=0, split=True)
-    plt.ylabel("$R^2$")
-    ax3.set_xticklabels(["DeepDive", "SQS"])
-    ax3.annotate("C", xy=(-0.15, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
+    my_pal = {"deepdive": "#1f77b4", "sqs": "C3"}
+    dat = pd.DataFrame(np.array([r2_dd, r2_sqs]).T)
+    dat.columns = ("deepdive", "sqs")
+    ax3 = sns.violinplot(data=dat, palette=my_pal, fill=True, density_norm="width", cut=0)
+    ax3.set_xticklabels([])
+    ax3.tick_params(bottom=False)
+    plt.ylabel("$R^2$", fontsize=12)
+    plt.xlabel("Original settings", fontsize=12)
+    ax3.annotate("C", xy=(-0.5, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
 
     ax4 = fig.add_subplot(gs[1, 1])
-    ax4 = sns.violinplot(data=[r2_dd_time, r2_sqs_time], palette=my_pal, shade=True, fill=True, cut=0, split=True)
-    plt.ylabel("$R^2$")
-    ax4.set_xticklabels(["DeepDive", "SQS"])
-    ax4.annotate("D", xy=(-0.15, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
+    dat = pd.DataFrame(np.array([r2_dd_time, r2_sqs_time]).T)
+    dat.columns = ("deepdive", "sqs")
+    ax4 = sns.violinplot(data=dat, palette=my_pal, fill=True, density_norm="width", cut=0)
+    ax4.set_xticklabels([])
+    ax4.tick_params(bottom=False)
+    plt.ylabel("$R^2$", fontsize=12)
+    plt.xlabel("Temporal bias", fontsize=12)
+    ax4.annotate("D", xy=(-0.5, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
 
     ax5 = fig.add_subplot(gs[1, 2])
-    ax5 = sns.violinplot(data=[r2_dd_taxa, r2_sqs_taxa], palette=my_pal, shade=True, fill=True, cut=0, split=True)
-    plt.ylabel("$R^2$")
-    ax5.set_xticklabels(["DeepDive", "SQS"])
-    ax5.annotate("E", xy=(-0.15, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
+    dat = pd.DataFrame(np.array([r2_dd_taxa, r2_sqs_taxa]).T)
+    dat.columns = ("deepdive", "sqs")
+    ax5 = sns.violinplot(data=dat, palette=my_pal, fill=True, density_norm="width", cut=0)
+    ax5.set_xticklabels([])
+    ax5.tick_params(bottom=False)
+    plt.ylabel("$R^2$", fontsize=12)
+    plt.xlabel("Taxonomic bias", fontsize=12)
+    ax5.annotate("E", xy=(-0.5, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
 
     ax6 = fig.add_subplot(gs[1, 3])
-    ax6 = sns.violinplot(data=[r2_dd_area, r2_sqs_area], palette=my_pal, shade=True, fill=True, cut=0, split=True)
-    plt.ylabel("$R^2$")
-    ax6.set_xticklabels(["DeepDive", "SQS"])
-    plt.ylabel("R$^{2}$")
-    ax6.annotate("F", xy=(-0.15, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
+    dat = pd.DataFrame(np.array([r2_dd_area, r2_sqs_area]).T)
+    dat.columns = ("deepdive", "sqs")
+    ax6 = sns.violinplot(data=dat, palette=my_pal, fill=True, density_norm="width", cut=0)
+    ax6.set_xticklabels([])
+    ax6.tick_params(bottom=False)
+    plt.ylabel("$R^2$", fontsize=12)
+    plt.xlabel("Spatial bias", fontsize=12)
+    ax6.annotate("F", xy=(-0.5, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
+
+    ax7 = fig.add_subplot(gs[1, 4])
+    dat = pd.DataFrame(np.array([r2_dd_spike, r2_sqs_spike]).T)
+    dat.columns = ("deepdive", "sqs")
+    ax7 = sns.violinplot(data=dat, palette=my_pal, fill=True, density_norm="width", cut=0)
+    ax7.set_xticklabels([])
+    ax7.tick_params(bottom=False)
+    plt.ylabel("$R^2$", fontsize=12)
+    plt.xlabel("MSME", fontsize=12)
+    ax7.annotate("G", xy=(-0.5, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
+
+    ax8 = fig.add_subplot(gs[1, 5])
+    dat = pd.DataFrame(np.array([r2_dd_ddme, r2_sqs_ddme]).T)
+    dat.columns = ("deepdive", "sqs")
+    ax8 = sns.violinplot(data=dat, palette=my_pal, fill=True, density_norm="width", cut=0)
+    ax8.set_xticklabels([])
+    ax8.tick_params(bottom=False)
+    plt.ylabel("$R^2$", fontsize=12)
+    plt.xlabel("DDME", fontsize=12)
+    ax8.annotate("H", xy=(-0.5, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
+
 
     if show:
         fig.show()
     else:
-        file_name = os.path.join(wd, "compariston_plot.png")
-        plt.savefig("comparison_plot.png", dpi=300)
+        file_name = "comparison_plot_new_model.png"
+        plt.savefig(file_name, dpi=300)
         plt.close()
         print("Plot saved as:", file_name)
 
@@ -1557,48 +1583,103 @@ def plot_relative_mse(rmse_dd,
                       rmse_sqs_time,
                       rmse_dd_tax,
                       rmse_sqs_tax,
+                      rmse_dd_spike,
+                      rmse_sqs_spike,
+                      rmse_dd_ddme,
+                      rmse_sqs_ddme,
                       show=False,
-                      wd=''):
+                      wd='',
+                      name=''):
 
     fig = plt.figure(figsize=(15, 7), layout="constrained")
+    red_points = mpatches.Patch(color='C3', label='SQS')
+    blue_points = mpatches.Patch(color='#1f77b4', label='DeepDive')
+    fig.legend(handles=[blue_points, red_points], loc="outside lower center", frameon=False, ncol=2, fontsize=16)
 
-    ax1 = fig.add_subplot(141)
-    ax1 = sns.boxplot(data=[rmse_dd, rmse_sqs], palette={'#1f77b4', 'C3'})
-    ax1.set_xticklabels(["DeepDive", "SQS"])
+    ax1 = fig.add_subplot(161)
+    my_pal = {"deepdive": "#1f77b4", "sqs": "C3"}
+    dat = pd.DataFrame(np.array([rmse_dd, rmse_sqs]).T)
+    dat.columns = ("deepdive", "sqs")
+    ax1 = sns.boxplot(data=dat, palette=my_pal)
     ax1.set_yscale("log")
-    ax1.set_yticks([0.001, 0.01, 0.1, 1])
-    plt.ylabel("rMSE")
-    ax1.annotate("A", xy=(-0.15, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
+    ax1.set_yticks([0.0001, 0.001, 0.01, 0.1, 1])
+    ax1.set_xticklabels([])
+    ax1.tick_params(bottom=False)
+    plt.ylim(0.0001, 1)
+    plt.ylabel("rMSE", fontsize=16)
+    plt.xlabel("Original settings", fontsize=16)
+    ax1.annotate("A", xy=(-0.3, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
 
-    ax2 = fig.add_subplot(142)
-    ax2 = sns.boxplot(data=[rmse_dd_time, rmse_sqs_time], palette={'#1f77b4', 'C3'})
-    ax2.set_xticklabels(["DeepDive", "SQS"])
+    ax2 = fig.add_subplot(162)
+    dat = pd.DataFrame(np.array([rmse_dd_time, rmse_sqs_time]).T)
+    dat.columns = ("deepdive", "sqs")
+    ax2 = sns.boxplot(data=dat, palette=my_pal)
     ax2.set_yscale("log")
-    ax2.set_yticks([0.001, 0.01, 0.1, 1])
-    plt.ylabel("rMSE")
-    ax2.annotate("B", xy=(-0.15, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
+    ax2.set_yticks([0.0001, 0.001, 0.01, 0.1, 1])
+    ax2.set_xticklabels([])
+    ax2.tick_params(bottom=False)
+    plt.ylim(0.0001, 1)
+    plt.ylabel("rMSE", fontsize=16)
+    plt.xlabel("Temporal bias", fontsize=16)
+    ax2.annotate("B", xy=(-0.3, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
 
-    ax3 = fig.add_subplot(143)
-    ax3 = sns.boxplot(data=[rmse_dd_tax, rmse_sqs_tax], palette={'#1f77b4', 'C3'})
-    ax3.set_xticklabels(["DeepDive", "SQS"])
+    ax3 = fig.add_subplot(163)
+    dat = pd.DataFrame(np.array([rmse_dd_tax, rmse_sqs_tax]).T)
+    dat.columns = ("deepdive", "sqs")
+    ax3 = sns.boxplot(data=dat, palette=my_pal)
     ax3.set_yscale("log")
-    ax3.set_yticks([0.001, 0.01, 0.1, 1])
-    plt.ylabel("rMSE")
-    ax3.annotate("C", xy=(-0.15, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
+    ax3.set_yticks([0.0001, 0.001, 0.01, 0.1, 1])
+    ax3.set_xticklabels([])
+    ax3.tick_params(bottom=False)
+    plt.ylim(0.0001, 1)
+    plt.ylabel("rMSE", fontsize=16)
+    plt.xlabel("Taxonomic bias", fontsize=16)
+    ax3.annotate("C", xy=(-0.3, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
 
-    ax4 = fig.add_subplot(144)
-    ax4 = sns.boxplot(data=[rmse_dd_a, rmse_sqs_a], palette={'#1f77b4', 'C3'})
-    ax4.set_xticklabels(["DeepDive", "SQS"])
+    ax4 = fig.add_subplot(164)
+    dat = pd.DataFrame(np.array([rmse_dd_a, rmse_sqs_a]).T)
+    dat.columns = ("deepdive", "sqs")
+    ax4 = sns.boxplot(data=dat, palette=my_pal)
     ax4.set_yscale("log")
-    ax4.set_yticks([0.001, 0.01, 0.1, 1])
-    plt.ylabel("rMSE")
-    ax4.annotate("D", xy=(-0.15, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
+    ax4.set_yticks([0.0001, 0.001, 0.01, 0.1, 1])
+    ax4.set_xticklabels([])
+    ax4.tick_params(bottom=False)
+    plt.ylim(0.0001, 1)
+    plt.ylabel("rMSE", fontsize=16)
+    plt.xlabel("Spatial bias", fontsize=16)
+    ax4.annotate("D", xy=(-0.3, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
+
+    ax5 = fig.add_subplot(165)
+    dat = pd.DataFrame(np.array([rmse_dd_spike, rmse_sqs_spike]).T)
+    dat.columns = ("deepdive", "sqs")
+    ax5 = sns.boxplot(data=dat, palette=my_pal)
+    ax5.set_yscale("log")
+    ax5.set_yticks([0.0001, 0.001, 0.01, 0.1, 1])
+    ax5.tick_params(bottom=False)
+    ax5.set_xticklabels([])
+    plt.ylim(0.0001, 1)
+    plt.ylabel("rMSE", fontsize=16)
+    plt.xlabel("MSME", fontsize=16)
+    ax5.annotate("E", xy=(-0.3, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
+
+    ax6 = fig.add_subplot(166)
+    dat = pd.DataFrame(np.array([rmse_dd_ddme, rmse_sqs_ddme]).T)
+    dat.columns = ("deepdive", "sqs")
+    ax6 = sns.boxplot(data=dat, palette=my_pal)
+    ax6.set_yscale("log")
+    ax6.set_yticks([0.0001, 0.001, 0.01, 0.1, 1])
+    ax6.set_xticklabels([])
+    ax6.tick_params(bottom=False)
+    plt.ylim(0.0001, 1)
+    plt.ylabel("rMSE", fontsize=16)
+    plt.xlabel("DDME", fontsize=16)
+    ax6.annotate("F", xy=(-0.3, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
 
     if show:
         fig.show()
     else:
-        file_name = os.path.join(wd, "relative_mse_tests.pdf")
-        plt.savefig("relative_mse_tests.pdf", dpi=300)
+        file_name = "relative_mse_tests.pdf"
+        plt.savefig(file_name, dpi=300)
         plt.close()
         print("Plot saved as:", file_name)
 
@@ -1611,7 +1692,8 @@ def plot_hists(results,
                n_taxa,
                n_occs,
                show=False,
-               wd=""):
+               wd="",
+               name=""):
 
     fig = plt.figure(figsize=(12, 7), layout="constrained")
 
@@ -1625,6 +1707,7 @@ def plot_hists(results,
     all_occs = np.array(all_occs)
     all_p = np.array(all_p)
     occs_per_sp = all_occs/all_p
+
 
     ax1 = fig.add_subplot(221)
     plt.hist(all_occs, bins=30, alpha=0.5, log=True)
@@ -1662,8 +1745,8 @@ def plot_hists(results,
 def plot_feature_hists(test_features,
                        empirical_features,
                        show=False,
-                       file_name="features",
-                       wd=""):
+                       wd="",
+                       name=""):
 
     fig = plt.figure(figsize=(12, 7), layout="constrained")
 
@@ -1720,7 +1803,7 @@ def plot_feature_hists(test_features,
     bins7 = np.linspace(start=0, stop=7450, num=30)
     plt.hist(test_features[:, :, 7:12].flatten(), bins=bins7, alpha=0.5, density=True, log=True)
     plt.hist(empirical_features[:, 7:12].flatten(), bins=bins7, alpha=0.5, density=True, log=True)
-    plt.xlabel("Global Taxa")
+    plt.xlabel("Taxa per region")
     plt.ylabel("Frequency")
     ax7.annotate("G", xy=(-0.15, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
 
@@ -1729,7 +1812,7 @@ def plot_feature_hists(test_features,
     plt.hist(test_features[:, :, 13:18].flatten()+1, bins=bins8, alpha=0.5, density=True, log=True)
     plt.hist(empirical_features[:, 13:18].flatten(), bins=bins8, alpha=0.5, density=True, log=True)
     plt.xscale("log")
-    plt.xlabel("Global occurrences")
+    plt.xlabel("Occurrences per region")
     plt.ylabel("Frequency")
     ax8.annotate("H", xy=(-0.15, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
 
@@ -1737,207 +1820,16 @@ def plot_feature_hists(test_features,
     bins9 = np.linspace(start=0, stop=420, num=30)
     plt.hist(test_features[:, :, 19:24].flatten(), bins=bins9, alpha=0.5, density=True, log=True)
     plt.hist(empirical_features[:, 19:24].flatten(), bins=bins9, alpha=0.5, density=True, log=True)
-    plt.xlabel("Global localities")
+    plt.xlabel("Localities per region")
     plt.ylabel("Frequency")
     ax9.annotate("I", xy=(-0.15, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
 
-    if show:
-        fig.show()
-    else:
-        file_name = os.path.join(wd, file_name + ".png")
-        plt.savefig(file_name, dpi=300)
-        plt.close()
-        print("Plot saved as:", file_name)
-
-
-def plot_feature_hists1(test_features,
-                        empirical_features,
-                        show=False,
-                        wd=""):
-
-    fig = plt.figure(figsize=(12, 7), layout="constrained")
-
-    ax1 = fig.add_subplot(231)
-    plt.hist(test_features[:, :, 7].flatten(), bins=30, alpha=0.5, density=True)
-    plt.hist(empirical_features[:, 7], bins=30, alpha=0.5, density=True)
-    plt.xscale("log")
-    plt.xlabel("Taxa region 1")
-    plt.ylabel("Frequency")
-    ax1.annotate("A", xy=(-0.15, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
-
-    ax2 = fig.add_subplot(232)
-    plt.hist(test_features[:, :, 13].flatten(), bins=30, alpha=0.5, density=True)
-    plt.hist(empirical_features[:, 13], bins=30, alpha=0.5, density=True)
-    plt.xscale("log")
-    plt.xlabel("Occurrences region 1")
-    plt.ylabel("Frequency")
-    ax2.annotate("B", xy=(-0.15, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
-
-    ax3 = fig.add_subplot(233)
-    plt.hist(test_features[:, :, 19].flatten()+1, bins=30, alpha=0.5, density=True)
-    plt.hist(empirical_features[:, 19], bins=30, alpha=0.5, density=True)
-    plt.xscale("log")
-    plt.xlabel("Localities region 1")
-    plt.ylabel("Frequency")
-    ax3.annotate("C", xy=(-0.15, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
-
-    ax4 = fig.add_subplot(234)
-    plt.hist(test_features[:, :, 8].flatten()+1, bins=30, alpha=0.5, density=True)
-    plt.hist(empirical_features[:, 8], bins=30, alpha=0.5, density=True)
-    plt.xscale("log")
-    plt.xlabel("Taxa region 2")
-    plt.ylabel("Frequency")
-    ax4.annotate("D", xy=(-0.15, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
-
-    ax5 = fig.add_subplot(235)
-    plt.hist(test_features[:, :, 14].flatten()+1, bins=30, alpha=0.5, density=True)
-    plt.hist(empirical_features[:, 14], bins=30, alpha=0.5, density=True)
-    plt.xscale("log")
-    plt.xlabel("Occurrences region 2")
-    plt.ylabel("Frequency")
-    ax5.annotate("E", xy=(-0.15, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
-
-    ax6 = fig.add_subplot(236)
-    plt.hist(test_features[:, :, 20].flatten()+1, bins=30, alpha=0.5, density=True)
-    plt.hist(empirical_features[:, 20], bins=30, alpha=0.5, density=True)
-    plt.xscale("log")
-    plt.xlabel("Localities region 2")
-    plt.ylabel("Frequency")
-    ax6.annotate("F", xy=(-0.15, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
 
     if show:
         fig.show()
     else:
-        file_name = os.path.join(wd, "remake_feature_hists1.png")
-        plt.savefig("remake_feature_hists1.png", dpi=300)
-        plt.close()
-        print("Plot saved as:", file_name)
-
-
-def plot_feature_hists2(test_features,
-                        empirical_features,
-                        show=False,
-                        wd=""):
-
-    fig = plt.figure(figsize=(12, 7), layout="constrained")
-
-    ax1 = fig.add_subplot(231)
-    plt.hist(test_features[:, :, 9].flatten()+1, bins=30, alpha=0.5, density=True)
-    plt.hist(empirical_features[:, 9], bins=30, alpha=0.5, density=True)
-    plt.xscale("log")
-    plt.xlabel("Taxa region 3")
-    plt.ylabel("Frequency")
-    ax1.annotate("A", xy=(-0.15, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
-
-    ax2 = fig.add_subplot(232)
-    plt.hist(test_features[:, :, 15].flatten()+1, bins=30, alpha=0.5, density=True)
-    plt.hist(empirical_features[:, 15], bins=30, alpha=0.5, density=True)
-    plt.xscale("log")
-    plt.xlabel("Occurrences region 3")
-    plt.ylabel("Frequency")
-    ax2.annotate("B", xy=(-0.15, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
-
-    ax3 = fig.add_subplot(233)
-    plt.hist(test_features[:, :, 21].flatten()+1, bins=30, alpha=0.5, density=True)
-    plt.hist(empirical_features[:, 21], bins=30, alpha=0.5, density=True)
-    plt.xscale("log")
-    plt.xlabel("Localities region 3")
-    plt.ylabel("Frequency")
-    ax3.annotate("C", xy=(-0.15, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
-
-    ax4 = fig.add_subplot(234)
-    plt.hist(test_features[:, :, 10].flatten()+1, bins=30, alpha=0.5, density=True)
-    plt.hist(empirical_features[:, 10], bins=30, alpha=0.5, density=True)
-    plt.xscale("log")
-    plt.xlabel("Taxa region 4")
-    plt.ylabel("Frequency")
-    ax4.annotate("D", xy=(-0.15, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
-
-    ax5 = fig.add_subplot(235)
-    plt.hist(test_features[:, :, 16].flatten()+1, bins=30, alpha=0.5, density=True)
-    plt.hist(empirical_features[:, 16], bins=30, alpha=0.5, density=True)
-    plt.xscale("log")
-    plt.xlabel("Occurrences region 4")
-    plt.ylabel("Frequency")
-    ax5.annotate("E", xy=(-0.15, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
-
-    ax6 = fig.add_subplot(236)
-    plt.hist(test_features[:, :, 22].flatten()+1, bins=30, alpha=0.5, density=True)
-    plt.hist(empirical_features[:, 22], bins=30, alpha=0.5, density=True)
-    plt.xscale("log")
-    plt.xlabel("Localities region 4")
-    plt.ylabel("Frequency")
-    ax6.annotate("F", xy=(-0.15, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
-
-    if show:
-        fig.show()
-    else:
-        file_name = os.path.join(wd, "remake_feature_hists2.png")
-        plt.savefig("remake_feature_hists2.png", dpi=300)
-        plt.close()
-        print("Plot saved as:", file_name)
-
-
-def plot_feature_hists3(test_features,
-                        empirical_features,
-                        show=False,
-                        wd=""):
-
-    fig = plt.figure(figsize=(12, 7), layout="constrained")
-
-    ax1 = fig.add_subplot(231)
-    plt.hist(test_features[:, :, 11].flatten()+1, bins=30, alpha=0.5, density=True)
-    plt.hist(empirical_features[:, 11], bins=30, alpha=0.5, density=True)
-    plt.xscale("log")
-    plt.xlabel("Taxa region 5")
-    plt.ylabel("Frequency")
-    ax1.annotate("A", xy=(-0.15, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
-
-    ax2 = fig.add_subplot(232)
-    plt.hist(test_features[:, :, 17].flatten()+1, bins=30, alpha=0.5, density=True)
-    plt.hist(empirical_features[:, 17], bins=30, alpha=0.5, density=True)
-    plt.xscale("log")
-    plt.xlabel("Occurrences region 5")
-    plt.ylabel("Frequency")
-    ax2.annotate("B", xy=(-0.15, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
-
-    ax3 = fig.add_subplot(233)
-    plt.hist(test_features[:, :, 23].flatten()+1, bins=30, alpha=0.5, density=True)
-    plt.hist(empirical_features[:, 23], bins=30, alpha=0.5, density=True)
-    plt.xscale("log")
-    plt.xlabel("Localities region 5")
-    plt.ylabel("Frequency")
-    ax3.annotate("C", xy=(-0.15, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
-
-    ax4 = fig.add_subplot(234)
-    plt.hist(test_features[:, :, 12].flatten()+1, bins=30, alpha=0.5, density=True)
-    plt.hist(empirical_features[:, 12], bins=30, alpha=0.5, density=True)
-    plt.xscale("log")
-    plt.xlabel("Taxa region 6")
-    plt.ylabel("Frequency")
-    ax4.annotate("D", xy=(-0.15, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
-
-    ax5 = fig.add_subplot(235)
-    plt.hist(test_features[:, :, 18].flatten()+1, bins=30, alpha=0.5, density=True)
-    plt.hist(empirical_features[:, 18], bins=30, alpha=0.5, density=True)
-    plt.xscale("log")
-    plt.xlabel("Occurrences region 6")
-    plt.ylabel("Frequency")
-    ax5.annotate("E", xy=(-0.15, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
-
-    ax6 = fig.add_subplot(236)
-    plt.hist(test_features[:, :, 24].flatten()+1, bins=30, alpha=0.5, density=True)
-    plt.hist(empirical_features[:, 24], bins=30, alpha=0.5, density=True)
-    plt.xscale("log")
-    plt.xlabel("Localities region 6")
-    plt.ylabel("Frequency")
-    ax6.annotate("F", xy=(-0.15, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
-
-    if show:
-        fig.show()
-    else:
-        file_name = os.path.join(wd, "remake_feature_hists3.png")
-        plt.savefig("remake_feature_hists3.png", dpi=300)
+        file_name = os.path.join(wd, "marine_feature_hists.png")
+        plt.savefig("remake_feature_hists.png", dpi=300)
         plt.close()
         print("Plot saved as:", file_name)
 
@@ -1945,7 +1837,8 @@ def plot_feature_hists3(test_features,
 def plot_feature_hists_ele(test_features,
                            empirical_features,
                            show=False,
-                           wd=""):
+                           wd="",
+                           name=""):
 
     fig = plt.figure(figsize=(12, 7), layout="constrained")
 
@@ -1953,6 +1846,7 @@ def plot_feature_hists_ele(test_features,
     bins1 = np.linspace(start=0, stop=260, num=30)
     plt.hist(test_features[:, :, 0].flatten(), bins=bins1, alpha=0.5, density=True, log=True)
     plt.hist(empirical_features[:, 0], bins=bins1, alpha=0.5, density=True, log=True)
+    # plt.xscale("log")
     plt.xlabel("Taxa")
     plt.ylabel("Frequency")
     ax1.annotate("A", xy=(-0.15, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
@@ -2002,7 +1896,7 @@ def plot_feature_hists_ele(test_features,
     bins7 = np.linspace(start=0, stop=260, num=30)
     plt.hist(test_features[:, :, 7:12].flatten(), bins=bins7, alpha=0.5, density=True, log=True)
     plt.hist(empirical_features[:, 7:12].flatten(), bins=bins7, alpha=0.5, density=True, log=True)
-    plt.xlabel("Global Taxa")
+    plt.xlabel("Taxa per region")
     plt.ylabel("Frequency")
     ax7.annotate("G", xy=(-0.15, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
 
@@ -2011,7 +1905,7 @@ def plot_feature_hists_ele(test_features,
     plt.hist(test_features[:, :, 13:18].flatten()+1, bins=bins8, alpha=0.5, density=True, log=True)
     plt.hist(empirical_features[:, 13:18].flatten(), bins=bins8, alpha=0.5, density=True, log=True)
     plt.xscale("log")
-    plt.xlabel("Global occurrences")
+    plt.xlabel("Occurrences per region")
     plt.ylabel("Frequency")
     ax8.annotate("H", xy=(-0.15, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
 
@@ -2019,9 +1913,10 @@ def plot_feature_hists_ele(test_features,
     bins9 = np.linspace(start=0, stop=95, num=30)
     plt.hist(test_features[:, :, 19:24].flatten(), bins=bins9, alpha=0.5, density=True, log=True)
     plt.hist(empirical_features[:, 19:24].flatten(), bins=bins9, alpha=0.5, density=True, log=True)
-    plt.xlabel("Global localities")
+    plt.xlabel("Localities per region")
     plt.ylabel("Frequency")
     ax9.annotate("I", xy=(-0.15, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
+
 
     if show:
         fig.show()
@@ -2030,3 +1925,37 @@ def plot_feature_hists_ele(test_features,
         plt.savefig("feature_hists_ele.png", dpi=300)
         plt.close()
         print("Plot saved as:", file_name)
+
+
+def plot_error_through_time(Ytest_r,
+                            mean_prediction,
+                            abs_path,
+                            nmean_prediction=None,
+                            test_folder="test"):
+    error = (mean_prediction-Ytest_r)**2  # square difference between mean_prediction and ytest
+    pd.DataFrame(error).to_csv(os.path.join(abs_path + '/test_sets/' + test_folder + '/error.csv'), index=False)
+    mean_error = np.mean(error, axis=0)
+
+    fig = plt.figure(figsize=(12, 7), layout="constrained")
+    plt.plot(mean_error)
+
+    if nmean_prediction is not None:
+        new_model_error = (nmean_prediction-Ytest_r)**2  # square difference between mean_prediction and ytest
+        pd.DataFrame(new_model_error).to_csv(os.path.join(abs_path + '/test_sets/' + test_folder + '/new_model_error.csv'), index=False)
+        new_model_mean_error = np.mean(new_model_error, axis=0)
+
+        plt.plot(new_model_mean_error)
+
+    plt.axvline(x=66, color='tab:gray', linestyle="dashed")
+    plt.axvline(x=16, color='tab:gray', linestyle="dashed")
+    plt.xlabel('Time (Ma)')
+    plt.ylabel('MSE')
+    plt.gca().invert_xaxis()
+    blue_line = mpatches.Patch(color='#1f77b4', label='Original model')
+    orange_line = mpatches.Patch(color='#ff7f0e', label='Model with more diversity dependence and mass extinctions')
+    fig.legend(handles=[blue_line, orange_line], loc="outside lower center", frameon=False, ncol=2)
+    file_name = os.path.join("error_tracking_plot.pdf")
+    plot_errors = matplotlib.backends.backend_pdf.PdfPages(file_name)
+    plot_errors.savefig(fig)
+    plot_errors.close()
+    print("Plot saved as:", file_name)
