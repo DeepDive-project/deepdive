@@ -14,6 +14,7 @@ class bd_simulator():
                  minEX_SP=0,  # minimum number of extinct lineages allowed
                  minEXTANT_SP=0,
                  maxEXTANT_SP=np.inf,
+                 pr_extant_clade=None,
                  root_r=[30., 100],  # range root ages
                  rangeL=[0.2, 0.5],
                  rangeM=[0.2, 0.5],
@@ -40,6 +41,7 @@ class bd_simulator():
         self.minEX_SP = minEX_SP
         self.minEXTANT_SP = minEXTANT_SP
         self.maxEXTANT_SP = maxEXTANT_SP
+        self.pr_extant_clade = pr_extant_clade
         self.root_r = root_r
         self.rangeL = rangeL
         self.rangeM = rangeM
@@ -214,7 +216,18 @@ class bd_simulator():
         else:
             dd_model = False
 
-        while len(LOtrue) < self.minSP or len(LOtrue) > self.maxSP or n_extinct < self.minEX_SP or n_extant < self.minEXTANT_SP or n_extant > self.maxEXTANT_SP:
+        if self.pr_extant_clade is not None:
+            if np.random.random() < self.pr_extant_clade:
+                min_extant = 1 # clade is extant
+                max_extant = self.maxEXTANT_SP
+            else:
+                min_extant = 0
+                max_extant = 0
+        else:
+            min_extant = self.minEXTANT_SP
+            max_extant = self.maxEXTANT_SP
+
+        while len(LOtrue) < self.minSP or len(LOtrue) > self.maxSP or n_extinct < self.minEX_SP or n_extant < min_extant or n_extant > max_extant:
             if isinstance(self.root_r, Iterable):
                 root = -np.random.uniform(np.min(self.root_r), np.max(self.root_r))  # ROOT AGES
             else:
