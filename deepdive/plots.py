@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from matplotlib.backends import backend_pdf  # saves pdfs
 from matplotlib.gridspec import GridSpec
 import matplotlib.patches as mpatches
-from .extract_properties import *
+from .feature_extraction import *
 
 
 def plot_trajectories(sim_obj,

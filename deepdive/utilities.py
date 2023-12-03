@@ -9,8 +9,10 @@ import pandas
 import pandas as pd
 import scipy.stats
 
-from .extract_properties import extract_sim_features
+from .feature_extraction import extract_sim_features
 
+def get_rnd_gen(seed=None):
+    return np.random.default_rng(seed)
 
 def print_update(s):
     sys.stdout.write('\r')

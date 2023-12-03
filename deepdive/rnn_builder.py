@@ -7,8 +7,6 @@ np.set_printoptions(suppress=True, precision=3)
 import os
 import pickle as pkl
 import scipy.stats
-np.random.seed(123)
-
 
 def build_rnn(Xt,
               lstm_nodes=None,
