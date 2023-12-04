@@ -63,6 +63,9 @@ class bd_simulator():
         self.vectorize = vectorize
         self._rs = get_rnd_gen(seed)
 
+    def reset_seed(self, seed):
+        self._rs = get_rnd_gen(seed)
+
     def simulate(self, L, M, timesL, timesM, root, dd_model=False, verbose=False):
         ts = list()
         te = list()

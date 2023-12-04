@@ -78,6 +78,10 @@ class fossil_simulator():
         self._additional_info = None
         self._rs = get_rnd_gen(seed)
 
+    def reset_seed(self, seed):
+        self._rs = get_rnd_gen(seed)
+
+
     # Generate presence/absence geographic range array.
     # Define a 2D array where 0 means absence and 1 means presence of a species in a set number of defined geographic
     # areas. Could add evolution of the geographic range and allow some species to go extinct in certain areas etc
