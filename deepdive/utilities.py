@@ -101,7 +101,7 @@ def prep_dd_input(wd,
                   hr_time_bins=None,  # array of shape (t)
                   lr_locality_file=None,  # array of shape (a, low_res_t)
                   lr_time_bins=None,
-                  no_age_u=False,
+                  no_age_u=True,
                   replicate=None,
                   rescale_by_n_bins=True,
                   debug=False

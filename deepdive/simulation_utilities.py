@@ -3,7 +3,8 @@ from collections.abc import Iterable
 import numpy as np
 import os
 from .utilities import print_update, save_pkl
-from .feature_extraction import extract_sim_features
+from .feature_extraction import extract_sim_features, get_features_names
+from .plots import plot_feature_hists
 class sim_settings_obj():
     def __init__(self,
                  bd_sim,
@@ -11,8 +12,8 @@ class sim_settings_obj():
                  n_simulations,
                  min_age,
                  max_age,
-                 seed,
-                 keys=[],
+                 seed=None,
+                 keys=None,
                  verbose=False
                  ):
         self.bd_sim = bd_sim
@@ -20,8 +21,15 @@ class sim_settings_obj():
         self.n_simulations = n_simulations
         self.min_age = min_age
         self.max_age = max_age
-        self.seed = seed
-        self.keys = keys
+
+        if seed is None:
+            self.seed = np.random.randint(1000, 9999)
+        else:
+            self.seed = seed
+        if keys is None:
+            self.keys = []
+        else:
+            self.keys = keys
         self.verbose = verbose
 
 
@@ -59,8 +67,8 @@ def run_sim(args):
     if rep == 0:
         print("\ndone.\n")
 
-    res = {'features': batch_features,
-            'labels': batch_labels,
+    res = {'features': np.array(batch_features),
+            'labels': np.array(batch_labels),
             'settings': sim_settings}
     return res
 
@@ -74,8 +82,8 @@ def run_sim_parallel(training_set: sim_settings_obj, n_CPUS):
     features = []
     labels = []
     for i in range(n_CPUS):
-        features = features + res[i]['features']
-        labels = labels + res[i]['labels']
+        features = features + list(res[i]['features'])
+        labels = labels + list(res[i]['labels'])
 
     Xt = np.array(features)
     Yt = np.array(labels)
@@ -93,3 +101,32 @@ def save_simulations(res, output_path, outname):
         save_pkl(res['settings'], os.path.join(output_path, outname + "_sim_settings.pkl"))
         print("Settings saved as: \n", os.path.join(output_path, outname + "_sim_settings.pkl"))
 
+
+
+def compare_features(empirical_features,
+                     test_set: sim_settings_obj = None,
+                     test_res= None,
+                     test_set_features=None,
+                     return_simulations=False,
+                     log_occurrences=False,
+                     n_areas=None,
+                     wd="",
+                     output_name=None,
+                     show=True):
+    if test_set_features is None:
+        if test_res is None:
+            test_res = run_sim(test_set)
+        test_set_features = test_res['features']
+
+    if n_areas is None:
+        n_areas = test_set.fossil_sim.n_areas
+
+    features_names = get_features_names(n_areas)
+    plot_feature_hists(test_features=test_set_features,
+                       empirical_features=empirical_features,
+                       show=show,
+                       wd=wd, output_name=output_name,
+                       features_names=features_names,
+                       log_occurrences=log_occurrences)
+    if return_simulations:
+        return test_res

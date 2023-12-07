@@ -142,8 +142,10 @@ def plot_properties(fossil_sim, sim, show=False):
 def plot_training_history(history, criterion='val_loss', b=0, show=True, wd='', filename=""):
     stopping_point = np.argmin(history.history[criterion])
     fig = plt.figure(figsize=(10, 5))
-    plt.plot(history.history['loss'][b:], label='Training loss (%s)' % np.round(np.min(history.history['loss']), 2))
-    plt.plot(history.history['val_loss'][b:], label='Validation loss (%s)' % np.round(np.min(history.history['val_loss']), 2))
+    plt.plot(history.history['loss'][b:],
+             label='Training loss (%s)' % np.round(np.min(history.history['loss']), 3))
+    plt.plot(history.history['val_loss'][b:],
+             label='Validation loss (%s)' % np.round(np.min(history.history['val_loss']), 3))
     plt.axvline(stopping_point, linestyle='--', color='red', label='Early stopping point')
     plt.grid(axis='y', linestyle='dashed', which='major', zorder=0)
     plt.xlabel('Training epoch')
@@ -190,7 +192,8 @@ def plot_prediction(predicted=None,
                          y2=transf(upper)[index][::-1].reshape(predicted[index].shape[0]),
                          color="orange", alpha=0.5)
         print(transf(upper)[index][::-1].reshape(predicted[index].shape[0]))
-    plt.plot(mid_time_bins, transf(predicted)[index][::-1].reshape(predicted[index].shape[0]), '-', label="Predicted")
+    plt.plot(mid_time_bins, transf(predicted)[index][::-1].reshape(predicted[index].shape[0]), '-',
+             label="Predicted")
     plt.plot(mid_time_bins, transf(sampled)[index][::-1], '-', label="Sampled")
     plt.xlim(xlimit)
     # plt.plot(mid_time_bins, transf(range_through)[index][::-1], '-', label="range-through Y")
@@ -1742,190 +1745,111 @@ def plot_hists(results,
         print("Plot saved as:", file_name)
 
 
+def get_bins(test_features, empirical_features, indx, n_bins, start=0):
+    stop = np.max([np.max([test_features[:, :, indx].flatten()]), np.max(empirical_features[:, indx])])
+    bins = np.linspace(start=0, stop=stop, num=n_bins)
+    return bins
+
 def plot_feature_hists(test_features,
                        empirical_features,
                        show=False,
                        wd="",
-                       name=""):
+                       output_name="Feature_plot",
+                       n_bins=30,
+                       features_names=None,
+                       log_occurrences=False
+                       ):
 
     fig = plt.figure(figsize=(12, 7), layout="constrained")
 
     ax1 = fig.add_subplot(331)
-    bins1 = np.linspace(start=0, stop=7500, num=30)
-    plt.hist(test_features[:, :, 0].flatten(), bins=bins1, alpha=0.5, density=True, log=True)
-    plt.hist(empirical_features[:, 0], bins=bins1, alpha=0.5, density=True, log=True)
+    bins = get_bins(test_features, empirical_features, 0, n_bins)
+    plt.hist(test_features[:, :, 0].flatten(), bins=bins, alpha=0.5, density=True, log=True)
+    plt.hist(empirical_features[:, 0], bins=bins, alpha=0.5, density=True, log=True)
     plt.xlabel("Taxa")
     plt.ylabel("Frequency")
     ax1.annotate("A", xy=(-0.15, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
 
     ax2 = fig.add_subplot(332)
-    bins2 = np.linspace(start=0, stop=549200, num=30)
-    plt.hist(test_features[:, :, 1].flatten()+1, bins=bins2, alpha=0.5, density=True, log=True)
-    plt.hist(empirical_features[:, 1], bins=bins2, alpha=0.5, density=True, log=True)
-    plt.xscale("log")
+    bins = get_bins(test_features, empirical_features, 1, n_bins)
+    plt.hist(test_features[:, :, 1].flatten()+1, bins=bins, alpha=0.5, density=True, log=True)
+    plt.hist(empirical_features[:, 1], bins=bins, alpha=0.5, density=True, log=True)
+    if log_occurrences:
+        plt.xscale("log")
     plt.xlabel("Occurrences")
     plt.ylabel("Frequency")
     ax2.annotate("B", xy=(-0.15, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
 
     ax3 = fig.add_subplot(333)
-    bins3 = np.linspace(start=0, stop=2750, num=30)
-    plt.hist(test_features[:, :, 2].flatten(), bins=bins3, alpha=0.5, density=True, log=True)
-    plt.hist(empirical_features[:, 2], bins=bins3, alpha=0.5, density=True, log=True)
+    bins = get_bins(test_features, empirical_features, 2, n_bins)
+    plt.hist(test_features[:, :, 2].flatten(), bins=bins, alpha=0.5, density=True, log=True)
+    plt.hist(empirical_features[:, 2], bins=bins, alpha=0.5, density=True, log=True)
     plt.xlabel("Singletons")
     plt.ylabel("Frequency")
     ax3.annotate("C", xy=(-0.15, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
 
     ax4 = fig.add_subplot(334)
-    bins4 = np.linspace(start=0, stop=6400, num=30)
-    plt.hist(test_features[:, :, 3].flatten(), bins=bins4, alpha=0.5, density=True, log=True)
-    plt.hist(empirical_features[:, 3], bins=bins4, alpha=0.5, density=True, log=True)
+    bins = get_bins(test_features, empirical_features, 3, n_bins)
+    plt.hist(test_features[:, :, 3].flatten(), bins=bins, alpha=0.5, density=True, log=True)
+    plt.hist(empirical_features[:, 3], bins=bins, alpha=0.5, density=True, log=True)
     plt.xlabel("Endemic taxa")
     plt.ylabel("Frequency")
     ax4.annotate("D", xy=(-0.15, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
 
     ax5 = fig.add_subplot(335)
-    bins5 = np.linspace(start=0, stop=7450, num=30)
-    plt.hist(test_features[:, :, 5].flatten(), bins=bins5, alpha=0.5, density=True, log=True)
-    plt.hist(empirical_features[:, 5], bins=bins5, alpha=0.5, density=True, log=True)
+    bins = get_bins(test_features, empirical_features, 5, n_bins)
+    plt.hist(test_features[:, :, 5].flatten(), bins=bins, alpha=0.5, density=True, log=True)
+    plt.hist(empirical_features[:, 5], bins=bins, alpha=0.5, density=True, log=True)
     plt.xlabel("Range-through diversity")
     plt.ylabel("Frequency")
     ax5.annotate("E", xy=(-0.15, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
 
     ax6 = fig.add_subplot(336)
-    bins6 = np.linspace(start=0, stop=2160, num=30)
-    plt.hist(test_features[:, :, 6].flatten(), bins=bins6, alpha=0.5, density=True, log=True)
-    plt.hist(empirical_features[:, 6], bins=bins6, alpha=0.5, density=True, log=True)
+    bins = get_bins(test_features, empirical_features,6, n_bins)
+    plt.hist(test_features[:, :, 6].flatten(), bins=bins, alpha=0.5, density=True, log=True)
+    plt.hist(empirical_features[:, 6], bins=bins, alpha=0.5, density=True, log=True)
     plt.xlabel("Sampled localities")
     plt.ylabel("Frequency")
     ax6.annotate("F", xy=(-0.15, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
 
-    ax7 = fig.add_subplot(337)
-    bins7 = np.linspace(start=0, stop=7450, num=30)
-    plt.hist(test_features[:, :, 7:12].flatten(), bins=bins7, alpha=0.5, density=True, log=True)
-    plt.hist(empirical_features[:, 7:12].flatten(), bins=bins7, alpha=0.5, density=True, log=True)
-    plt.xlabel("Taxa per region")
-    plt.ylabel("Frequency")
-    ax7.annotate("G", xy=(-0.15, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
+    if features_names is not None:
+        ax7 = fig.add_subplot(337)
+        indx = np.array([i for i in range(len(features_names)) if "n_species_area" in features_names[i]])
+        bins = get_bins(test_features, empirical_features, indx, n_bins)
+        plt.hist(test_features[:, :, indx].flatten(), bins=bins, alpha=0.5, density=True, log=True)
+        plt.hist(empirical_features[:, indx].flatten(), bins=bins, alpha=0.5, density=True, log=True)
+        plt.xlabel("Taxa per region")
+        plt.ylabel("Frequency")
+        ax7.annotate("G", xy=(-0.15, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
 
-    ax8 = fig.add_subplot(338)
-    bins8 = np.linspace(start=0, stop=354150, num=30)
-    plt.hist(test_features[:, :, 13:18].flatten()+1, bins=bins8, alpha=0.5, density=True, log=True)
-    plt.hist(empirical_features[:, 13:18].flatten(), bins=bins8, alpha=0.5, density=True, log=True)
-    plt.xscale("log")
-    plt.xlabel("Occurrences per region")
-    plt.ylabel("Frequency")
-    ax8.annotate("H", xy=(-0.15, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
+        ax8 = fig.add_subplot(338)
+        indx = np.array([i for i in range(len(features_names)) if "n_occs_area" in features_names[i]])
+        bins = get_bins(test_features, empirical_features, indx, n_bins)
+        plt.hist(test_features[:, :, indx].flatten()+1, bins=bins, alpha=0.5, density=True, log=True)
+        plt.hist(empirical_features[:, indx].flatten(), bins=bins, alpha=0.5, density=True, log=True)
+        if log_occurrences:
+            plt.xscale("log")
+        plt.xlabel("Occurrences per region")
+        plt.ylabel("Frequency")
+        ax8.annotate("H", xy=(-0.15, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
 
-    ax9 = fig.add_subplot(339)
-    bins9 = np.linspace(start=0, stop=420, num=30)
-    plt.hist(test_features[:, :, 19:24].flatten(), bins=bins9, alpha=0.5, density=True, log=True)
-    plt.hist(empirical_features[:, 19:24].flatten(), bins=bins9, alpha=0.5, density=True, log=True)
-    plt.xlabel("Localities per region")
-    plt.ylabel("Frequency")
-    ax9.annotate("I", xy=(-0.15, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
+        ax9 = fig.add_subplot(339)
+        indx = np.array([i for i in range(len(features_names)) if "n_locs_area" in features_names[i]])
+        bins = get_bins(test_features, empirical_features, indx, n_bins)
+        plt.hist(test_features[:, :, indx].flatten(), bins=bins, alpha=0.5, density=True, log=True)
+        plt.hist(empirical_features[:, indx].flatten(), bins=bins, alpha=0.5, density=True, log=True)
+        plt.xlabel("Localities per region")
+        plt.ylabel("Frequency")
+        ax9.annotate("I", xy=(-0.15, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
 
 
     if show:
         fig.show()
     else:
-        file_name = os.path.join(wd, "marine_feature_hists.png")
-        plt.savefig("remake_feature_hists.png", dpi=300)
-        plt.close()
-        print("Plot saved as:", file_name)
-
-
-def plot_feature_hists_ele(test_features,
-                           empirical_features,
-                           show=False,
-                           wd="",
-                           name=""):
-
-    fig = plt.figure(figsize=(12, 7), layout="constrained")
-
-    ax1 = fig.add_subplot(331)
-    bins1 = np.linspace(start=0, stop=260, num=30)
-    plt.hist(test_features[:, :, 0].flatten(), bins=bins1, alpha=0.5, density=True, log=True)
-    plt.hist(empirical_features[:, 0], bins=bins1, alpha=0.5, density=True, log=True)
-    # plt.xscale("log")
-    plt.xlabel("Taxa")
-    plt.ylabel("Frequency")
-    ax1.annotate("A", xy=(-0.15, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
-
-    ax2 = fig.add_subplot(332)
-    bins2 = np.linspace(start=0, stop=2000, num=30)
-    plt.hist(test_features[:, :, 1].flatten()+1, bins=bins2, alpha=0.5, density=True, log=True)
-    plt.hist(empirical_features[:, 1], bins=bins2, alpha=0.5, density=True, log=True)
-    plt.xscale("log")
-    plt.xlabel("Occurrences")
-    plt.ylabel("Frequency")
-    ax2.annotate("B", xy=(-0.15, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
-
-    ax3 = fig.add_subplot(333)
-    bins3 = np.linspace(start=0, stop=42, num=30)
-    plt.hist(test_features[:, :, 2].flatten(), bins=bins3, alpha=0.5, density=True, log=True)
-    plt.hist(empirical_features[:, 2], bins=bins3, alpha=0.5, density=True, log=True)
-    plt.xlabel("Singletons")
-    plt.ylabel("Frequency")
-    ax3.annotate("C", xy=(-0.15, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
-
-    ax4 = fig.add_subplot(334)
-    bins4 = np.linspace(start=0, stop=260, num=30)
-    plt.hist(test_features[:, :, 3].flatten(), bins=bins4, alpha=0.5, density=True, log=True)
-    plt.hist(empirical_features[:, 3], bins=bins4, alpha=0.5, density=True, log=True)
-    plt.xlabel("Endemic taxa")
-    plt.ylabel("Frequency")
-    ax4.annotate("D", xy=(-0.15, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
-
-    ax5 = fig.add_subplot(335)
-    bins5 = np.linspace(start=0, stop=285, num=30)
-    plt.hist(test_features[:, :, 5].flatten(), bins=bins5, alpha=0.5, density=True, log=True)
-    plt.hist(empirical_features[:, 5], bins=bins5, alpha=0.5, density=True, log=True)
-    plt.xlabel("Range-through diversity")
-    plt.ylabel("Frequency")
-    ax5.annotate("E", xy=(-0.15, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
-
-    ax6 = fig.add_subplot(336)
-    bins6 = np.linspace(start=0, stop=400, num=30)
-    plt.hist(test_features[:, :, 6].flatten(), bins=bins6, alpha=0.5, density=True, log=True)
-    plt.hist(empirical_features[:, 6], bins=bins6, alpha=0.5, density=True, log=True)
-    plt.xlabel("Sampled localities")
-    plt.ylabel("Frequency")
-    ax6.annotate("F", xy=(-0.15, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
-
-    ax7 = fig.add_subplot(337)
-    bins7 = np.linspace(start=0, stop=260, num=30)
-    plt.hist(test_features[:, :, 7:12].flatten(), bins=bins7, alpha=0.5, density=True, log=True)
-    plt.hist(empirical_features[:, 7:12].flatten(), bins=bins7, alpha=0.5, density=True, log=True)
-    plt.xlabel("Taxa per region")
-    plt.ylabel("Frequency")
-    ax7.annotate("G", xy=(-0.15, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
-
-    ax8 = fig.add_subplot(338)
-    bins8 = np.linspace(start=0, stop=145, num=30)
-    plt.hist(test_features[:, :, 13:18].flatten()+1, bins=bins8, alpha=0.5, density=True, log=True)
-    plt.hist(empirical_features[:, 13:18].flatten(), bins=bins8, alpha=0.5, density=True, log=True)
-    plt.xscale("log")
-    plt.xlabel("Occurrences per region")
-    plt.ylabel("Frequency")
-    ax8.annotate("H", xy=(-0.15, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
-
-    ax9 = fig.add_subplot(339)
-    bins9 = np.linspace(start=0, stop=95, num=30)
-    plt.hist(test_features[:, :, 19:24].flatten(), bins=bins9, alpha=0.5, density=True, log=True)
-    plt.hist(empirical_features[:, 19:24].flatten(), bins=bins9, alpha=0.5, density=True, log=True)
-    plt.xlabel("Localities per region")
-    plt.ylabel("Frequency")
-    ax9.annotate("I", xy=(-0.15, 1), xycoords="axes fraction", fontweight="bold", fontsize=16)
-
-
-    if show:
-        fig.show()
-    else:
-        file_name = os.path.join(wd, "feature_hists_ele.png")
-        plt.savefig("feature_hists_ele.png", dpi=300)
-        plt.close()
-        print("Plot saved as:", file_name)
-
+        file_name = os.path.join(wd, output_name + ".pdf")
+        plot_errors = matplotlib.backends.backend_pdf.PdfPages(file_name)
+        plot_errors.savefig(fig)
+        plot_errors.close()
 
 def plot_error_through_time(Ytest_r,
                             mean_prediction,

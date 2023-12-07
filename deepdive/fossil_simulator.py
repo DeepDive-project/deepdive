@@ -36,8 +36,8 @@ class fossil_simulator():
                  slope=0,  # change in log-sampling rate through time (log-linear) (can be iterable)
                  intercept=0.05,  # initial sampling rate (can be iterable)
                  sd_through_time=0.5,  # st dev in log-sampling rate through time (can be iterable)
-                 maximum_localities_per_bin=10,
-                 sd_through_time_skyline=2,
+                 maximum_localities_per_bin=10, # max locality rate per bin per area
+                 sd_through_time_skyline=2,     # locs ~ Poi(min(rate, maximum_localities_per_bin))
                  mean_n_epochs_skyline=4,
                  fraction_skyline_sampling=0.5,
                  locality_rate_multiplier=None,  # array of shape = (n_areas x n_time_bins)
