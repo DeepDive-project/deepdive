@@ -104,6 +104,7 @@ def prep_dd_input(wd,
                   no_age_u=True,
                   replicate=None,
                   rescale_by_n_bins=True,
+                  present_diversity=None,
                   debug=False
                   ):
     # time bin file
@@ -130,6 +131,11 @@ def prep_dd_input(wd,
         'time_bins_duration': bin_durations_rev,
     }
 
+    if present_diversity is not None:
+        sim['global_true_trajectory'] = [present_diversity]
+        include_present_div = True
+    else:
+        include_present_div = False
 
     # Low res occs files
     if lr_locality_file is not None:
@@ -137,15 +143,15 @@ def prep_dd_input(wd,
     else:
         # High res features only
         # print(hr_occs_rev.shape, localities_rev.shape, bin_durations_rev.shape)
-        features = extract_sim_features(sim)
+        features = extract_sim_features(sim, include_present_div=include_present_div)
         info = None
 
     # next: rescale features using rescaler and run predictions with Dropout
 
     if debug:
         # check that after diluting the counts the totals remain unchanged
-        print(np.sum(info['lr_foss_data']) == np.sum(lr_occs_rev))  # total occurrences
-        print(np.sum(info['lr_loc_data']) == np.sum(lr_localities_rev))  # total localities
+        # print(np.sum(info['lr_foss_data']) == np.sum(lr_occs_rev))  # total occurrences
+        # print(np.sum(info['lr_loc_data']) == np.sum(lr_localities_rev))  # total localities
         # total occurrences vs summed counts in the low res features:
         print(np.sum(info['lr_foss_data']) / np.sum(info['sim_features_lr'][:, 1]))
         print(np.sum(info['sim_features_hr'][:, 1]) / np.sum(hr_occs_rev))  # hr occs counts
