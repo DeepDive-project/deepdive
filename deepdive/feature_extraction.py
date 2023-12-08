@@ -123,22 +123,39 @@ def extract_features_2D(sim):
     return properties
 
 
-def extract_sim_features(sim):
+def extract_sim_features(sim, include_present_div=False):
     f1d = extract_features_1D(sim)
     f2d = extract_features_2D(sim)
-    return np.hstack((f1d, f2d))
+    if include_present_div:
+        present_div = np.zeros((f1d.shape[0], 1))
+        present_div[0] += sim['global_true_trajectory'][0]
+        return np.hstack((f1d, f2d, present_div))
+    else:
+        return np.hstack((f1d, f2d))
 
 
-def normalize_features(Xt):
+def normalize_features(Xt, log_last=False):
     den2d = np.mean(Xt, axis=1)
     den1d = np.mean(den2d, axis=0)
     if len(np.where(den1d == 0)[0]):
         print("Warning - features %s is 0!" % np.where(den1d == 0))
         den1d[den1d == 0] = 1 # prevent divide-by-0 in case a features is always zero
 
-    def feature_rescaler(x):
-        return x / den1d
-    return Xt / den1d, feature_rescaler
+    if log_last:
+        # present diversity feature
+        den1d[-1] = 1
+        def feature_rescaler(x):
+            x_r = x / den1d
+            x_r[-1] = np.log(x_r[-1] + 1)
+            return x_r
+    else:
+        def feature_rescaler(x):
+            x_r = x / den1d
+            return x_r
+
+    Xt_r = feature_rescaler(Xt)
+
+    return Xt_r, feature_rescaler
 
 
 def normalize_labels(Yt, rescaler=0, log=False):

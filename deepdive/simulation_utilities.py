@@ -14,7 +14,8 @@ class sim_settings_obj():
                  max_age,
                  seed=None,
                  keys=None,
-                 verbose=False
+                 verbose=False,
+                 include_present_diversity=False
                  ):
         self.bd_sim = bd_sim
         self.fossil_sim = fossil_sim
@@ -31,6 +32,7 @@ class sim_settings_obj():
         else:
             self.keys = keys
         self.verbose = verbose
+        self.include_present_diversity=include_present_diversity
 
 
 
@@ -57,7 +59,8 @@ def run_sim(args):
 
         sp_x = bd_sim.run_simulation(print_res=settings_obj.verbose)
         sim = fossil_sim.run_simulation(sp_x, min_age=settings_obj.min_age, max_age=settings_obj.max_age)
-        sim_features = extract_sim_features(sim)
+        sim_features = extract_sim_features(sim,
+                                            include_present_div=settings_obj.include_present_diversity)
         sim_y = sim['global_true_trajectory']
         batch_features.append(sim_features)
         batch_labels.append(sim_y)
