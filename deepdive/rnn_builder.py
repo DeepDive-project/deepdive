@@ -4,7 +4,7 @@ from tensorflow import keras
 from tensorflow.keras import layers
 from tensorflow.keras import metrics
 np.set_printoptions(suppress=True, precision=3)
-import os
+import os, glob
 import pickle as pkl
 import scipy.stats
 
@@ -144,3 +144,24 @@ def get_avg_mse(Ytrue, Ypred):
            'max mse': np.nanmax(mse),
            'std mse': np.nanstd(mse)}
     return res
+
+
+def load_models(model_wd, model_name_tag="rnn_model"):
+    model_list = glob.glob(os.path.join(model_wd, "*%s*" % model_name_tag))
+    models = []
+    for model_i in model_list:
+        filename = model_i.split(sep="rnn_model")[1]
+        print("\nLoading model:", filename)
+        history, model, feature_rescaler = load_rnn_model(model_wd, filename=filename)
+        models.append({
+            'model_name' : filename,
+            'history' : history,
+            'model': model,
+            'feature_rescaler': feature_rescaler
+        })
+
+    return models
+
+
+
+

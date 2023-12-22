@@ -10,6 +10,7 @@ from matplotlib.backends import backend_pdf  # saves pdfs
 from matplotlib.gridspec import GridSpec
 import matplotlib.patches as mpatches
 from .feature_extraction import *
+from .utilities import prep_dd_input, print_update, predict
 
 
 def plot_trajectories(sim_obj,
@@ -1883,3 +1884,78 @@ def plot_error_through_time(Ytest_r,
     plot_errors.savefig(fig)
     plot_errors.close()
     print("Plot saved as:", file_name)
+
+
+def plot_all_models(data_wd, loaded_models, present_diversity, clade_name, output_wd,
+                    time_bins, min_age=0, n_predictions=1, scaling=None,
+                    prediction_color="b", alpha=0.5, replicates=1,
+                    ):
+    # run predictions across all models
+    fig = plt.figure(figsize=(12, 8))
+
+    predictions = []
+
+    for model_i in range(len(loaded_models)):
+        model = loaded_models[model_i]['model']
+        feature_rescaler = loaded_models[model_i]['feature_rescaler']
+
+        for replicate in range(1, replicates + 1):
+            features, info = prep_dd_input(data_wd,
+                                              bin_duration_file='t_bins.csv',  # from old to recent, array of shape (t)
+                                              locality_file='%s_localities.csv' % replicate,  # array of shape (a, t)
+                                              locality_dir='Locality',
+                                              taxon_dir="Species_occurrences",
+                                              hr_time_bins=time_bins,  # array of shape (t)
+                                              rescale_by_n_bins=True,
+                                              no_age_u=True,
+                                              replicate=replicate,
+                                              present_diversity=present_diversity,
+                                              debug=False)
+
+            # from recent to old
+            plot_time_axis = np.sort(time_bins) + min_age
+
+            print_update("Running replicate n. %s" % replicate)
+
+            # from recent to old
+            pred_div = predict(features, model, feature_rescaler,
+                                  n_predictions=n_predictions, dropout=False)
+
+            pred = np.mean(np.exp(pred_div) - 1, axis=0)
+            if scaling == "1-mean":
+                den = np.mean(pred)
+            elif scaling == "first-bin":
+                den = pred[-1]
+            else:
+                den = 1
+
+            pred /= den
+
+            plt.step(-plot_time_axis,  # pred,
+                     [pred[0]] + list(pred),
+                     label="Mean prediction",
+                     linewidth=2,
+                     c=prediction_color,
+                     alpha=alpha)
+
+            predictions.append(pred)
+
+    predictions = np.array(predictions)
+    # print(predictions)
+
+    add_geochrono(-0.025 * np.max(predictions), -0.1 * np.max(predictions), max_ma=-np.max(time_bins), min_ma=-np.min(time_bins))
+    plt.ylim(bottom=-0.1 * np.max(predictions), top=1.05 * np.max(predictions))
+    add_pt_events(height=2.5)
+    plt.xlim(-np.max(time_bins), 3)
+    plt.ylabel("Diversity", fontsize=15)
+    plt.xlabel("Time (Ma)", fontsize=15)
+    fig.show()
+    file_name = os.path.join(output_wd, clade_name + ".pdf")
+    dd_plot = matplotlib.backends.backend_pdf.PdfPages(file_name)
+    dd_plot.savefig(fig)
+    dd_plot.close()
+    print("\nPlot saved as:", file_name)
+    return features, predictions
+
+
+
