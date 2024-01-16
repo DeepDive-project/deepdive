@@ -1,4 +1,4 @@
-__version__ = '1.13'
+__version__ = '1.14'
 
 from . import bd_simulator
 from .bd_simulator import *
@@ -23,3 +23,6 @@ from .utilities import *
 
 from . import simulation_utilities
 from .simulation_utilities import *
+
+from . import deepdiver_utilities
+from .deepdiver_utilities import *
