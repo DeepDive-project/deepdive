@@ -23,7 +23,7 @@ def create_sim_obj_from_config(config, rseed=None):
                              p_mass_extinction=float(config["simulations"]["p_mass_extinction"]),  # probability of mass extinction per my
                              p_equilibrium=config.getfloat("simulations", "p_equilibrium"),
                              p_constant_bd=config.getfloat("simulations", "p_constant_bd"),
-                             p_mass_speciation=list(map(float, config["simulations"]["p_mass_speciation"].split())),
+                             p_mass_speciation=float(config["simulations"]["p_mass_speciation"]),
                              poiL=config.getfloat("simulations", "poil"),  # expected number of birth rate shifts
                              poiM=config.getfloat("simulations", "poim"),  # expected number of death rate shifts
                              seed=rseed,  # if > 0 fixes the random seed to make simulations reproducible
@@ -58,7 +58,7 @@ def create_sim_obj_from_config(config, rseed=None):
                                      mean_n_epochs_skyline=config.getfloat("simulations", "mean_n_epochs_skyline"),
                                      fraction_skyline_sampling=config.getfloat("simulations", "fraction_skyline_sampling"),
                                      maximum_localities_per_bin=config.getint("simulations", "maximum_localities_per_bin"),
-                                     singletons_frequency=list(map(float, config["simulations"]["singletons_frequency"].split())),
+                                     singletons_frequency=config.getfloat("simulations", "singletons_frequency"),
                                      seed=rseed)  # if > 0 fixes the random seed to make simulations reproducible
     return bd_sim, fossil_sim
 
