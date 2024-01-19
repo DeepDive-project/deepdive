@@ -155,7 +155,7 @@ def get_model_settings(config):  ## IDEAS TO FIX ERROR: is it better to hard cod
     print(arrays)
     lstm_nodes = arrays
 
-    dense_nodes = list(map(int, config["model_training"]["dense_layer"].split()))
+    dense_nodes = np.array(list(map(int, config["model_training"]["dense_layer"].split())))
     arrays = [[dense_nodes[0]]]
     indx = 0
     for i in range(1, len(dense_nodes)):
@@ -165,7 +165,7 @@ def get_model_settings(config):  ## IDEAS TO FIX ERROR: is it better to hard cod
             arrays.append([dense_nodes[i]])
             indx = indx+1
     print(arrays)
-    lstm_nodes = arrays
+    dense_nodes = arrays
 
     dropout_frac = list(map(float, config["model_training"]["dropout"].split()))
     loss_f = ['mse']
@@ -276,33 +276,3 @@ def run_test(abs_path,
                    index=False)
 
     return mean_prediction, nmean_prediction, Ytest_r
-
-
-
-# Import config function
-# def run_config():
-#     config = configparser.ConfigParser()
-#     config.read("config.ini")
-#     config.sections()  # see which blocks are listed in the config
-#     # "simulations" in config  # to see if a block is present in the config, returns True/False
-#     # config["simulations"]["eta"]  # to call settings
-#     #for key in config["simulations"]:  # lists settings included in a block
-#     #    print(key)
-#
-#     if config.getint("simulations", "n_training_simulations"):
-#         create_sim_obj_from_config(rseed, config)
-#         run_sim(rep, config)
-#
-#     if config.getint("simulations", "n_training_simulations"):
-#         create_sim_obj_from_config(rseed, config)
-#         run_test_sim(rep, config)
-#
-#     if config.getint("model_training"):
-#         get_model_settings()
-#         run_model_training()
-#
-#     if :
-#         run_test()
-#
-#     if :
-#         predict()

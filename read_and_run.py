@@ -12,7 +12,7 @@ config = configparser.ConfigParser()
 
 # wd = "/Users/dsilvestro/Software/DeepDive-project/deepdive/test_deepdiveR/"
 wd = "/Users/CooperR/Documents/GitHub/deep_dive/"
-config_f = "try1.ini"
+config_f = "try2.ini"
 config.read(os.path.join(wd, config_f))
 config.sections()  # see which blocks are listed in the config
 # "simulations" in config  # to see if a block is present in the config, returns True/False
@@ -27,6 +27,7 @@ sp_x = bd_sim.run_simulation(print_res=True)
 sim = fossil_sim.run_simulation(sp_x)
 
 # Run simulations in parallel
+os.mkdir(wd + config["simulations"]["sims_folder"])  # make folder for saving simulations
 if config.getint("simulations", "n_training_simulations"):
     training_set = dd.sim_settings_obj(bd_sim,
                                        fossil_sim,
@@ -39,27 +40,36 @@ if config.getint("simulations", "n_training_simulations"):
     # save simulations
     res = dd.run_sim_parallel(training_set, config.getint("simulations", "n_CPUS"))
     print(res['features'].shape, res['labels'].shape)
-    dd.save_simulations(res, config["simulations"]["sims_folder"], config["simulations"]["sim_name"] + "_" + now + "_training")
+    dd.save_simulations(res, wd + config["simulations"]["sims_folder"], config["simulations"]["sim_name"] + "_" + now + "_training")
+
+
+# Train models
+sims_path = wd + config["model_training"]["sims_folder"]
+os.mkdir(wd + config["model_training"]["model_folder"])
+model_path = wd + config["model_training"]["model_folder"]
+nametag = 'base file name'
+feat_files = ['%s_features.npy' % (nametag)]
+lab_file = '%s_labels.npy' % (nametag)
+output_names = ["rnn%s"]  # ['rnn%s' % date_tag]
+list_settings = dd.get_model_settings(config)
+
+# import training data
+for i in range(len(feat_files)):
+    feat_file = feat_files[i]
+
+    for j in list_settings:
+        j['feature_file'] = feat_file
+        j['label_file'] = lab_file
+
+    # run all jobs in parallel
+    pool = multiprocessing.Pool(len(list_settings))
+    pool.map(dd.run_model_training, list_settings)
+    pool.close()
+
 
 
 # next steps
 """
-1. run simulations in parallel and save them
-if n_training_simulations:
-    training_set = dd.sim_settings_obj(bd_sim,
-                                       fossil_sim,
-                                       n_simulations=n_training_simulations,
-                                       min_age=np.min(time_bins),
-                                       max_age=np.max(time_bins),
-                                       seed=training_seed,
-                                       keys=[],
-                                       include_present_diversity=True)
-    # save simulations
-    res = dd.run_sim_parallel(training_set, n_CPUS)
-    print(res['features'].shape, res['labels'].shape)
-    dd.save_simulations(res, output_path, outname + now + "_training")
-
-
 2. model training ...
 
 """
@@ -93,7 +103,7 @@ for key in config["simulations"]:  # lists settings included in a block
         pass
 
 # from the start of the model training script
-wd = "./simulations"    # THESE LINES NEED EDITING - WILL NOT FUNCTION AS IS. USE ABS_PATH IDEA? HOW DID IT WORK IN DEEPDIVE FOR REVIEW? OR READ PATHS DIERCTLY FROM THE CONFIG FILE.
+wd = "./simulations"
 model_wd = "./model_training"
 
 try:
@@ -163,28 +173,3 @@ if __name__ == "__main__":
         dd.save_pkl(sim_settings, os.path.join(out_path, "test_sim_settings" + now + ".pkl"))
 
     print("\ndone.\n")
-
-
-if __name__ == "__main__":
-    nametag = 'base file name'
-
-    feat_files = [
-        '%s_features.npy' % (nametag)
-    ]
-    lab_file = '%s_labels.npy' % (nametag)
-
-    output_names = ["rnn%s"]     # ['rnn%s' % date_tag]
-    list_settings = get_model_settings()
-
-    # import training data
-    for i in range(len(feat_files)):
-        feat_file = feat_files[i]
-
-        for j in list_settings:
-            j['feature_file'] = feat_file
-            j['label_file'] = lab_file
-
-        # run all jobs in parallel
-        pool = multiprocessing.Pool(len(list_settings))
-        pool.map(run_model_training, list_settings)
-        pool.close()
