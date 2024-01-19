@@ -76,11 +76,14 @@ def run_sim(args):
     return res
 
 def run_sim_parallel(training_set: sim_settings_obj, n_CPUS):
-    training_args = [[i, training_set] for i in range(n_CPUS)]
-    print("\nSimulating training data...")
-    pool = multiprocessing.Pool()
-    res = pool.map(run_sim, training_args)
-    pool.close()
+    if n_CPUS == 1:
+        res = [run_sim([0, training_set])]
+    else:
+        training_args = [[i, training_set] for i in range(n_CPUS)]
+        print("\nSimulating training data...")
+        pool = multiprocessing.Pool()
+        res = pool.map(run_sim, training_args)
+        pool.close()
 
     features = []
     labels = []
