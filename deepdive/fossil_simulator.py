@@ -177,6 +177,8 @@ class fossil_simulator():
             X = 0 + dist_matrix
             X = np.triu(X, 1)  # set lower and diagonal to 0
             distance_matrix = X + X.T  # add transposed matrix to set lower tr = upper tr
+        if self.dispersal_rate == "None":
+            self.dispersal_rate = None
         if self.dispersal_rate is None:
             if isinstance(self.disp_rate_mean, Iterable):  # if iterable
                 disp_rate_mean = self._rs.uniform(np.min(self.disp_rate_mean),
