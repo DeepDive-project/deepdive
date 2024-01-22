@@ -45,7 +45,7 @@ if config.getint("simulations", "n_training_simulations"):
 
 # Train models
 sims_path = wd + config["model_training"]["sims_folder"]
-os.mkdir(wd + config["model_training"]["model_folder"])
+# os.mkdir(wd + config["model_training"]["model_folder"])
 model_path = wd + config["model_training"]["model_folder"]
 nametag = 'base file name'
 feat_files = ['%s_features.npy' % (nametag)]
@@ -61,6 +61,7 @@ for i in range(len(feat_files)):
         j['feature_file'] = feat_file
         j['label_file'] = lab_file
 
+    dd.run_model_training(config, wd=sims_path, d=, feat_file=feat_file[i], model_wd=model_path)  # what should d refer to?
     # run all jobs in parallel
     pool = multiprocessing.Pool(len(list_settings))
     pool.map(dd.run_model_training, list_settings)
@@ -71,6 +72,21 @@ for i in range(len(feat_files)):
 # next steps
 """
 2. model training ...
+options with multiprocessing and without
+
+3. testing?
+similar to simulations process, saving outputs on model performance 
+
+4. predictions
+reading the new input file format, saving outputs and any graphs 
+
+5. complete pipeline 
+running the full thing and checking each block still functions independently, neaten up scripts. 
+How will it be run in practice? 
+
+6. empirical example
+
+7. documentation and writing the application note
 
 """
 
