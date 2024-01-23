@@ -44,29 +44,15 @@ if config.getint("simulations", "n_training_simulations"):
 
 
 # Train models
-sims_path = wd + config["model_training"]["sims_folder"]
-# os.mkdir(wd + config["model_training"]["model_folder"])
-model_path = wd + config["model_training"]["model_folder"]
+
 nametag = 'base file name'
 feat_files = ['%s_features.npy' % (nametag)]
 lab_file = '%s_labels.npy' % (nametag)
 output_names = ["rnn%s"]  # ['rnn%s' % date_tag]
-list_settings = dd.get_model_settings(config)
+
 
 # import training data
-for i in range(len(feat_files)):
-    feat_file = feat_files[i]
-
-    for j in list_settings:
-        j['feature_file'] = feat_file
-        j['label_file'] = lab_file
-
-    dd.run_model_training(config, wd=sims_path, d=, feat_file=feat_file[i], model_wd=model_path)  # what should d refer to?
-    # run all jobs in parallel
-    pool = multiprocessing.Pool(len(list_settings))
-    pool.map(dd.run_model_training, list_settings)
-    pool.close()
-
+dd.run_model_training(config)
 
 
 # next steps
