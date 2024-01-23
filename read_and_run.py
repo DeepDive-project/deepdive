@@ -43,22 +43,14 @@ if config.getint("simulations", "n_training_simulations"):
     dd.save_simulations(res, wd + config["simulations"]["sims_folder"], config["simulations"]["sim_name"] + "_" + now + "_training")
 
 
-# Train models
-
-nametag = 'base file name'
-feat_files = ['%s_features.npy' % (nametag)]
-lab_file = '%s_labels.npy' % (nametag)
-output_names = ["rnn%s"]  # ['rnn%s' % date_tag]
-
-
-# import training data
+# Train a model
 dd.run_model_training(config)
 
 
 # next steps
 """
 2. model training ...
-options with multiprocessing and without
+options with multiprocessing?
 
 3. testing?
 similar to simulations process, saving outputs on model performance 
