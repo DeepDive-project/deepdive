@@ -12,7 +12,7 @@ config = configparser.ConfigParser()
 
 # wd = "/Users/dsilvestro/Software/DeepDive-project/deepdive/test_deepdiveR/"
 wd = "/Users/CooperR/Documents/GitHub/deep_dive/"
-config_f = "try2.ini"
+config_f = "try3.ini"
 config.read(os.path.join(wd, config_f))
 config.sections()  # see which blocks are listed in the config
 # "simulations" in config  # to see if a block is present in the config, returns True/False
@@ -45,6 +45,11 @@ if config.getint("simulations", "n_training_simulations"):
 
 # Train a model
 dd.run_model_training(config)
+
+
+# Make diversity predictions
+
+
 
 
 # next steps
