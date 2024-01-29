@@ -117,48 +117,54 @@ def prep_dd_input(wd,
         occs_files = np.sort(glob.glob(os.path.join(wd, taxon_dir, "hr_*.csv")))
     if no_age_u is True:
         occs_files = np.sort(glob.glob(os.path.join(wd, taxon_dir, str(replicate) + "_*.csv")))
-    occurrences = np.array([pd.read_csv(f) for f in occs_files])
-    occs = np.transpose(occurrences, axes=(1, 0, 2))
-    hr_occs_rev = np.flip(occs, axis=2)  # FROM RECENT TO OLD
-    # locality file
-    localities = pd.read_csv(os.path.join(wd, locality_dir, locality_file)).to_numpy()  # localities
-    localities_rev = np.flip(localities, axis=1)  # FROM RECENT TO OLD
 
-    sim = {
-        'n_bins': hr_occs_rev.shape[2],
-        'fossil_data': hr_occs_rev,
-        'n_localities_w_fossils': localities_rev,
-        'time_bins_duration': bin_durations_rev,
-    }
-
-    if present_diversity is not None:
-        sim['global_true_trajectory'] = [present_diversity]
-        include_present_div = True
+    if len(occs_files) == 0:
+        print("No occs file found in %s" % \
+                 os.path.join(wd, taxon_dir, str(replicate) + "_*.csv"))
+        return None, None
     else:
-        include_present_div = False
+        occurrences = np.array([pd.read_csv(f) for f in occs_files])
+        occs = np.transpose(occurrences, axes=(1, 0, 2))
+        hr_occs_rev = np.flip(occs, axis=2)  # FROM RECENT TO OLD
+        # locality file
+        localities = pd.read_csv(os.path.join(wd, locality_dir, locality_file)).to_numpy()  # localities
+        localities_rev = np.flip(localities, axis=1)  # FROM RECENT TO OLD
 
-    # Low res occs files
-    if lr_locality_file is not None:
-        raise NotImplementedError("\n Function not available!")
-    else:
-        # High res features only
-        # print(hr_occs_rev.shape, localities_rev.shape, bin_durations_rev.shape)
-        features = extract_sim_features(sim, include_present_div=include_present_div)
-        info = None
+        sim = {
+            'n_bins': hr_occs_rev.shape[2],
+            'fossil_data': hr_occs_rev,
+            'n_localities_w_fossils': localities_rev,
+            'time_bins_duration': bin_durations_rev,
+        }
 
-    # next: rescale features using rescaler and run predictions with Dropout
+        if present_diversity is not None:
+            sim['global_true_trajectory'] = [present_diversity]
+            include_present_div = True
+        else:
+            include_present_div = False
 
-    if debug:
-        # check that after diluting the counts the totals remain unchanged
-        # print(np.sum(info['lr_foss_data']) == np.sum(lr_occs_rev))  # total occurrences
-        # print(np.sum(info['lr_loc_data']) == np.sum(lr_localities_rev))  # total localities
-        # total occurrences vs summed counts in the low res features:
-        print(np.sum(info['lr_foss_data']) / np.sum(info['sim_features_lr'][:, 1]))
-        print(np.sum(info['sim_features_hr'][:, 1]) / np.sum(hr_occs_rev))  # hr occs counts
-        print(np.sum(localities), np.sum(info['sim_features_hr'][:, 6]))  # hr localities
-        print(info['time_bins_lr_duration'])
+        # Low res occs files
+        if lr_locality_file is not None:
+            raise NotImplementedError("\n Function not available!")
+        else:
+            # High res features only
+            # print(hr_occs_rev.shape, localities_rev.shape, bin_durations_rev.shape)
+            features = extract_sim_features(sim, include_present_div=include_present_div)
+            info = None
 
-    return features, info
+        # next: rescale features using rescaler and run predictions with Dropout
+
+        if debug:
+            # check that after diluting the counts the totals remain unchanged
+            # print(np.sum(info['lr_foss_data']) == np.sum(lr_occs_rev))  # total occurrences
+            # print(np.sum(info['lr_loc_data']) == np.sum(lr_localities_rev))  # total localities
+            # total occurrences vs summed counts in the low res features:
+            print(np.sum(info['lr_foss_data']) / np.sum(info['sim_features_lr'][:, 1]))
+            print(np.sum(info['sim_features_hr'][:, 1]) / np.sum(hr_occs_rev))  # hr occs counts
+            print(np.sum(localities), np.sum(info['sim_features_hr'][:, 6]))  # hr localities
+            print(info['time_bins_lr_duration'])
+
+        return features, info
 
 
 def predict(features,
