@@ -4,6 +4,9 @@ from datetime import datetime
 import multiprocessing
 import configparser  # read the config file (".ini") created by the r function 'create_config()'
 import glob
+import matplotlib
+import matplotlib.pyplot as plt
+from matplotlib.backends import backend_pdf  # saves pdfs
 from .rnn_builder import fit_rnn
 from .bd_simulator import bd_simulator
 from .fossil_simulator import fossil_simulator
@@ -195,23 +198,24 @@ def get_model_settings(config):
 
     return list_settings
 
-def run_model_training(config, feature_file = None, label_file = None):
+def run_model_training(config, feature_file = None, label_file = None, include_present_diversity=False):
+    ## move include present diversity to config
     model_settings = get_model_settings(config)
     if feature_file is None:
         feature_file = config["model_training"]["f"]
-        sims_path = config["working_directory"]["wd"] + config["model_training"]["sims_folder"]
+        sims_path = config["general"]["wd"] + config["model_training"]["sims_folder"]
         label_file = config["model_training"]["l"]
         if config["model_training"]["f"] == "NULL":
             sys.exit("No feature or label files specified, provide to run_model_training or in the config (see R)")
     # os.mkdir(wd + config["model_training"]["model_folder"])
-    model_wd = os.path.join(config["working_directory"]["wd"], config["model_training"]["model_folder"])
+    model_wd = os.path.join(config["general"]["wd"], config["model_training"]["model_folder"])
     Xt = np.load(os.path.join(sims_path, feature_file))
     Yt = np.load(os.path.join(sims_path, label_file))
     infile_name = feature_file.split("/")[-1].split('.npy')[0]
     out_name = infile_name + model_settings[0]['model_name']
 
     # feature_rescaler() is a function to rescale the features the same way as done in the training set
-    Xt_r, feature_rescaler = normalize_features(Xt)
+    Xt_r, feature_rescaler = normalize_features(Xt, log_last=include_present_diversity)
     Yt_r = normalize_labels(Yt, rescaler=1, log=True)
     model = build_rnn(Xt_r,
                       lstm_nodes=model_settings[0]['lstm_nodes'],
@@ -231,23 +235,101 @@ def run_model_training(config, feature_file = None, label_file = None):
 
 
 def predict(config):
-    np.random.seed(config.getint("predictions", "random_seed"))
+    np.random.seed(config.getint("empirical_predictions", "random_seed"))
+    dat = config["empirical_predictions"]["empirical_input_file"]  # get input data
+
+    # load the model
+    model_wd = os.path.join(config["general"]["wd"], config["empirical_predictions"]["model_folder"])
 
     # Specify settings
-    n_predictions = config.getint("predictions", "n_predictions")  # number of predictions per input file
-    replicates = config.getint("predictions", "replicates")  # number of age randomisation replicates in data_pipeline.R
-    alpha = config.getfloar("predictions", "alpha")
-    prediction_color = config["predictions"]["prediction_color"]
-    # scaling_options: None, "1-mean", "first-bin"
-    scaling = config["predictions"]["scaling"]
-    plot_shaded_area = config  # Resolve the errors this will make here.
-    combine_all_models = True  # if false plot each model separately  - is this a relict (remove) or something that should be moved to config? should be model ensemble now instead
+    n_predictions = config.getint("empirical_predictions", "n_predictions")  # number of predictions per input file
+    replicates = config.getint("empirical_predictions", "replicates")  # number of age randomisation replicates in data_pipeline.R
+#    alpha = config.getfloat("empirical_predictions", "alpha")
+    prediction_color = config["empirical_predictions"]["prediction_color"]
+    scaling = config["empirical_predictions"]["scaling"]  # scaling_options: None, "1-mean", "first-bin"
+    # plot_shaded_area = config  # Resolve the errors this will make here.
+    # combine_all_models = True  # if false plot each model separately  - is this a relict (remove) or something that should be moved to config? should be model ensemble now instead
 
     # run predictions across all models
     model_list = glob.glob(os.path.join(model_wd, "*rnn_model*"))
 
     # create time bin indices from recent to old
-    time_bins = np.sort(np.array(list(map(float, config["simulations"]["time_bins"].split()))))
+    time_bins = np.sort(np.array(list(map(float, config["empirical_predictions"]["time_bins"].split()))))
+    n_time_bins = len(time_bins) - 1
+
+    # make and plot predictions:
+    fig = plt.figure(figsize=(12, 8))
+    predictions = []
+
+    for model_i in model_list:
+        filename = model_i.split(sep="rnn_model")[1]
+        print("\nModel", filename)
+        # load model trained using age uncertainty
+        history, model, feature_rescaler = load_rnn_model(model_wd, filename=filename)
+
+        for replicate in range(1, replicates + 1):
+            features, info = dd.prep_dd_input(wd=config["general"]["wd"],
+                                              bin_duration_file='t_bins.csv',  # from old to recent, array of shape (t)
+                                              locality_file='%s_localities.csv' % replicate,  # array of shape (a, t)
+                                              locality_dir='Locality',
+                                              taxon_dir=level,
+                                              hr_time_bins=time_bins,  # array of shape (t)
+                                              rescale_by_n_bins=True,
+                                              no_age_u=True,
+                                              replicate=replicate,
+                                              debug=False)
+
+            # from recent to old
+            plot_time_axis = np.sort(time_bins)
+
+            print_update("Running replicate n. %s" % replicate)
+
+            # from recent to old
+            pred_div = predict(features, model, feature_rescaler,
+                               n_predictions=n_predictions, dropout=use_dropout)
+
+            pred = np.mean(np.exp(pred_div) - 1, axis=0)
+            if scaling == "1-mean":
+                den = np.mean(pred)
+            elif scaling == "first-bin":
+                den = pred[-1]
+            else:
+                den = 1
+            pred /= den
+
+            plt.step(-plot_time_axis,  # pred,
+                     [pred[0]] + list(pred),
+                     label="Mean prediction",
+                     linewidth=2,
+                     c=prediction_color,
+                     alpha=0.05)
+
+            predictions.append(pred)
+
+    predictions = np.array(predictions)
+
+    dd.add_geochrono(0, -4.8, max_ma=-66, min_ma=0)
+    plt.ylim(bottom=-4.8, top=80)
+    plt.xlim(-66, 0)
+    plt.ylabel("Species diversity", fontsize=15)
+    plt.xlabel("Time (Ma)", fontsize=15)
+    fig.show()
+    file_name = os.path.join(abs_path, "elephant_analysis/elephant_predictions.pdf")
+    ele_plot = matplotlib.backends.backend_pdf.PdfPages(file_name)
+    ele_plot.savefig(fig)
+    ele_plot.close()
+    print("Plot saved as:", file_name)
+
+    # Get stats for model training in a pandas dataframe
+    res = list()
+    for i in model_list:
+        filename = i.split(sep="rnn_model")[1]
+        history, model, feature_rescaler = dd.load_rnn_model(model_wd, filename=filename)
+        val_loss = np.min(history["val_loss"])  # check validation loss
+        t_loss = history["loss"][np.argmin(history["val_loss"])]  # training loss
+        epochs = np.argmin(history["val_loss"])  # number of epochs used to train
+        res.append([filename, val_loss, t_loss, epochs])
+    res = pd.DataFrame(res)
 
 
 def run_test(abs_path,
