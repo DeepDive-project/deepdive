@@ -71,7 +71,7 @@ def create_sim_obj_from_config(config, rseed=None):
     return bd_sim, fossil_sim
 
 
-def run_sim(rep, config):
+def run_sim_from_config(rep, config):
     batch_features = []
     batch_labels = []
 
@@ -106,7 +106,7 @@ def run_sim(rep, config):
     return res
 
 
-def run_test_sim(rep, config):
+def run_test_sim_from_config(rep, config):
     batch_features = []
     batch_labels = []
 
@@ -149,7 +149,7 @@ def run_test_sim(rep, config):
     return res
 
 
-def get_model_settings(config):
+def get_model_settings_from_config(config):
     ## Otherwise, how to structure the config that it reads correctly in python? Can't use list
     lstm_nodes = np.array(list(map(int, config["model_training"]["lstm_layers"].split())))
     arrays = [[lstm_nodes[0]]]
@@ -198,9 +198,9 @@ def get_model_settings(config):
 
     return list_settings
 
-def run_model_training(config, feature_file = None, label_file = None, include_present_diversity=False):
+def run_model_training_from_config(config, feature_file = None, label_file = None, include_present_diversity=False):
     ## move include present diversity to config
-    model_settings = get_model_settings(config)
+    model_settings = get_model_settings_from_config(config)
     if feature_file is None:
         feature_file = config["model_training"]["f"]
         sims_path = config["general"]["wd"] + config["model_training"]["sims_folder"]
@@ -234,7 +234,9 @@ def run_model_training(config, feature_file = None, label_file = None, include_p
     plot_training_history(history, criterion='val_loss', wd=model_wd, show=False, filename=out_name)
 
 
-def predict(config):
+def predict_from_config(config):
+    # TODO: we should avoid changing the global random seed and use local random generator instead
+    # Do we actually use random generators in this function?
     np.random.seed(config.getint("empirical_predictions", "random_seed"))
     dat = config["empirical_predictions"]["empirical_input_file"]  # get input data
 
@@ -269,16 +271,16 @@ def predict(config):
         history, model, feature_rescaler = load_rnn_model(model_wd, filename=filename)
 
         for replicate in range(1, replicates + 1):
-            features, info = dd.prep_dd_input(wd=config["general"]["wd"],
-                                              bin_duration_file='t_bins.csv',  # from old to recent, array of shape (t)
-                                              locality_file='%s_localities.csv' % replicate,  # array of shape (a, t)
-                                              locality_dir='Locality',
-                                              taxon_dir=level,
-                                              hr_time_bins=time_bins,  # array of shape (t)
-                                              rescale_by_n_bins=True,
-                                              no_age_u=True,
-                                              replicate=replicate,
-                                              debug=False)
+            features, info = prep_dd_input(wd=config["general"]["wd"],
+                                           bin_duration_file='t_bins.csv',  # from old to recent, array of shape (t)
+                                           locality_file='%s_localities.csv' % replicate,  # array of shape (a, t)
+                                           locality_dir='Locality',
+                                           taxon_dir=level,
+                                           hr_time_bins=time_bins,  # array of shape (t)
+                                           rescale_by_n_bins=True,
+                                           no_age_u=True,
+                                           replicate=replicate,
+                                           debug=False)
 
             # from recent to old
             plot_time_axis = np.sort(time_bins)
@@ -333,26 +335,26 @@ def predict(config):
     res = pd.DataFrame(res)
 
 
-def run_test(abs_path,
-             model_wd,
-             new_model_wd,
-             Ytest,
-             Xtest,
-             sqs,
-             output_names,
-             new_output_names=None,
-             test_folder="test"):
+def run_test_from_config(abs_path,
+                         model_wd,
+                         new_model_wd,
+                         Ytest,
+                         Xtest,
+                         sqs,
+                         output_names,
+                         new_output_names=None,
+                         test_folder="test"):
     #  predictions for test sets, get stats
     outname = 'sim_features' + output_names[0] + 'lstm3_d2_o0.05_mse'
     print("Running:", outname)
-    history, model, feature_rescaler = dd.load_rnn_model(model_wd, filename=outname)
-    Ytest_r = dd.normalize_labels(Ytest, rescaler=1, log=True)
-    Ytest_pred = dd.predict(features=Xtest, model=model, feature_rescaler=feature_rescaler, n_predictions=10)
+    history, model, feature_rescaler = load_rnn_model(model_wd, filename=outname)
+    Ytest_r = normalize_labels(Ytest, rescaler=1, log=True)
+    Ytest_pred = predict(features=Xtest, model=model, feature_rescaler=feature_rescaler, n_predictions=10)
     mean_prediction = np.mean(Ytest_pred, axis=0)
 
-    sqs_log_transform = dd.normalize_labels(sqs, rescaler=1, log=True)
-    res = dd.calc_time_series_diff2D(mean_prediction, Ytest_r, sqs_log_transform)
-    sqs_res = dd.calc_time_series_diff2D(sqs_log_transform, Ytest_r, sqs_log_transform)
+    sqs_log_transform = normalize_labels(sqs, rescaler=1, log=True)
+    res = calc_time_series_diff2D(mean_prediction, Ytest_r, sqs_log_transform)
+    sqs_res = calc_time_series_diff2D(sqs_log_transform, Ytest_r, sqs_log_transform)
     res.to_csv(os.path.join(abs_path + '/test_sets/' + test_folder + '/' + output_names[0] + '_t_series_diff_2d.csv'),
                index=False)
     sqs_res.to_csv(os.path.join(abs_path + '/test_sets/' + test_folder + '/' + output_names[0] + '_t_series_diff_2d_sqs.csv'),
