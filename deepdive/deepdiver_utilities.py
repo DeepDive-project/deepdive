@@ -257,6 +257,7 @@ def predict(config):
     time_bins = np.sort(np.array(list(map(float, config["empirical_predictions"]["time_bins"].split()))))
     n_time_bins = len(time_bins) - 1
 
+
     # make and plot predictions:
     fig = plt.figure(figsize=(12, 8))
     predictions = []
