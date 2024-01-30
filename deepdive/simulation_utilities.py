@@ -97,7 +97,7 @@ def run_sim_parallel(training_set: sim_settings_obj, n_CPUS):
     res = {'features': Xt, 'labels': Yt}
     return res
 
-def save_simulations(res, output_path, outname):
+def save_simulations(res, output_path, outname, return_file_names=False):
     np.save(os.path.join(output_path, outname + "_features" + ".npy"), res['features'])
     np.save(os.path.join(output_path, outname + "_labels" + ".npy"), res['labels'])
     print("Features saved as: \n", os.path.join(output_path, outname + "_features" + ".npy"))
@@ -106,6 +106,9 @@ def save_simulations(res, output_path, outname):
     if 'settings' in res.keys():
         save_pkl(res['settings'], os.path.join(output_path, outname + "_sim_settings.pkl"))
         print("Settings saved as: \n", os.path.join(output_path, outname + "_sim_settings.pkl"))
+    if return_file_names:
+        return  (os.path.join(output_path, outname + "_features" + ".npy"),
+                 os.path.join(output_path, outname + "_labels" + ".npy"))
 
 
 
