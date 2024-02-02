@@ -210,7 +210,7 @@ class bd_simulator():
 
         return timesL, timesM, L, M
 
-    def run_simulation(self, print_res=False):
+    def run_simulation(self, print_res=False, return_bd_settings=False):
         LOtrue = [0]
         n_extinct = -0
         n_extant = -0
@@ -252,6 +252,13 @@ class bd_simulator():
                 n = len(FAtrue[FAtrue > i]) - len(LOtrue[LOtrue > i])
                 ltt += "\n%s\t%s\t%s" % (i, n, "*" * int(n / max_standin_div))
             print(ltt)
+        if return_bd_settings:
+            res_dict = {"L": L, "M": M,
+                        "tL": timesL, "tM": timesM,
+                        "n_extinct": n_extinct,
+                        "n_extant": n_extant
+                        }
+            return ts_te.T, res_dict
         return ts_te.T
 
     def reset_s_species(self, s):
