@@ -14,6 +14,7 @@ from .utilities import *
 from .feature_extraction import *
 from .rnn_builder import *
 from .plots import plot_training_history
+from .simulation_utilities import *
 
 # create simulator object
 def create_sim_obj_from_config(config, rseed=None):
@@ -40,7 +41,7 @@ def create_sim_obj_from_config(config, rseed=None):
 
     # create fossil simulator object
     fossil_sim = fossil_simulator(n_areas=config.getint("simulations", "n_areas"),
-                                  n_bins=len(list(map(float, config["simulations"]["time_bins"].split()))),  # number of time bins
+                                  n_bins=len(list(map(float, config["general"]["time_bins"].split()))),  # number of time bins
                                   eta=list(map(float, config["simulations"]["eta"].split())),  # area-sp stochasticity
                                   p_gap=list(map(float, config["simulations"]["p_gap"].split())),  # probability of 0 preservation in a time bin
                                   dispersal_rate=config["simulations"]["dispersal_rate"],
@@ -71,82 +72,42 @@ def create_sim_obj_from_config(config, rseed=None):
     return bd_sim, fossil_sim
 
 
-def run_sim_from_config(rep, config):
-    batch_features = []
-    batch_labels = []
-
+def run_sim_from_config(config):
     # simulate training data
-    bd_sim, fossil_sim = create_sim_obj_from_config(config.getint("simulations", "training_seed") + rep, config=config)
-    for i in range(config.getint("simulations", "n_training_simulations")):
-        if i % 1 == 0 and rep == 0:
-            print_update("%s of %s done" % (i + 1, config.getint("simulations", "n_training_simulations")))
-            sp_x = bd_sim.run_simulation(print_res=False)
+    bd_sim, fossil_sim = create_sim_obj_from_config(config, rseed=config.getint("simulations", "training_seed"))
 
-        # ----
-        # if config.getboolean("simulations", "use_area_constraints"):
-        #     c1, c2 = dd.set_area_constraints(sp_x=sp_x,
-        #                                      n_time_bins=len(list(map(float, config["simulations"]["time_bins"].split()))),
-        #                                      area_tbl=area_tbl,
-        #                                      mid_time_bins=mid_time_bins)           ### How do we automate this? Where is it being read form in the empirical files???
-        #
-        #     fossil_sim.set_carrying_capacity_multiplier(m_species_origin=c1, m_sp_area_time=c2)
-        # ----
+    training_set = sim_settings_obj(bd_sim, fossil_sim, n_simulations=config.getint("simulations", "n_training_simulations"),
+                                    min_age=np.min(list(map(float, config["general"]["time_bins"].split()))),
+                                    max_age=np.max(list(map(float, config["general"]["time_bins"].split()))),
+                                    seed=config.getint("simulations", "training_seed"), keys=[],
+                                    include_present_diversity=config.get("simulations", "include_present_diversity"))  # check boolean is working
 
-        # using min_age and max_age ensures that the time bins always span the same amount of time
-        sim = fossil_sim.run_simulation(sp_x, min_age=0, max_age=config.getfloat("simulations", "max_clade_age"))  # MIN AGE = 0 SHOULDN'T BE HARD CODED
-
-        # ----
-        sim_features = extract_sim_features(sim)
-        sim_y = sim['global_true_trajectory']
-        batch_features.append(sim_features)
-        batch_labels.append(sim_y)
-
-    res = {'features': batch_features,
-           'labels': batch_labels}
-    return res
+    res = run_sim_parallel(training_set, n_CPUS=config.getint("simulations", "n_CPUS"))
+    f, l = save_simulations(res, wd + config["simulations"]["sims_folder"],
+                            config["simulations"]["sim_name"] + "_" + now + "_training", return_file_names=True)
+    return f, l
 
 
-def run_test_sim_from_config(rep, config):
-    batch_features = []
-    batch_labels = []
+def run_test_sim_from_config(config):
+    # simulate test data
+    bd_sim, fossil_sim = create_sim_obj_from_config(config.getint("simulations", "test_seed"), config=config)
 
-    # simulate training data
-    sim_settings = []
-    bd_sim, fossil_sim = create_sim_obj_from_config(config.getint("simulations", "test_seed") + rep, config=config)
-    for i in range(config.getint("simulations", "n_test_simulations")):
-        if i % 1 == 0 and rep == 0:
-            print_update("%s of %s done" % (i + 1, config.getfloat("simulations", "n_test_simulations")))
-        sp_x = bd_sim.run_simulation(print_res=False)
-        # ----
-        # if config.getboolean("simulations", "use_area_constraints"):
-        #     c1, c2 = dd.set_area_constraints(sp_x=sp_x,
-        #                                      n_time_bins=len(list(map(float, config["simulations"]["time_bins"].split()))),
-        #                                      area_tbl=area_tbl,
-        #                                      mid_time_bins=mid_time_bins)
-        #
-        #     fossil_sim.set_carrying_capacity_multiplier(m_species_origin=c1, m_sp_area_time=c2)
-        # ----
+    test_set = sim_settings_obj(bd_sim, fossil_sim, n_simulations=config.getint("simulations", "n_test_simulations"),
+                                min_age=np.min(list(map(float, config["general"]["time_bins"].split()))),
+                                max_age=np.max(list(map(float, config["general"]["time_bins"].split()))),
+                                seed=config.getint("simulations", "test_seed"),
+                                keys = ['time_specific_rate', 'species_specific_rate', 'area_specific_rate',
+                                'a_var', 'n_bins', 'area_size', 'n_areas', 'n_species', 'n_sampled_species',
+                                'tot_br_length', 'n_occurrences', 'slope_pr', 'pr_at_origination',
+                                'time_bins_duration', 'eta', 'p_gap', 'area_size_concentration_prm',
+                                'link_area_size_carrying_capacity', 'slope_log_sampling',
+                                'intercept_initial_sampling', 'sd_through_time', 'additional_info'],
+                                include_present_diversity=config.get("simulations", "include_present_diversity"))  # check boolean is working
 
-        # using min_age and max_age ensures that the time bins always span the same amount of time
-        sim = fossil_sim.run_simulation(sp_x, min_age=0, max_age=config.getfloat("simulations", "max_clade_age"))  # MIN AGE = 0 SHOULDN'T BE HARD CODED
-        sim_features = extract_sim_features(sim)
-        sim_y = sim['global_true_trajectory']
-        batch_features.append(sim_features)
-        batch_labels.append(sim_y)
-
-        keys = ['time_specific_rate', 'species_specific_rate', 'area_specific_rate',
-                'a_var', 'n_bins', 'area_size', 'n_areas', 'n_species', 'n_sampled_species', 'tot_br_length',
-                'n_occurrences', 'slope_pr', 'pr_at_origination', 'time_bins_duration', 'eta', 'p_gap',
-                'area_size_concentration_prm', 'link_area_size_carrying_capacity',
-                'slope_log_sampling', 'intercept_initial_sampling', 'sd_through_time', 'additional_info']
-
-        s = {key: sim[key] for key in keys}
-        sim_settings.append(s)
-
-    res = {'features': batch_features,
-           'labels': batch_labels,
-           'settings': sim_settings}
-    return res
+    res = run_sim(training_set)
+    f, l = save_simulations(res, wd + config["simulations"]["sims_folder"],
+                            config["simulations"]["sim_name"] + "_" + now + "_test", return_file_names=True)
+    return f, l
 
 
 def get_model_settings_from_config(config):
@@ -198,8 +159,7 @@ def get_model_settings_from_config(config):
 
     return list_settings
 
-def run_model_training_from_config(config, feature_file = None, label_file = None, include_present_diversity=False):
-    ## move include present diversity to config
+def run_model_training_from_config(config, feature_file = None, label_file = None):
     model_settings = get_model_settings_from_config(config)
     if feature_file is None:
         feature_file = config["model_training"]["f"]
@@ -207,7 +167,6 @@ def run_model_training_from_config(config, feature_file = None, label_file = Non
         label_file = config["model_training"]["l"]
         if config["model_training"]["f"] == "NULL":
             sys.exit("No feature or label files specified, provide to run_model_training or in the config (see R)")
-    # os.mkdir(wd + config["model_training"]["model_folder"])
     model_wd = os.path.join(config["general"]["wd"], config["model_training"]["model_folder"])
     Xt = np.load(os.path.join(sims_path, feature_file))
     Yt = np.load(os.path.join(sims_path, label_file))
@@ -215,7 +174,7 @@ def run_model_training_from_config(config, feature_file = None, label_file = Non
     out_name = infile_name + model_settings[0]['model_name']
 
     # feature_rescaler() is a function to rescale the features the same way as done in the training set
-    Xt_r, feature_rescaler = normalize_features(Xt, log_last=include_present_diversity)
+    Xt_r, feature_rescaler = normalize_features(Xt, log_last=config.get("model_training", "include_present_diversity"))
     Yt_r = normalize_labels(Yt, rescaler=1, log=True)
     model = build_rnn(Xt_r,
                       lstm_nodes=model_settings[0]['lstm_nodes'],
@@ -235,9 +194,6 @@ def run_model_training_from_config(config, feature_file = None, label_file = Non
 
 
 def predict_from_config(config):
-    # TODO: we should avoid changing the global random seed and use local random generator instead
-    # Do we actually use random generators in this function?
-    np.random.seed(config.getint("empirical_predictions", "random_seed"))
     dat = config["empirical_predictions"]["empirical_input_file"]  # get input data
 
     # load the model
@@ -256,7 +212,7 @@ def predict_from_config(config):
     model_list = glob.glob(os.path.join(model_wd, "*rnn_model*"))
 
     # create time bin indices from recent to old
-    time_bins = np.sort(np.array(list(map(float, config["empirical_predictions"]["time_bins"].split()))))
+    time_bins = np.sort(np.array(list(map(float, config["general"]["time_bins"].split()))))
     n_time_bins = len(time_bins) - 1
 
 

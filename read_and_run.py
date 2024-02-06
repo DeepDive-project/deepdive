@@ -12,7 +12,7 @@ config = configparser.ConfigParser()
 
 # wd = "/Users/dsilvestro/Software/DeepDive-project/deepdive/test_deepdiveR/"
 wd = "/Users/CooperR/Documents/GitHub/deep_dive/"
-config_f = "try3.ini"
+config_f = "try1.ini"
 config.read(os.path.join(wd, config_f))
 config.sections()  # see which blocks are listed in the config
 # "simulations" in config  # to see if a block is present in the config, returns True/False
@@ -27,24 +27,20 @@ sp_x = bd_sim.run_simulation(print_res=True)
 sim = fossil_sim.run_simulation(sp_x)
 
 # Run simulations in parallel
-os.mkdir(wd + config["simulations"]["sims_folder"])  # make folder for saving simulations
 if config.getint("simulations", "n_training_simulations"):
-    training_set = dd.sim_settings_obj(bd_sim,
-                                       fossil_sim,
-                                       n_simulations=config.getint("simulations", "n_training_simulations"),
-                                       min_age=np.min(list(map(float, config["simulations"]["time_bins"].split()))),
-                                       max_age=np.max(list(map(float, config["simulations"]["time_bins"].split()))),
-                                       seed=config.getint("simulations", "training_seed"),
-                                       keys=[],
-                                       include_present_diversity=True)
-    # save simulations
-    res = dd.run_sim_parallel(training_set, config.getint("simulations", "n_CPUS"))
-    print(res['features'].shape, res['labels'].shape)
-    dd.save_simulations(res, wd + config["simulations"]["sims_folder"], config["simulations"]["sim_name"] + "_" + now + "_training")
-
-
+    feature_file, label_file = dd.run_sim_from_config(config)
+else:
+    feature_file, label_file = None
 # Train a model
-dd.run_model_training(config)
+if config.getint("model_training", ""):
+    dd.run_model_training_from_config(config, feature_file=feature_file, label_file=label_file)
+# Simulate test set - just simulating, second test module that runs with models. Or maybe setting up training and test set
+# don't need to be seperate? Add a default of automatically the same settings at the training set?? It would just change
+# seed and number of simulations.
+if config.getint("", ):  #### IF x2, sim training and if test under same conditions as simulate then read settings from simulate.
+    dd.run_test_sim_from_config()
+
+
 
 
 # Make diversity predictions
