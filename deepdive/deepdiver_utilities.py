@@ -7,6 +7,7 @@ import glob
 import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.backends import backend_pdf  # saves pdfs
+from datetime import datetime
 from .rnn_builder import fit_rnn
 from .bd_simulator import bd_simulator
 from .fossil_simulator import fossil_simulator
@@ -83,20 +84,21 @@ def run_sim_from_config(config):
                                     include_present_diversity=config.get("simulations", "include_present_diversity"))  # check boolean is working
 
     res = run_sim_parallel(training_set, n_CPUS=config.getint("simulations", "n_CPUS"))
-    f, l = save_simulations(res, wd + config["simulations"]["sims_folder"],
+    now = datetime.now().strftime('%Y%m%d')
+    f, l = save_simulations(res, os.path.join(config["general"]["wd"], config["simulations"]["sims_folder"]),
                             config["simulations"]["sim_name"] + "_" + now + "_training", return_file_names=True)
     return f, l
 
 
 def run_test_sim_from_config(config):
     # simulate test data
-    bd_sim, fossil_sim = create_sim_obj_from_config(config.getint("simulations", "test_seed"), config=config)
+    bd_sim, fossil_sim = create_sim_obj_from_config(config, rseed=config.getint("simulations", "test_seed"))
 
     test_set = sim_settings_obj(bd_sim, fossil_sim, n_simulations=config.getint("simulations", "n_test_simulations"),
                                 min_age=np.min(list(map(float, config["general"]["time_bins"].split()))),
                                 max_age=np.max(list(map(float, config["general"]["time_bins"].split()))),
                                 seed=config.getint("simulations", "test_seed"),
-                                keys = ['time_specific_rate', 'species_specific_rate', 'area_specific_rate',
+                                keys=['time_specific_rate', 'species_specific_rate', 'area_specific_rate',
                                 'a_var', 'n_bins', 'area_size', 'n_areas', 'n_species', 'n_sampled_species',
                                 'tot_br_length', 'n_occurrences', 'slope_pr', 'pr_at_origination',
                                 'time_bins_duration', 'eta', 'p_gap', 'area_size_concentration_prm',
@@ -104,8 +106,9 @@ def run_test_sim_from_config(config):
                                 'intercept_initial_sampling', 'sd_through_time', 'additional_info'],
                                 include_present_diversity=config.get("simulations", "include_present_diversity"))  # check boolean is working
 
-    res = run_sim(training_set)
-    f, l = save_simulations(res, wd + config["simulations"]["sims_folder"],
+    res = run_sim_parallel(test_set, n_CPUS=config.getint("simulations", "n_CPUS"))
+    now = datetime.now().strftime('%Y%m%d')
+    f, l = save_simulations(res, os.path.join(config["general"]["wd"], config["simulations"]["sims_folder"]),
                             config["simulations"]["sim_name"] + "_" + now + "_test", return_file_names=True)
     return f, l
 
@@ -163,13 +166,13 @@ def run_model_training_from_config(config, feature_file = None, label_file = Non
     model_settings = get_model_settings_from_config(config)
     if feature_file is None:
         feature_file = config["model_training"]["f"]
-        sims_path = config["general"]["wd"] + config["model_training"]["sims_folder"]
+        sims_path = os.path.join(config["general"]["wd"], config["model_training"]["sims_folder"])
         label_file = config["model_training"]["l"]
         if config["model_training"]["f"] == "NULL":
             sys.exit("No feature or label files specified, provide to run_model_training or in the config (see R)")
     model_wd = os.path.join(config["general"]["wd"], config["model_training"]["model_folder"])
-    Xt = np.load(os.path.join(sims_path, feature_file))
-    Yt = np.load(os.path.join(sims_path, label_file))
+    Xt = np.load(os.path.join(config["general"]["wd"], feature_file))
+    Yt = np.load(os.path.join(config["general"]["wd"], label_file))
     infile_name = feature_file.split("/")[-1].split('.npy')[0]
     out_name = infile_name + model_settings[0]['model_name']
 
@@ -331,3 +334,23 @@ def run_test_from_config(abs_path,
                    index=False)
 
     return mean_prediction, nmean_prediction, Ytest_r
+
+
+def import_deepdive_input(config):
+    n_predictions = config["empirical_predictions"]["n_predictions"]
+    replicates = config["empirical_predicitons"]["replicates"]
+    data = config["empirical_predictions"]["empirical_input_file"]
+
+    output_wd
+    res_file
+    testset_wd
+    test_f
+    test_l
+    scaling = config["empirical_predictions"]["scaling"]
+    time_bins = config["general"]["time_bins"]
+    min_age = np.min(time_bins)
+    n_areas
+    load_models(model_wd=config["empirical_predictions"]["model_folder"])
+    loaded_models = load_models(model_wd)
+    plot_all_models(data_wd, loaded_models, present_diversity)
+
