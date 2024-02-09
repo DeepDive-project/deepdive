@@ -93,6 +93,55 @@ def set_area_constraints(sp_x,
 
 
 
+def parse_dd_input(dd_input, present_diversity=None):
+    tbl = pd.read_csv(dd_input)
+    tbl_np = tbl.to_numpy()
+    replicates = np.unique(tbl_np[:,0])
+    features_list = []
+    # loop over replicates
+    for rep in replicates:
+        tbl_rep = tbl_np[tbl_np[:,0] == rep]
+        bin_durations = tbl_rep[np.where(tbl_rep[:,1] =='bin_dur')[0][0], 3:].astype(float)
+        bin_durations_rev = bin_durations[::-1]  # FROM RECENT TO OLD
+        mid_points_rev = tbl_rep[np.where(tbl_rep[:,1] =='bin_mid')[0][0], 3:].astype(float)[::-1]
+
+        tbl_occs = tbl_rep[np.where(tbl_rep[:, 1] == "occs")[0]]
+        areas = tbl_occs[:, 2]
+        area_counts = []
+        for area in np.unique(areas):
+            area_counts_tmp = tbl_occs[areas == area, 3:].astype(int)
+            area_counts.append(area_counts_tmp)
+
+        area_counts = np.array(area_counts)
+
+        occs = np.transpose(area_counts, axes=(1, 0, 2))
+        occs_rev = np.flip(occs, axis=2)  # FROM RECENT TO OLD
+
+
+        # locality file
+        localities = tbl_rep[np.where(tbl_rep[:,1] =='locs')[0], 3:].astype(float)
+        localities_rev = np.flip(localities, axis=1)  # FROM RECENT TO OLD
+
+        sim = {
+            'n_bins': occs_rev.shape[2],
+            'fossil_data': occs_rev,
+            'n_localities_w_fossils': localities_rev,
+            'time_bins_duration': bin_durations_rev,
+            'time_mid_points': mid_points_rev,
+        }
+
+        if present_diversity is not None:
+            sim['global_true_trajectory'] = [present_diversity]
+            include_present_div = True
+        else:
+            include_present_div = False
+
+        features = extract_sim_features(sim, include_present_div=include_present_div)
+        features_list.append(features)
+
+    return np.array(features_list)
+
+
 def prep_dd_input(wd,
                   bin_duration_file='hr_t_bins.csv',  # from old to recent, array of shape (t)
                   locality_file='hr_localities.csv',  # array of shape (a, t)
@@ -165,6 +214,8 @@ def prep_dd_input(wd,
             print(info['time_bins_lr_duration'])
 
         return features, info
+
+
 
 
 def predict(features,

@@ -336,7 +336,7 @@ def run_test_from_config(abs_path,
     return mean_prediction, nmean_prediction, Ytest_r
 
 
-def import_deepdive_input(config):
+def predict_from_config(config):
     n_predictions = config["empirical_predictions"]["n_predictions"]
     replicates = config["empirical_predicitons"]["replicates"]
     data = config["empirical_predictions"]["empirical_input_file"]
@@ -350,7 +350,6 @@ def import_deepdive_input(config):
     time_bins = config["general"]["time_bins"]
     min_age = np.min(time_bins)
     n_areas
-    load_models(model_wd=config["empirical_predictions"]["model_folder"])
-    loaded_models = load_models(model_wd)
+    trained_models = load_models(model_wd=config["empirical_predictions"]["model_folder"])
     plot_all_models(data_wd, loaded_models, present_diversity)
 
