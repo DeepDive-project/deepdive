@@ -337,19 +337,19 @@ def run_test_from_config(abs_path,
 
 
 def predict_from_config(config):
-    n_predictions = config["empirical_predictions"]["n_predictions"]
-    replicates = config["empirical_predicitons"]["replicates"]
-    data = config["empirical_predictions"]["empirical_input_file"]
+    dd_input = os.path.join(config["general"]["wd"], config["empirical_predictions"]["empirical_input_file"])
+    loaded_models = load_models(model_wd=os.path.join(config["general"]["wd"], config["empirical_predictions"]["model_folder"]))
 
-    output_wd
-    res_file
-    testset_wd
-    test_f
-    test_l
-    scaling = config["empirical_predictions"]["scaling"]
-    time_bins = config["general"]["time_bins"]
-    min_age = np.min(time_bins)
-    n_areas
-    trained_models = load_models(model_wd=config["empirical_predictions"]["model_folder"])
-    plot_all_models(data_wd, loaded_models, present_diversity)
+    features = parse_dd_input(dd_input, present_diversity=config.getint("empirical_predictions", "present_diversity"))
 
+    pred_list = []
+    for model_i in range(len(loaded_models)):
+        model = loaded_models[model_i]['model']
+        feature_rescaler = loaded_models[model_i]['feature_rescaler']
+
+        pred_div = predict(features, model, feature_rescaler,
+                           n_predictions=config.getint("empirical_predictions", "n_predictions"), dropout=False)
+
+        pred_list.append(pred_div)
+
+    return pred_list

@@ -50,8 +50,7 @@ if "model_training" in config.sections():
     dd.run_model_training_from_config(config, feature_file=feature_file, label_file=label_file)
 # Predict diversity curves
 if "empirical_predictions" in config.sections():
-
-
+    dd.predict_from_config(config)
 
 
 # next steps
