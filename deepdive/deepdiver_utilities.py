@@ -42,7 +42,7 @@ def create_sim_obj_from_config(config, rseed=None):
 
     # create fossil simulator object
     fossil_sim = fossil_simulator(n_areas=config.getint("simulations", "n_areas"),
-                                  n_bins=len(list(map(float, config["general"]["time_bins"].split()))),  # number of time bins
+                                  n_bins=len(list(map(float, config["general"]["time_bins"].split())))-1,  # number of time bins
                                   eta=list(map(float, config["simulations"]["eta"].split())),  # area-sp stochasticity
                                   p_gap=list(map(float, config["simulations"]["p_gap"].split())),  # probability of 0 preservation in a time bin
                                   dispersal_rate=config["simulations"]["dispersal_rate"],
@@ -173,7 +173,7 @@ def run_model_training_from_config(config, feature_file = None, label_file = Non
     model_wd = os.path.join(config["general"]["wd"], config["model_training"]["model_folder"])
     Xt = np.load(os.path.join(config["general"]["wd"], feature_file))
     Yt = np.load(os.path.join(config["general"]["wd"], label_file))
-    infile_name = feature_file.split("/")[-1].split('.npy')[0]
+    infile_name = os.path.basename(feature_file).split('.npy')[0]
     out_name = infile_name + model_settings[0]['model_name']
 
     # feature_rescaler() is a function to rescale the features the same way as done in the training set
@@ -205,8 +205,8 @@ def predict_from_config(config):
     # Specify settings
     n_predictions = config.getint("empirical_predictions", "n_predictions")  # number of predictions per input file
     replicates = config.getint("empirical_predictions", "replicates")  # number of age randomisation replicates in data_pipeline.R
-#    alpha = config.getfloat("empirical_predictions", "alpha")
-    prediction_color = config["empirical_predictions"]["prediction_color"]
+    # alpha = config.getfloat("empirical_predictions", "alpha")
+    # prediction_color = config["empirical_predictions"]["prediction_color"]
     scaling = config["empirical_predictions"]["scaling"]  # scaling_options: None, "1-mean", "first-bin"
     # plot_shaded_area = config  # Resolve the errors this will make here.
     # combine_all_models = True  # if false plot each model separately  - is this a relict (remove) or something that should be moved to config? should be model ensemble now instead
@@ -273,13 +273,13 @@ def predict_from_config(config):
     dd.add_geochrono(0, -4.8, max_ma=-66, min_ma=0)
     plt.ylim(bottom=-4.8, top=80)
     plt.xlim(-66, 0)
-    plt.ylabel("Species diversity", fontsize=15)
+    plt.ylabel("Diversity", fontsize=15)
     plt.xlabel("Time (Ma)", fontsize=15)
     fig.show()
-    file_name = os.path.join(abs_path, "elephant_analysis/elephant_predictions.pdf")
-    ele_plot = matplotlib.backends.backend_pdf.PdfPages(file_name)
-    ele_plot.savefig(fig)
-    ele_plot.close()
+    file_name = os.path.join(config["general"]["wd"], "predictions.pdf")
+    div_plot = matplotlib.backends.backend_pdf.PdfPages(file_name)
+    div_plot.savefig(fig)
+    div_plot.close()
     print("Plot saved as:", file_name)
 
     # Get stats for model training in a pandas dataframe
@@ -292,6 +292,8 @@ def predict_from_config(config):
         epochs = np.argmin(history["val_loss"])  # number of epochs used to train
         res.append([filename, val_loss, t_loss, epochs])
     res = pd.DataFrame(res)
+
+    return predictions, res
 
 
 def run_test_from_config(abs_path,

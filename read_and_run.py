@@ -13,7 +13,7 @@ config = configparser.ConfigParser()
 # wd = "/Users/dsilvestro/Software/DeepDive-project/deepdive/test_deepdiveR/"
 wd = "/Users/CooperR/Documents/GitHub/deep_dive/"
 data_wd = "/Users/CooperR/Documents/GitHub/DeepDiveR/R/test_empirical_data/carnivora_analysis"
-config_f = "try2.ini"
+config_f = "try4.ini"
 config.read(os.path.join(data_wd, config_f))
 config.sections()  # see which blocks are listed in the config
 # "simulations" in config  # to see if a block is present in the config, returns True/False
@@ -50,7 +50,9 @@ if "model_training" in config.sections():
     dd.run_model_training_from_config(config, feature_file=feature_file, label_file=label_file)
 # Predict diversity curves
 if "empirical_predictions" in config.sections():
-    dd.predict_from_config(config)
+    results = dd.predict_from_config(config)
+    predictions = results[0]
+    res = results[1]
 
 
 # next steps
