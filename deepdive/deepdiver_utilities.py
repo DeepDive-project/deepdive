@@ -196,6 +196,8 @@ def run_model_training_from_config(config, feature_file = None, label_file = Non
     plot_training_history(history, criterion='val_loss', wd=model_wd, show=False, filename=out_name)
 
 
+# NEED AN ALTERNATIVE PATH TO PREDICT FROM A TEST SET! SHOULD THIS BE A DIFFERENT FUNCTION OR A DIFFERENT PATH WITHIN
+# THIS ONE.
 def predict_from_config(config):
     dat = config["empirical_predictions"]["empirical_input_file"]  # get input data
 
@@ -234,7 +236,7 @@ def predict_from_config(config):
                                            bin_duration_file='t_bins.csv',  # from old to recent, array of shape (t)
                                            locality_file='%s_localities.csv' % replicate,  # array of shape (a, t)
                                            locality_dir='Locality',
-                                           taxon_dir=level,
+                                           taxon_dir=config["empirical_predictions"]["taxon_level"],
                                            hr_time_bins=time_bins,  # array of shape (t)
                                            rescale_by_n_bins=True,
                                            no_age_u=True,
