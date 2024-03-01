@@ -22,7 +22,7 @@ def create_sim_obj_from_config(config, rseed=None):
     if rseed is None:
         rseed = config.getint("simulations", "training_seed")
     bd_sim = bd_simulator(s_species=config.getint("simulations", "s_species"),  # number of starting species
-                          rangeSP=list(map(float, config["simulations"]["rangesp"].split())),  # min/max size data set
+                          rangeSP=list(map(float, config["simulations"]["total_sp"].split())),  # min/max size data set
                           minEX_SP=config.getint("simulations", "min_extinct_sp"),  # list(map(float, config["simulations"]["minex_sp"].split())),  # minimum number of extinct lineages
                           root_r=list(map(float, config["simulations"]["root_r"].split())),  # range root ages
                           minEXTANT_SP=np.min(list(map(float, config["simulations"]["extant_sp"].split()))), # min number of living species
