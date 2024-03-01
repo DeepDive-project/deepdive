@@ -85,6 +85,10 @@ def run_sim_from_config(config):
 
     res = run_sim_parallel(training_set, n_CPUS=config.getint("simulations", "n_CPUS"))
     now = datetime.now().strftime('%Y%m%d')
+    try:
+        os.mkdir(os.path.join(config["general"]["wd"], config["simulations"]["sims_folder"]))
+    except FileExistsError:
+        pass
     f, l = save_simulations(res, os.path.join(config["general"]["wd"], config["simulations"]["sims_folder"]),
                             config["simulations"]["sim_name"] + "_" + now + "_training", return_file_names=True)
     return f, l
@@ -192,6 +196,11 @@ def run_model_training_from_config(config, feature_file = None, label_file = Non
                       patience=config.getint("model_training", "patience"),
                       batch_size=config.getint("model_training", "batch_size"),
                       validation_split=config.getfloat("model_training", "validation_split"))
+    try:
+        os.mkdir(model_wd)
+    except FileExistsError:
+        pass
+
     save_rnn_model(model_wd, history, model, feature_rescaler, filename=out_name)
     plot_training_history(history, criterion='val_loss', wd=model_wd, show=False, filename=out_name)
 
