@@ -1,10 +1,7 @@
 import os
 import deepdive as dd
-import numpy as np
 from datetime import datetime
-import multiprocessing
 import configparser  # read the config file (".ini") created by the r function 'create_config()'
-import glob
 
 now = datetime.now().strftime('%Y%m%d')
 
@@ -13,7 +10,7 @@ config = configparser.ConfigParser()
 # wd = "/Users/dsilvestro/Software/DeepDive-project/deepdive/test_deepdiveR/"
 wd = "/Users/CooperR/Documents/GitHub/deep_dive/"
 data_wd = "/Users/CooperR/Documents/GitHub/DeepDiveR/R/test_empirical_data/carnivora_analysis"
-config_f = "try4.ini"
+config_f = "carnivora.ini"
 config.read(os.path.join(data_wd, config_f))
 config.sections()  # see which blocks are listed in the config
 # "simulations" in config  # to see if a block is present in the config, returns True/False
@@ -28,22 +25,22 @@ sp_x = bd_sim.run_simulation(print_res=True)
 sim = fossil_sim.run_simulation(sp_x)
 
 # edit a setting in python after the fact
-config["simulations"]["n_training_simulations"] = '20'
-config["simulations"]["n_test_simulations"] = '20'
+config["simulations"]["n_training_simulations"] = '10'
+config["simulations"]["n_test_simulations"] = '10'
 
 # Run simulations in parallel
-if "simulations" in config.sections(): ##### should we just only have the sims + test batch option, and other test batches use independently the training module??
+if "simulations" in config.sections():
     feature_file, label_file = dd.run_sim_from_config(config)
 else:
     feature_file = None
     label_file = None
-if "simulations" in config.sections() and config.getint("simulations", "n_test_simulations"):  ## check this part functions
+if "simulations" in config.sections() and config.getint("simulations", "n_test_simulations"):  # check this functions
     test_feature_file, test_label_file = dd.run_test_sim_from_config(config)
 else:
     test_feature_file = None
     test_label_file = None
-# Simulate test set - just simulating, second test module that runs with models. Or maybe setting up training and test set
-# don't need to be seperate? Add a default of automatically the same settings at the training set?? It would just change
+# Simulate test set - just sim, second test module that runs with models. Or maybe setting up training and test set
+# don't need to be separate? Add a default of automatically the same settings at the training set?? It would just change
 # seed and number of simulations.
 # Train a model
 if "model_training" in config.sections():
@@ -71,7 +68,7 @@ running the full thing and checking each block still functions independently, ne
 How will it be run in practice? 
 
 6. empirical example
-carnivorans in the Cenozoic, global records from Faurby et al. Dispersal ability predicts volutionary sucess amond
+carnivores in the Cenozoic, global records from Faurby et al. Dispersal ability predicts evolutionary success among
 mammalian carnivores.
 
 7. documentation and writing the application note
