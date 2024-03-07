@@ -174,7 +174,7 @@ def run_model_training_from_config(config, feature_file = None, label_file = Non
         label_file = config["model_training"]["l"]
         if config["model_training"]["f"] == "NULL":
             sys.exit("No feature or label files specified, provide to run_model_training or in the config (see R)")
-    model_wd = os.path.join(config["general"]["wd"], config["model_training"]["model_folder"])
+    model_wd = os.path.join(config["general"]["wd"], config["model_training"]["model_folder"]).replace("\\", "/")
     Xt = np.load(os.path.join(config["general"]["wd"], feature_file))
     Yt = np.load(os.path.join(config["general"]["wd"], label_file))
     infile_name = os.path.basename(feature_file).split('.npy')[0]
@@ -225,14 +225,14 @@ def plot_predictions(config, pred_list):
         den = 1
     pred /= den
 
-            plt.step(-plot_time_axis,  # pred,
-                     [pred[0]] + list(pred),
-                     label="Mean prediction",
-                     linewidth=2,
-                     c=prediction_color,
-                     alpha=0.05)
+    plt.step(-plot_time_axis,  # pred,
+             [pred[0]] + list(pred),
+             label="Mean prediction",
+             linewidth=2,
+             c=prediction_color,
+             alpha=0.05)
 
-            predictions.append(pred)
+    predictions.append(pred)
 
     predictions = np.array(predictions)
 
