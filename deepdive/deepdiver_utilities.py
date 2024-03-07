@@ -81,7 +81,7 @@ def run_sim_from_config(config):
                                     min_age=np.min(list(map(float, config["general"]["time_bins"].split()))),
                                     max_age=np.max(list(map(float, config["general"]["time_bins"].split()))),
                                     seed=config.getint("simulations", "training_seed"), keys=[],
-                                    include_present_diversity=config.get("simulations", "include_present_diversity"))  # check boolean is working
+                                    include_present_diversity=config.get("general", "include_present_diversity"))  # check boolean is working
 
     res = run_sim_parallel(training_set, n_CPUS=config.getint("simulations", "n_CPUS"))
     now = datetime.now().strftime('%Y%m%d')
@@ -108,7 +108,7 @@ def run_test_sim_from_config(config):
                                 'time_bins_duration', 'eta', 'p_gap', 'area_size_concentration_prm',
                                 'link_area_size_carrying_capacity', 'slope_log_sampling',
                                 'intercept_initial_sampling', 'sd_through_time', 'additional_info'],
-                                include_present_diversity=config.get("simulations", "include_present_diversity"))  # check boolean is working
+                                include_present_diversity=config.get("general", "include_present_diversity"))  # check boolean is working
 
     res = run_sim_parallel(test_set, n_CPUS=config.getint("simulations", "n_CPUS"))
     now = datetime.now().strftime('%Y%m%d')
@@ -181,7 +181,7 @@ def run_model_training_from_config(config, feature_file = None, label_file = Non
     out_name = infile_name + model_settings[0]['model_name']
 
     # feature_rescaler() is a function to rescale the features the same way as done in the training set
-    Xt_r, feature_rescaler = normalize_features(Xt, log_last=config.get("model_training", "include_present_diversity"))
+    Xt_r, feature_rescaler = normalize_features(Xt, log_last=config.get("general", "include_present_diversity"))
     Yt_r = normalize_labels(Yt, rescaler=1, log=True)
     model = build_rnn(Xt_r,
                       lstm_nodes=model_settings[0]['lstm_nodes'],
@@ -206,69 +206,24 @@ def run_model_training_from_config(config, feature_file = None, label_file = Non
 
 
 # NEED AN ALTERNATIVE PATH TO PREDICT FROM A TEST SET! SHOULD THIS BE A DIFFERENT FUNCTION OR A DIFFERENT PATH WITHIN
-# THIS ONE.
-def predict_from_config(config):
-    dat = config["empirical_predictions"]["empirical_input_file"]  # get input data
-
-    # load the model
-    model_wd = os.path.join(config["general"]["wd"], config["empirical_predictions"]["model_folder"])
-
-    # Specify settings
-    n_predictions = config.getint("empirical_predictions", "n_predictions")  # number of predictions per input file
-    replicates = config.getint("empirical_predictions", "replicates")  # number of age randomisation replicates in data_pipeline.R
-    # alpha = config.getfloat("empirical_predictions", "alpha")
-    # prediction_color = config["empirical_predictions"]["prediction_color"]
-    scaling = config["empirical_predictions"]["scaling"]  # scaling_options: None, "1-mean", "first-bin"
-    # plot_shaded_area = config  # Resolve the errors this will make here.
-    # combine_all_models = True  # if false plot each model separately  - is this a relict (remove) or something that should be moved to config? should be model ensemble now instead
-
-    # run predictions across all models
-    model_list = glob.glob(os.path.join(model_wd, "*rnn_model*"))
-
-    # create time bin indices from recent to old
-    time_bins = np.sort(np.array(list(map(float, config["general"]["time_bins"].split()))))
-    n_time_bins = len(time_bins) - 1
-
-
-    # make and plot predictions:
+# THIS ONE. CHECK IF THERE'S ANY REDUNDANCY, REMOVE AND RENAME TO MAKE A PLOTTING FUNCTION.
+def plot_predictions(config, pred_list):
     fig = plt.figure(figsize=(12, 8))
-    predictions = []
 
-    for model_i in model_list:
-        filename = model_i.split(sep="rnn_model")[1]
-        print("\nModel", filename)
-        # load model trained using age uncertainty
-        history, model, feature_rescaler = load_rnn_model(model_wd, filename=filename)
+    # from recent to old
+    plot_time_axis = np.sort(list(map(float, config["general"]["time_bins"].split())))
 
-        for replicate in range(1, replicates + 1):
-            features, info = prep_dd_input(wd=config["general"]["wd"],
-                                           bin_duration_file='t_bins.csv',  # from old to recent, array of shape (t)
-                                           locality_file='%s_localities.csv' % replicate,  # array of shape (a, t)
-                                           locality_dir='Locality',
-                                           taxon_dir=config["empirical_predictions"]["taxon_level"],
-                                           hr_time_bins=time_bins,  # array of shape (t)
-                                           rescale_by_n_bins=True,
-                                           no_age_u=True,
-                                           replicate=replicate,
-                                           debug=False)
+    # from recent to old
+    pred_div = predict(features, model, feature_rescaler, n_predictions=n_predictions, dropout=use_dropout)
 
-            # from recent to old
-            plot_time_axis = np.sort(time_bins)
-
-            print_update("Running replicate n. %s" % replicate)
-
-            # from recent to old
-            pred_div = predict(features, model, feature_rescaler,
-                               n_predictions=n_predictions, dropout=use_dropout)
-
-            pred = np.mean(np.exp(pred_div) - 1, axis=0)
-            if scaling == "1-mean":
-                den = np.mean(pred)
-            elif scaling == "first-bin":
-                den = pred[-1]
-            else:
-                den = 1
-            pred /= den
+    pred = np.mean(np.exp(pred_div) - 1, axis=0)
+    if scaling == "1-mean":
+        den = np.mean(pred)
+    elif scaling == "first-bin":
+        den = pred[-1]
+    else:
+        den = 1
+    pred /= den
 
             plt.step(-plot_time_axis,  # pred,
                      [pred[0]] + list(pred),
@@ -281,7 +236,7 @@ def predict_from_config(config):
 
     predictions = np.array(predictions)
 
-    dd.add_geochrono(0, -4.8, max_ma=-66, min_ma=0)
+    add_geochrono(0, -4.8, max_ma=-66, min_ma=0)
     plt.ylim(bottom=-4.8, top=80)
     plt.xlim(-66, 0)
     plt.ylabel("Diversity", fontsize=15)
@@ -294,15 +249,15 @@ def predict_from_config(config):
     print("Plot saved as:", file_name)
 
     # Get stats for model training in a pandas dataframe
-    res = list()
-    for i in model_list:
-        filename = i.split(sep="rnn_model")[1]
-        history, model, feature_rescaler = dd.load_rnn_model(model_wd, filename=filename)
-        val_loss = np.min(history["val_loss"])  # check validation loss
-        t_loss = history["loss"][np.argmin(history["val_loss"])]  # training loss
-        epochs = np.argmin(history["val_loss"])  # number of epochs used to train
-        res.append([filename, val_loss, t_loss, epochs])
-    res = pd.DataFrame(res)
+    # res = list()
+    # for i in model_list:
+    #     filename = i.split(sep="rnn_model")[1]
+    #     history, model, feature_rescaler = dd.load_rnn_model(model_wd, filename=filename)
+    #     val_loss = np.min(history["val_loss"])  # check validation loss
+    #     t_loss = history["loss"][np.argmin(history["val_loss"])]  # training loss
+    #     epochs = np.argmin(history["val_loss"])  # number of epochs used to train
+    #     res.append([filename, val_loss, t_loss, epochs])
+    # res = pd.DataFrame(res)
 
     return predictions, res
 
