@@ -3,10 +3,10 @@ import glob
 import os
 import pickle
 import sys
-
 import numpy as np
 import pandas
 import pandas as pd
+import tensorflow as tf
 import scipy.stats
 
 from .feature_extraction import extract_sim_features
@@ -41,6 +41,11 @@ def save_pkl(obj, out_file):
     with open(out_file, 'wb') as output:  # Overwrites any existing file.
         pickle.dump(obj, output, pickle.HIGHEST_PROTOCOL)
 
+
+def np_to_tf(x, type=np.float32):
+    with tf.device('/cpu:0'):
+        tf_x = tf.convert_to_tensor(np.array(x), type)
+    return tf_x
 
 def preservation_rate_mle(all_br, all_occs, sp_x, n):
     for i in range(len(all_br)):
@@ -221,7 +226,7 @@ def prep_dd_input(wd,
 def predict(features,
             model,
             feature_rescaler=None,
-            drop_hr_features=False,
+            drop_modern_diversity=False,
             n_predictions=1,
             dropout=True,
             ):
@@ -237,9 +242,9 @@ def predict(features,
     else:
         print("Cannot reshape feature file")
         return "Error"
-    if drop_hr_features:
+    if drop_modern_diversity:
         # leave only low res data!
-        dd_input = dd_input[:, :, 22:]
+        dd_input = dd_input[:, :, :-1]
 
     # predictions
     if len(features.shape) == 2:
