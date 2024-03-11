@@ -259,7 +259,7 @@ def get_model_settings_from_config(config):
 
     return list_settings
 
-def run_model_training_from_config(config, feature_file=None, label_file=None, useGPU=False):
+def run_model_training_from_config(config, feature_file=None, label_file=None, convert_to_tf=True):
     model_settings = get_model_settings_from_config(config)
     sims_path = os.path.join(config["general"]["wd"], config["model_training"]["sims_folder"])
     if feature_file is None:
@@ -277,7 +277,7 @@ def run_model_training_from_config(config, feature_file=None, label_file=None, u
     Xt_r, feature_rescaler = normalize_features(Xt, log_last=config.get("general", "include_present_diversity"))
     Yt_r = normalize_labels(Yt, rescaler=1, log=True)
 
-    if useGPU:
+    if convert_to_tf:
         # convert to tf tensors
         Xt_r = np_to_tf(Xt_r)
         Yt_r = np_to_tf(Yt_r)

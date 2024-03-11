@@ -1,7 +1,6 @@
 import sys
 import numpy as np
 
-
 def calculate_global_trajectory(species_space_time):
     # a 3D array with species, areas and time bins.
     temp = np.einsum('sat -> st', species_space_time)  # sum over areas
@@ -129,9 +128,12 @@ def extract_sim_features(sim, include_present_div=False):
     if include_present_div:
         present_div = np.zeros((f1d.shape[0], 1))
         present_div[0] += sim['global_true_trajectory'][0]
-        return np.hstack((f1d, f2d, present_div))
+        feat = np.hstack((f1d, f2d, present_div))
     else:
-        return np.hstack((f1d, f2d))
+        feat = np.hstack((f1d, f2d))
+    return feat
+
+
 
 
 def normalize_features(Xt, log_last=False):
