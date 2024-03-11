@@ -77,11 +77,57 @@ def run_sim_from_config(config):
     # simulate training data
     bd_sim, fossil_sim = create_sim_obj_from_config(config, rseed=config.getint("simulations", "training_seed"))
 
+    # AREA CONSTRAINTS
+    area_start = [i for i in config['simulations'] if 'area_start' in i]
+    area_end = [i for i in config['simulations'] if 'area_end' in i]
+
+    # print("area_start", area_start, area_end)
+    area_tbl = None
+    area_tbl_max = None
+    n_areas = int(config['simulations']['n_areas'])
+    if len(area_start):
+        area_tbl = np.ones((n_areas, 3))
+        area_tbl[:, 0] = np.arange(n_areas)  # set areas IDs
+        area_tbl[:, 1:] = -1  # set all values to -1 (all areas exist throughout)
+        area_tbl_max = area_tbl + 0
+
+        for i in range(len(area_start)):
+            val = list(map(float, config["simulations"][area_start[i]].split()))
+            min_val = np.min(val)
+            max_val = np.max(val)
+            area_tbl[i, 1] = min_val
+            area_tbl_max[i, 1] = max_val
+
+
+    if len(area_end):
+        if area_tbl is None:
+            area_tbl = np.ones((n_areas, 3))
+            area_tbl[:, 0] = np.arange(n_areas)  # set areas IDs
+            area_tbl[:, 1:] = -1  # set all values to -1 (all areas exist throughout)
+            area_tbl_max = area_tbl + 0
+
+        for i in range(len(area_end)):
+            val = list(map(float, config["simulations"][area_end[i]].split()))
+            min_val = np.min(val)
+            max_val = np.max(val)
+            area_tbl[i, 2] = min_val
+            area_tbl_max[i, 2] = max_val
+
+    if area_tbl is not None:
+        area_constraint = {
+            'min_age': area_tbl,
+            'max_age': area_tbl_max
+        }
+    else:
+        area_constraint = None
+
     training_set = sim_settings_obj(bd_sim, fossil_sim, n_simulations=config.getint("simulations", "n_training_simulations"),
                                     min_age=np.min(list(map(float, config["general"]["time_bins"].split()))),
                                     max_age=np.max(list(map(float, config["general"]["time_bins"].split()))),
                                     seed=config.getint("simulations", "training_seed"), keys=[],
-                                    include_present_diversity=config.get("general", "include_present_diversity"))  # check boolean is working
+                                    include_present_diversity=config.get("general", "include_present_diversity"),
+                                    area_constraint=area_constraint
+                                    )
 
     res = run_sim_parallel(training_set, n_CPUS=config.getint("simulations", "n_CPUS"))
     now = datetime.now().strftime('%Y%m%d')
@@ -98,6 +144,51 @@ def run_test_sim_from_config(config):
     # simulate test data
     bd_sim, fossil_sim = create_sim_obj_from_config(config, rseed=config.getint("simulations", "test_seed"))
 
+    # AREA CONSTRAINTS
+    area_start = [i for i in config['simulations'] if 'area_start' in i]
+    area_end = [i for i in config['simulations'] if 'area_end' in i]
+
+    # print("area_start", area_start, area_end)
+    area_tbl = None
+    area_tbl_max = None
+    n_areas = int(config['simulations']['n_areas'])
+    if len(area_start):
+        area_tbl = np.ones((n_areas, 3))
+        area_tbl[:, 0] = np.arange(n_areas)  # set areas IDs
+        area_tbl[:, 1:] = -1  # set all values to -1 (all areas exist throughout)
+        area_tbl_max = area_tbl + 0
+
+        for i in range(len(area_start)):
+            val = list(map(float, config["simulations"][area_start[i]].split()))
+            min_val = np.min(val)
+            max_val = np.max(val)
+            area_tbl[i, 1] = min_val
+            area_tbl_max[i, 1] = max_val
+
+
+    if len(area_end):
+        if area_tbl is None:
+            area_tbl = np.ones((n_areas, 3))
+            area_tbl[:, 0] = np.arange(n_areas)  # set areas IDs
+            area_tbl[:, 1:] = -1  # set all values to -1 (all areas exist throughout)
+            area_tbl_max = area_tbl + 0
+
+        for i in range(len(area_end)):
+            val = list(map(float, config["simulations"][area_end[i]].split()))
+            min_val = np.min(val)
+            max_val = np.max(val)
+            area_tbl[i, 2] = min_val
+            area_tbl_max[i, 2] = max_val
+
+    if area_tbl is not None:
+        area_constraint = {
+            'min_age': area_tbl,
+            'max_age': area_tbl_max
+        }
+    else:
+        area_constraint = None
+
+
     test_set = sim_settings_obj(bd_sim, fossil_sim, n_simulations=config.getint("simulations", "n_test_simulations"),
                                 min_age=np.min(list(map(float, config["general"]["time_bins"].split()))),
                                 max_age=np.max(list(map(float, config["general"]["time_bins"].split()))),
@@ -108,7 +199,9 @@ def run_test_sim_from_config(config):
                                 'time_bins_duration', 'eta', 'p_gap', 'area_size_concentration_prm',
                                 'link_area_size_carrying_capacity', 'slope_log_sampling',
                                 'intercept_initial_sampling', 'sd_through_time', 'additional_info'],
-                                include_present_diversity=config.get("general", "include_present_diversity"))  # check boolean is working
+                                include_present_diversity=config.get("general", "include_present_diversity"),
+                                area_constraint=area_constraint
+                                )
 
     res = run_sim_parallel(test_set, n_CPUS=config.getint("simulations", "n_CPUS"))
     now = datetime.now().strftime('%Y%m%d')
@@ -166,23 +259,29 @@ def get_model_settings_from_config(config):
 
     return list_settings
 
-def run_model_training_from_config(config, feature_file = None, label_file = None):
+def run_model_training_from_config(config, feature_file=None, label_file=None, useGPU=False):
     model_settings = get_model_settings_from_config(config)
+    sims_path = os.path.join(config["general"]["wd"], config["model_training"]["sims_folder"])
     if feature_file is None:
         feature_file = config["model_training"]["f"]
-        sims_path = os.path.join(config["general"]["wd"], config["model_training"]["sims_folder"])
         label_file = config["model_training"]["l"]
         if config["model_training"]["f"] == "NULL":
             sys.exit("No feature or label files specified, provide to run_model_training or in the config (see R)")
     model_wd = os.path.join(config["general"]["wd"], config["model_training"]["model_folder"]).replace("\\", "/")
-    Xt = np.load(os.path.join(config["general"]["wd"], feature_file))
-    Yt = np.load(os.path.join(config["general"]["wd"], label_file))
+    Xt = np.load(os.path.join(sims_path, feature_file))
+    Yt = np.load(os.path.join(sims_path, label_file))
     infile_name = os.path.basename(feature_file).split('.npy')[0]
     out_name = infile_name + model_settings[0]['model_name']
 
     # feature_rescaler() is a function to rescale the features the same way as done in the training set
     Xt_r, feature_rescaler = normalize_features(Xt, log_last=config.get("general", "include_present_diversity"))
     Yt_r = normalize_labels(Yt, rescaler=1, log=True)
+
+    if useGPU:
+        # convert to tf tensors
+        Xt_r = np_to_tf(Xt_r)
+        Yt_r = np_to_tf(Yt_r)
+
     model = build_rnn(Xt_r,
                       lstm_nodes=model_settings[0]['lstm_nodes'],
                       dense_nodes=model_settings[0]['dense_nodes'],
@@ -321,3 +420,22 @@ def predict_from_config(config):
         pred_list.append(pred_div)
 
     return pred_list
+
+def predict_testset_from_config(config, test_feature_file, test_label_file):
+    loaded_models = load_models(model_wd=os.path.join(config["general"]["wd"], config["empirical_predictions"]["model_folder"]))
+
+    features = np.load(test_feature_file)
+    labels = np.load(test_label_file)
+    labels = normalize_labels(labels, rescaler=1, log=True)
+
+    pred_list = []
+    for model_i in range(len(loaded_models)):
+        model = loaded_models[model_i]['model']
+        feature_rescaler = loaded_models[model_i]['feature_rescaler']
+
+        pred_div = predict(features, model, feature_rescaler,
+                           n_predictions=config.getint("empirical_predictions", "n_predictions"), dropout=False)
+
+        pred_list.append(pred_div)
+
+    return pred_list, labels
