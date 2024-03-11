@@ -9,7 +9,7 @@ config = configparser.ConfigParser()
 
 # wd = "/Users/dsilvestro/Software/DeepDive-project/deepdive/test_deepdiveR/"
 wd = "/Users/CooperR/Documents/GitHub/deep_dive/"
-data_wd = "/Users/CooperR/Documents/GitHub/DeepDiveR/R/test_empirical_data/carnivora_analysis"
+data_wd = "/Users/CooperR/Documents/carnivora_analysis"
 config_f = "carnivora.ini"
 config.read(os.path.join(data_wd, config_f))
 config.sections()  # see which blocks are listed in the config
@@ -25,8 +25,8 @@ sp_x = bd_sim.run_simulation(print_res=True)
 sim = fossil_sim.run_simulation(sp_x)
 
 # edit a setting in python after the fact
-config["simulations"]["n_training_simulations"] = '10'
-config["simulations"]["n_test_simulations"] = '10'
+config["simulations"]["n_training_simulations"] = '5'
+config["simulations"]["n_test_simulations"] = '0'
 
 # Run simulations in parallel
 if "simulations" in config.sections():
@@ -49,7 +49,7 @@ if "model_training" in config.sections():
 if "empirical_predictions" in config.sections():
     results = dd.predict_from_config(config)
     predictions = results[0]
-    res = results[1]
+    # res = results[1]
 
 
 # next steps
