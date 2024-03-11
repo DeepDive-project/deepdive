@@ -43,6 +43,7 @@ def create_sim_obj_from_config(config, rseed=None):
     # create fossil simulator object
     fossil_sim = fossil_simulator(n_areas=config.getint("simulations", "n_areas"),
                                   n_bins=len(list(map(float, config["general"]["time_bins"].split())))-1,  # number of time bins
+                                  time_bins=np.array(list(map(float, config["general"]["time_bins"].split())))[::-1],
                                   eta=list(map(float, config["simulations"]["eta"].split())),  # area-sp stochasticity
                                   p_gap=list(map(float, config["simulations"]["p_gap"].split())),  # probability of 0 preservation in a time bin
                                   dispersal_rate=config["simulations"]["dispersal_rate"],
@@ -403,7 +404,7 @@ def run_test_from_config(abs_path,
     return mean_prediction, nmean_prediction, Ytest_r
 
 
-def predict_from_config(config):
+def predict_from_config(config, return_features=False):
     dd_input = os.path.join(config["general"]["wd"], config["empirical_predictions"]["empirical_input_file"])
     loaded_models = load_models(model_wd=os.path.join(config["general"]["wd"], config["empirical_predictions"]["model_folder"]))
 
@@ -419,7 +420,10 @@ def predict_from_config(config):
 
         pred_list.append(pred_div)
 
-    return pred_list
+    if return_features:
+        return pred_list, features
+    else:
+        return pred_list
 
 def predict_testset_from_config(config, test_feature_file, test_label_file):
     loaded_models = load_models(model_wd=os.path.join(config["general"]["wd"], config["empirical_predictions"]["model_folder"]))

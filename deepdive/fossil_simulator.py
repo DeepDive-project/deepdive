@@ -121,7 +121,7 @@ class fossil_simulator():
         self.n_species = len(sp_x)
         if self.time_bins is None:
             self.time_bins = np.linspace(self.min_age, self.max_age, self.n_bins + 1)
-            # draws 20 equally spaced numbers between 0 and 100
+            # draws equally spaced numbers between 0 and 100
 
         self.time_bins_duration = np.diff(self.time_bins)
         mid_time_bins = []
