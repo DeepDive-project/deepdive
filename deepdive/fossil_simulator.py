@@ -43,6 +43,7 @@ class fossil_simulator():
                  locality_rate_multiplier=None,  # array of shape = (n_areas x n_time_bins)
                  carrying_capacity_multiplier=None,  # array of shape = (n_species x n_areas). Must be between 0 and 1
                  sampling_rate_multiplier=None,
+                 species_per_locality_multiplier=None,
                  seed=None):
 
         self.n_areas = n_areas
@@ -75,6 +76,7 @@ class fossil_simulator():
         self.locality_rate_multiplier = locality_rate_multiplier
         self.carrying_capacity_multiplier = carrying_capacity_multiplier
         self.sampling_rate_multiplier = sampling_rate_multiplier
+        self.species_per_locality_multiplier = species_per_locality_multiplier
         self._additional_info = None
         self._rs = get_rnd_gen(seed)
 
@@ -256,8 +258,9 @@ class fossil_simulator():
         ### SKYLINE MODEL
         if self._rs.random() > self.fraction_skyline_sampling:
             mu = np.einsum('a, t -> at', slope, self.mid_time_bins) + np.log(intercept)
+            # print(mu)
             loc_rates = self._rs.normal(loc=mu, scale=sd_through_time)
-
+            # print(np.exp(loc_rates)[0])
         else:
             n_preservation_bins = self._rs.poisson(self.mean_n_epochs_skyline * self.n_areas)
             time_id = np.sort(self._rs.integers(0, n_preservation_bins, self.n_areas * self.n_bins))
@@ -266,7 +269,7 @@ class fossil_simulator():
                                           scale=self.sd_through_time_skyline,
                                           size=(n_preservation_bins))
             loc_rates = loc_rates_b[time_id_area]
-            # print(loc_rates)
+            # print("skyline", np.exp(loc_rates)[0])
         return np.exp(loc_rates), slope, intercept, sd_through_time
 
     # consider that each area has its own preservation and sampling rate, generate preservation rate per area function
@@ -379,8 +382,16 @@ class fossil_simulator():
         # ---
         # print("number_of_localities", number_of_localities.shape, number_of_localities.dtype)
         # print("p_3d", p_3d.shape)
-        fossils_per_area = self._rs.binomial(number_of_localities, p_3d)
-        # print("fossils_per_area", fossils_per_area)
+        # even with max sampling rate localities will only record ~10% of the species
+        if self.species_per_locality_multiplier is None:
+            mul = 1
+        elif isinstance(self.species_per_locality_multiplier, Iterable):
+            mul = self._rs.uniform(self.species_per_locality_multiplier[0], self.species_per_locality_multiplier[1])
+        else:
+            mul = self.species_per_locality_multiplier
+
+        fossils_per_area = self._rs.binomial(number_of_localities * self._rs.binomial(1, mul, p_3d.shape), p_3d)
+        # print("fossils_per_area", fossils_per_area.shape)
         # print(np.sum(fossils_per_area))
         if self.singletons_frequency is not None:
             fossils_per_area = self.add_singletons(fossils_per_area)

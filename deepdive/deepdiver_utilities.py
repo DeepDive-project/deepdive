@@ -70,6 +70,7 @@ def create_sim_obj_from_config(config, rseed=None):
                                   fraction_skyline_sampling=config.getfloat("simulations", "fraction_skyline_sampling"),
                                   maximum_localities_per_bin=config.getint("simulations", "maximum_localities_per_bin"),
                                   singletons_frequency=config.getfloat("simulations", "singletons_frequency"),
+                                  species_per_locality_multiplier=list(map(float, config["simulations"]["species_per_locality_multiplier"].split())),
                                   seed=rseed)  # if > 0 fixes the random seed to make simulations reproducible
     return bd_sim, fossil_sim
 

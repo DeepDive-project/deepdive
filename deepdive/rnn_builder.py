@@ -49,7 +49,7 @@ def build_rnn(Xt,
 
     model.compile(loss=loss_f,
                   optimizer="adam",
-                  metrics=['mae', 'mse', 'msle', 'mape'])
+                  metrics=['mae']) # , 'msle', 'mape', 'mse'
     return model
 
 

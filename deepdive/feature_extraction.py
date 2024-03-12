@@ -134,8 +134,6 @@ def extract_sim_features(sim, include_present_div=False):
     return feat
 
 
-
-
 def normalize_features(Xt, log_last=False):
     den2d = np.mean(Xt, axis=1)
     den1d = np.mean(den2d, axis=0)
@@ -171,12 +169,15 @@ def normalize_labels(Yt, rescaler=0, log=False):
     return Yt_r
 
 
-def get_features_names(n_areas):
+def get_features_names(n_areas, include_present_div=False):
     global_features = ["n_species", "n_occs", "n_singletons", "n_endemics",
                        "time_bin_duration", "range_through_div", "n_localities"]
 
     sp_area = ["n_species_area_%s" % i for i in range(1, 1 + n_areas)]
     occs_area = ["n_occs_area_%s" % i for i in range(1, 1 + n_areas)]
     loc_area = ["n_locs_area_%s" % i for i in range(1, 1 + n_areas)]
+    features_names = global_features + sp_area + occs_area + loc_area
+    if include_present_div:
+        features_names = features_names + ["present_diversity"]
 
-    return(global_features + sp_area + occs_area + loc_area)
+    return features_names
