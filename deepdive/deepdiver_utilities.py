@@ -263,7 +263,7 @@ def get_model_settings_from_config(config):
 
     return list_settings
 
-def run_model_training_from_config(config, feature_file=None, label_file=None, convert_to_tf=True):
+def run_model_training_from_config(config, feature_file=None, label_file=None, convert_to_tf=True, prm_sharing=False):
     model_settings = get_model_settings_from_config(config)
     sims_path = os.path.join(config["general"]["wd"], config["model_training"]["sims_folder"])
     if feature_file is None:
@@ -286,11 +286,17 @@ def run_model_training_from_config(config, feature_file=None, label_file=None, c
         Xt_r = np_to_tf(Xt_r)
         Yt_r = np_to_tf(Yt_r)
 
-    model = build_rnn(Xt_r,
-                      lstm_nodes=model_settings[0]['lstm_nodes'],
-                      dense_nodes=model_settings[0]['dense_nodes'],
-                      loss_f=model_settings[0]['loss_f'],
-                      dropout_rate=model_settings[0]['dropout'])
+    if prm_sharing:
+        model_config = rnn_config(n_features=Xt_r.shape[2], n_bins=Xt_r.shape[1], mean_normalize_rates=False)
+        model = build_rnn_model(model_config, print_summary=True)
+
+    else:
+        model = build_rnn(Xt_r,
+                          lstm_nodes=model_settings[0]['lstm_nodes'],
+                          dense_nodes=model_settings[0]['dense_nodes'],
+                          loss_f=model_settings[0]['loss_f'],
+                          dropout_rate=model_settings[0]['dropout'])
+
     verbose = 0
     if model_settings[0]['model_n'] == 0:
         verbose = 1

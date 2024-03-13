@@ -8,6 +8,9 @@ import os, glob
 import pickle as pkl
 import scipy.stats
 
+from keras.layers import Activation
+from tensorflow.python.keras.utils import generic_utils
+
 def build_rnn(Xt,
               lstm_nodes=None,
               dense_nodes=None,
@@ -162,6 +165,121 @@ def load_models(model_wd, model_name_tag="rnn_model"):
 
     return models
 
+class rnn_config():
+    def __init__(self,
+                 lstm_nodes: list = None,
+                 nn_dense: list = None,
+                 pool_per_bin = True,
+                 mean_normalize_rates = True,
+                 layers_normalization = False,
+                 output_f: list = None,
+                 n_features: int = None,
+                 n_bins: int = None,
+                 ):
+
+        if lstm_nodes is None:
+            lstm_nodes = [128, 64]
+        if nn_dense is None:
+            nn_dense = [64, 32]
+        if output_f is None:
+            output_f = 'softplus'
+
+        self.lstm_nodes = lstm_nodes
+        self.nn_dense = nn_dense
+        self.mean_normalize_rates = mean_normalize_rates
+        self.layers_norm = layers_normalization
+        self.output_f = output_f
+        self.n_features = n_features
+        self.n_bins = n_bins
+        self.pool_per_bin = pool_per_bin
+
+def build_rnn_model(model_config: rnn_config,
+                    optimizer=keras.optimizers.RMSprop(1e-3),
+                    print_summary=False
+                    ):
+    ali_input = keras.Input(shape=(model_config.n_bins, model_config.n_features,),
+                            name="input_tbl")
+    print("SHAPE ali_input", ali_input.shape)
+    # inputs = [ali_input]
+
+    # lstm on sequence data
+
+    ali_rnn_1 = layers.Bidirectional(
+        layers.LSTM(model_config.lstm_nodes[0], return_sequences=True, activation='tanh',
+                    recurrent_activation='sigmoid', name="sequence_LSTM_1"))(ali_input)
+    if model_config.layers_norm:
+        ali_rnn_1n = layers.LayerNormalization(name='layer_norm_rnn1')(ali_rnn_1)
+    else:
+        ali_rnn_1n = ali_rnn_1
+    ali_rnn_2 = layers.Bidirectional(
+        layers.LSTM(model_config.lstm_nodes[1], return_sequences=True, activation='tanh',
+                    recurrent_activation='sigmoid', name="sequence_LSTM_2"))(ali_rnn_1n)
+    if model_config.layers_norm:
+        ali_rnn_2n = layers.LayerNormalization(name='layer_norm_rnn2')(ali_rnn_2)
+    else:
+        ali_rnn_2n = ali_rnn_2
+
+
+    #--- block w shared prms
+    site_dnn_1 = layers.Dense(model_config.nn_dense[0], activation='swish', name="site_NN")
+
+    print("Creating blocks...")
+    comb_outputs = [layers.Flatten()(i) for i in tf.split(ali_rnn_2n, model_config.n_bins, axis=1)]
+
+    site_sp_dnn_1_list = [site_dnn_1(i) for i in comb_outputs]
+
+    print("done")
+    #---
+
+    # Merge all available features into a single large vector via concatenation
+    # concat_1 = layers.concatenate([ali_rnn_3, phy_dnn_1])
+    outputs = []
+    loss = {}
+    loss_w = {}
+    # output: diversity per bin
+    site_rate_1 = layers.Dense(model_config.nn_dense[1], activation='swish', name="site_rate_hidden")
+    if len(model_config.nn_dense) > 2:
+        print("Warning: only tywo dense layers are currently supported!")
+    site_rate_1_list = [site_rate_1(i) for i in site_sp_dnn_1_list]
+    rate_pred_nn = layers.Dense(1, activation=model_config.output_f, name="per_site_rate_split")
+    rate_pred_list = [rate_pred_nn(i) for i in site_rate_1_list]
+    # rate_pred =  layers.Dense(1, activation='linear', name="per_site_rate")(layers.concatenate(rate_pred_list))
+
+    if not model_config.mean_normalize_rates:
+        rate_pred = layers.Flatten(name="per_site_rate")(layers.concatenate(rate_pred_list))
+    else:
+        def mean_rescale(x):
+            return x / x[0]
+            # return x / tf.reduce_mean(x, axis=1, keepdims=True)
+
+        generic_utils.get_custom_objects().update({'mean_rescale': Activation(mean_rescale)})
+        rate_pred_tmp = layers.Flatten(name="per_site_rate_tmp")(layers.concatenate(rate_pred_list))
+        rate_pred = layers.Activation(mean_rescale, name='per_site_rate')(rate_pred_tmp)
+
+    outputs.append(rate_pred)
+    loss['per_site_rate'] = keras.losses.MeanSquaredError()
+    loss_w["per_site_rate"] = 1
+
+
+
+    # Instantiate an end-to-end model predicting both rates and substitution model
+    model = keras.Model(
+        inputs=ali_input,
+        outputs=outputs,
+    )
+
+    model.compile(
+        optimizer=optimizer,
+        loss=loss,
+        loss_weights=loss_w
+    )
+
+    if print_summary:
+        print(model.summary())
+
+    print("N. model parameters:", model.count_params())
+
+    return model
 
 
 
