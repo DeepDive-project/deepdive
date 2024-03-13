@@ -398,7 +398,8 @@ class fossil_simulator():
         if self.species_per_locality_multiplier is None:
             mul = 1
         elif isinstance(self.species_per_locality_multiplier, Iterable):
-            mul = self._rs.uniform(self.species_per_locality_multiplier[0], self.species_per_locality_multiplier[1])
+            mul = self._rs.uniform(self.species_per_locality_multiplier[0],
+                                   self.species_per_locality_multiplier[len(self.species_per_locality_multiplier) - 1])
         else:
             mul = self.species_per_locality_multiplier
 
