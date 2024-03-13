@@ -516,5 +516,12 @@ def config_autotune(config_init):
     f_singl = np.mean(n_singletons[n_species > 0] / n_species[n_species > 0])
     config["simulations"]["p_gap"] = "%s %s" % (f_singl / 2, f_singl * 2)
 
+    pres_species = int(config["empirical_predictions"]["present_diversity"])
+    config["simulations"]["extant_sp"] = "%s %s" % (int(pres_species / 2),
+                                                    int(pres_species * 10))
+
+    config["simulations"]["total_sp"] = "%s %s" % (int(np.max(n_species) * 2), int(np.sum(n_species) * 2))
+
+
     return config
 
