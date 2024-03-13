@@ -116,7 +116,7 @@ def run_sim_parallel(training_set: sim_settings_obj, n_CPUS):
         res = [run_sim([0, training_set])]
     else:
         training_args = [[i, training_set] for i in range(n_CPUS)]
-        print("\nSimulating training data...")
+        print("\nSimulating data...")
         pool = multiprocessing.Pool()
         res = pool.map(run_sim, training_args)
         pool.close()
