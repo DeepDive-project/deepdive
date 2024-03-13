@@ -3,7 +3,8 @@ import numpy as np
 from datetime import datetime
 import multiprocessing
 import configparser  # read the config file (".ini") created by the r function 'create_config()'
-import glob
+import glob, copy
+import scipy.stats
 import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.backends import backend_pdf  # saves pdfs
@@ -66,6 +67,7 @@ def create_sim_obj_from_config(config, rseed=None):
                                   sd_through_time=list(map(float, config["simulations"]["sd_through_time"].split())),
                                   # st dev in log-sampling rate through time
                                   sd_through_time_skyline=config.getfloat("simulations", "sd_through_time_skyline"),
+                                  mean_rate_skyline=list(map(float, config["simulations"]["mean_skyline_sampling"].split())),
                                   mean_n_epochs_skyline=config.getfloat("simulations", "mean_n_epochs_skyline"),
                                   fraction_skyline_sampling=config.getfloat("simulations", "fraction_skyline_sampling"),
                                   maximum_localities_per_bin=config.getint("simulations", "maximum_localities_per_bin"),
@@ -444,3 +446,75 @@ def predict_testset_from_config(config, test_feature_file, test_label_file):
         pred_list.append(pred_div)
 
     return pred_list, labels
+
+
+def config_autotune(config_init):
+    config = copy.deepcopy(config_init)
+    n_areas = int(config["simulations"]["n_areas"])
+    # load empirical
+    dd_input = os.path.join(config["general"]["wd"], config["empirical_predictions"]["empirical_input_file"])
+    feat_emp = parse_dd_input(dd_input,
+                                 present_diversity=config.getint("empirical_predictions", "present_diversity"))
+
+
+    feat_names_df = get_features_names(n_areas=n_areas, include_present_div=True, as_dataframe=True)
+    feat_names = get_features_names(n_areas=n_areas, include_present_div=True, as_dataframe=False)
+
+
+    time_bins = np.sort(list(map(float, config["general"]["time_bins"].split())))
+    n_localities = feat_emp[0][:,feat_names.index("n_localities")]
+    n_species = feat_emp[0][:,feat_names.index("n_species")]
+    n_occs = feat_emp[0][:,feat_names.index("n_occs")]
+    range_through_div = feat_emp[0][:, feat_names.index("range_through_div")]
+    n_singletons = feat_emp[0][:, feat_names.index("n_singletons")]
+
+    indx = np.array([i for i in range(len(feat_names)) if "n_locs_area_" in feat_names[i]])
+    n_localities_area = feat_emp[0][:,indx]
+
+    indx = np.array([i for i in range(len(feat_names)) if "n_species_area_" in feat_names[i]])
+    n_species_area = feat_emp[0][:,indx]
+
+    indx = np.array([i for i in range(len(feat_names)) if "n_occs_area_" in feat_names[i]])
+    n_occs_area = feat_emp[0][:,indx]
+
+    approx_sampling_rate = np.mean(range_through_div[n_occs > 0] / n_occs[n_occs > 0])
+
+    slopes, intercepts = [], []
+    for i in range(n_areas):
+        slope, intercept, _, __, ___ = scipy.stats.linregress(time_bins[1:], np.log(n_localities_area[:, i] + 1))
+        slopes.append(slope)
+        intercepts.append(intercept)
+
+    # re-set (log) slopes in locality rates
+    config["simulations"]["slope"] = "%s %s" % (-np.max(np.abs(slopes)) * 2, 0)
+    # re-set intercept in locality rates
+    config["simulations"]["intercept"] = "%s %s" % (np.min(np.exp(intercepts)) / 2, np.max(np.exp(intercepts)) * 2)
+
+    # re-set mean n. localities per area
+    config["simulations"]["area_mean"] = "%s" % np.mean(n_localities_area)
+    config["simulations"]["area_variance"] = "%s" % np.var(n_localities_area)
+
+    # re-set max localities per area
+    config["simulations"]["maximum_localities_per_bin"] = "%s" % int(np.max(n_localities_area))
+
+    # re-set mean skyline sampling
+    config["simulations"]["mean_skyline_sampling"] = "%s %s" % (np.log(np.mean(n_localities_area) / 2),
+                                                                np.log(np.mean(n_localities_area) * 2))
+    config["simulations"]["sd_through_time_skyline"] = "%s" % np.log(np.var(n_localities_area))
+
+    # re-set carrying capacity
+    config["simulations"]["dd_K"] = "%s %s" % (np.mean(range_through_div) / 2, np.max(range_through_div) * 5)
+
+    # re-set per-species sampling rate
+    m = (n_species - n_singletons)[range_through_div > 0] / range_through_div[range_through_div > 0]
+    config["simulations"]["sp_mean"] = "%s %s" % (np.min(m) / 2, np.mean(m))
+
+    # re-set prob gap
+    config["simulations"]["p_gap"] = "%s %s" % (0, np.sum(n_occs_area == 0) / np.size(n_occs_area))
+
+    # reset freq singletons
+    f_singl = np.mean(n_singletons[n_species > 0] / n_species[n_species > 0])
+    config["simulations"]["p_gap"] = "%s %s" % (f_singl / 2, f_singl * 2)
+
+    return config
+

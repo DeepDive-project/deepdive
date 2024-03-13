@@ -1,5 +1,7 @@
 import sys
 import numpy as np
+import pandas as pd
+
 
 def calculate_global_trajectory(species_space_time):
     # a 3D array with species, areas and time bins.
@@ -169,7 +171,7 @@ def normalize_labels(Yt, rescaler=0, log=False):
     return Yt_r
 
 
-def get_features_names(n_areas, include_present_div=False):
+def get_features_names(n_areas, include_present_div=False, as_dataframe=False):
     global_features = ["n_species", "n_occs", "n_singletons", "n_endemics",
                        "time_bin_duration", "range_through_div", "n_localities"]
 
@@ -179,5 +181,9 @@ def get_features_names(n_areas, include_present_div=False):
     features_names = global_features + sp_area + occs_area + loc_area
     if include_present_div:
         features_names = features_names + ["present_diversity"]
+
+    if as_dataframe:
+        features_names = pd.DataFrame(zip(range(len(features_names)), features_names))
+        features_names.columns = ["Index", "Feature"]
 
     return features_names

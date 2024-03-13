@@ -134,6 +134,10 @@ def run_sim_parallel(training_set: sim_settings_obj, n_CPUS):
     return res
 
 def save_simulations(res, output_path, outname, return_file_names=False):
+    try:
+        os.mkdir(output_path)
+    except FileExistsError:
+        pass
     np.save(os.path.join(output_path, outname + "_features" + ".npy"), res['features'])
     np.save(os.path.join(output_path, outname + "_labels" + ".npy"), res['labels'])
     print("Features saved as: \n", os.path.join(output_path, outname + "_features" + ".npy"))

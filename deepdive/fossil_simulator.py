@@ -269,6 +269,9 @@ class fossil_simulator():
         else:
             if self.mean_rate_skyline is None:
                 mu = np.mean(np.einsum('a, t -> at', slope, self.mid_time_bins) + np.log(intercept))
+            elif isinstance(self.mean_rate_skyline, Iterable):
+                mu = self._rs.uniform(np.min(self.mean_rate_skyline),
+                                                   np.max(self.mean_rate_skyline))
             else:
                 mu = self.mean_rate_skyline
             n_preservation_bins = self._rs.poisson(self.mean_n_epochs_skyline * self.n_areas)
