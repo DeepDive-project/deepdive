@@ -288,7 +288,7 @@ def run_model_training_from_config(config, feature_file=None, label_file=None, c
 
     if prm_sharing:
         model_config = rnn_config(n_features=Xt_r.shape[2], n_bins=Xt_r.shape[1],
-                                  mean_normalize_rates=False, layers_normalization=True)
+                                  mean_normalize_rates=False, layers_normalization=False)
         model = build_rnn_model(model_config, print_summary=True)
 
     else:
