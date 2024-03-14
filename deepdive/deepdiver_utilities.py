@@ -288,8 +288,23 @@ def run_model_training_from_config(config, feature_file=None, label_file=None, c
 
     if prm_sharing:
         model_config = rnn_config(n_features=Xt_r.shape[2], n_bins=Xt_r.shape[1],
-                                  mean_normalize_rates=False, layers_normalization=False)
+                                  mean_normalize_rates=True, layers_normalization=False)
         model = build_rnn_model(model_config, print_summary=True)
+
+        dict_inputs = {
+            "input_tbl": np_to_tf(Xt_r),
+            "present_div": np_to_tf(Xt_r[:,0,-1])
+        }
+
+        verbose = 0
+        if model_settings[0]['model_n'] == 0:
+            verbose = 1
+        history = fit_rnn(dict_inputs, Yt_r, model, verbose=verbose,
+                          max_epochs=config.getint("model_training", "max_epochs"),
+                          patience=config.getint("model_training", "patience"),
+                          batch_size=config.getint("model_training", "batch_size"),
+                          validation_split=config.getfloat("model_training", "validation_split"))
+
 
     else:
         model = build_rnn(Xt_r,
@@ -298,14 +313,14 @@ def run_model_training_from_config(config, feature_file=None, label_file=None, c
                           loss_f=model_settings[0]['loss_f'],
                           dropout_rate=model_settings[0]['dropout'])
 
-    verbose = 0
-    if model_settings[0]['model_n'] == 0:
-        verbose = 1
-    history = fit_rnn(Xt_r, Yt_r, model, verbose=verbose,
-                      max_epochs=config.getint("model_training", "max_epochs"),
-                      patience=config.getint("model_training", "patience"),
-                      batch_size=config.getint("model_training", "batch_size"),
-                      validation_split=config.getfloat("model_training", "validation_split"))
+        verbose = 0
+        if model_settings[0]['model_n'] == 0:
+            verbose = 1
+        history = fit_rnn(Xt_r, Yt_r, model, verbose=verbose,
+                          max_epochs=config.getint("model_training", "max_epochs"),
+                          patience=config.getint("model_training", "patience"),
+                          batch_size=config.getint("model_training", "batch_size"),
+                          validation_split=config.getfloat("model_training", "validation_split"))
     try:
         os.mkdir(model_wd)
     except FileExistsError:

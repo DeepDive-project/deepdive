@@ -200,7 +200,10 @@ def build_rnn_model(model_config: rnn_config,
     ali_input = keras.Input(shape=(model_config.n_bins, model_config.n_features,),
                             name="input_tbl")
     print("SHAPE ali_input", ali_input.shape)
-    # inputs = [ali_input]
+    present_div_input = keras.Input(shape=(1,),
+                            name="present_div")
+
+    inputs = [ali_input, present_div_input]
 
     # lstm on sequence data
 
@@ -239,7 +242,7 @@ def build_rnn_model(model_config: rnn_config,
     # output: diversity per bin
     site_rate_1 = layers.Dense(model_config.nn_dense[1], activation='swish', name="site_rate_hidden")
     if len(model_config.nn_dense) > 2:
-        print("Warning: only tywo dense layers are currently supported!")
+        print("Warning: only two dense layers are currently supported!")
     site_rate_1_list = [site_rate_1(i) for i in site_sp_dnn_1_list]
     rate_pred_nn = layers.Dense(1, activation=model_config.output_f, name="per_site_rate_split")
     rate_pred_list = [rate_pred_nn(i) for i in site_rate_1_list]
@@ -249,7 +252,7 @@ def build_rnn_model(model_config: rnn_config,
         rate_pred = layers.Flatten(name="per_site_rate")(layers.concatenate(rate_pred_list))
     else:
         def mean_rescale(x):
-            return x / x[0]
+            return x / x[0] * present_div_input
             # return x / tf.reduce_mean(x, axis=1, keepdims=True)
 
         generic_utils.get_custom_objects().update({'mean_rescale': Activation(mean_rescale)})
@@ -264,7 +267,7 @@ def build_rnn_model(model_config: rnn_config,
 
     # Instantiate an end-to-end model predicting both rates and substitution model
     model = keras.Model(
-        inputs=ali_input,
+        inputs=inputs,
         outputs=outputs,
     )
 
