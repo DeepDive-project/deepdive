@@ -287,7 +287,8 @@ def run_model_training_from_config(config, feature_file=None, label_file=None, c
         Yt_r = np_to_tf(Yt_r)
 
     if prm_sharing:
-        model_config = rnn_config(n_features=Xt_r.shape[2], n_bins=Xt_r.shape[1], mean_normalize_rates=False)
+        model_config = rnn_config(n_features=Xt_r.shape[2], n_bins=Xt_r.shape[1],
+                                  mean_normalize_rates=False, layers_normalization=True)
         model = build_rnn_model(model_config, print_summary=True)
 
     else:
@@ -434,8 +435,10 @@ def predict_from_config(config, return_features=False):
     else:
         return pred_list
 
-def predict_testset_from_config(config, test_feature_file, test_label_file):
-    loaded_models = load_models(model_wd=os.path.join(config["general"]["wd"], config["empirical_predictions"]["model_folder"]))
+def predict_testset_from_config(config, test_feature_file, test_label_file, model_tag="rnn_model"):
+    loaded_models = load_models(model_wd=os.path.join(config["general"]["wd"],
+                                                      config["empirical_predictions"]["model_folder"]),
+                                model_name_tag=model_tag)
 
     features = np.load(test_feature_file)
     labels = np.load(test_label_file)
