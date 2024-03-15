@@ -253,10 +253,10 @@ def build_rnn_model(model_config: rnn_config,
     else:
         def mean_rescale(x):
             print(x.shape, present_div_input.shape)
-            # return tf.einsum('ix, iy -> ix', x / x[0], present_div_input)
+            return tf.einsum('ix, i -> ix', x, x[:, 0])
             # return tf.keras.layers.Multiply()(x / x[0], present_div_input)
             # return x / tf.reduce_mean(x, axis=1, keepdims=True)
-            return x / x[:, 0] # * present_div_input
+            # return x / x[:, 0] # * present_div_input
 
         generic_utils.get_custom_objects().update({'mean_rescale': Activation(mean_rescale)})
         rate_pred_tmp = layers.Flatten(name="per_site_rate_tmp")(layers.concatenate(rate_pred_list))
