@@ -199,9 +199,9 @@ def build_rnn_model(model_config: rnn_config,
                     ):
     ali_input = keras.Input(shape=(model_config.n_bins, model_config.n_features,),
                             name="input_tbl")
-    print("SHAPE ali_input", ali_input.shape)
-    present_div_input = keras.Input(shape=(1,),
+    present_div_input = keras.Input(shape=(model_config.n_bins,),
                             name="present_div")
+    print("SHAPE input", ali_input.shape, present_div_input.shape)
 
     inputs = [ali_input, present_div_input]
 
@@ -252,12 +252,17 @@ def build_rnn_model(model_config: rnn_config,
         rate_pred = layers.Flatten(name="per_site_rate")(layers.concatenate(rate_pred_list))
     else:
         def mean_rescale(x):
-            return x / x[0] * present_div_input
+            print(x.shape, present_div_input.shape)
+            # return tf.einsum('ix, iy -> ix', x / x[0], present_div_input)
+            # return tf.keras.layers.Multiply()(x / x[0], present_div_input)
             # return x / tf.reduce_mean(x, axis=1, keepdims=True)
+            return x / x[:, 0] # * present_div_input
 
         generic_utils.get_custom_objects().update({'mean_rescale': Activation(mean_rescale)})
         rate_pred_tmp = layers.Flatten(name="per_site_rate_tmp")(layers.concatenate(rate_pred_list))
+        mul = layers.ReLU(name='layer_norm_input_two')(present_div_input)
         rate_pred = layers.Activation(mean_rescale, name='per_site_rate')(rate_pred_tmp)
+        rate_pred = rate_pred * mul
 
     outputs.append(rate_pred)
     loss['per_site_rate'] = keras.losses.MeanSquaredError()

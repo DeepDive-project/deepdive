@@ -291,9 +291,11 @@ def run_model_training_from_config(config, feature_file=None, label_file=None, c
                                   mean_normalize_rates=True, layers_normalization=False)
         model = build_rnn_model(model_config, print_summary=True)
 
+        present_div_vec = np.einsum('i, ib -> ib', Xt_r[:,0,-1] , np.ones((Xt_r.shape[0], Xt_r.shape[1])))
+
         dict_inputs = {
             "input_tbl": np_to_tf(Xt_r),
-            "present_div": np_to_tf(Xt_r[:,0,-1])
+            "present_div": np_to_tf(present_div_vec)
         }
 
         verbose = 0
