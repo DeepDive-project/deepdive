@@ -431,11 +431,21 @@ def run_test_from_config(abs_path,
     return mean_prediction, nmean_prediction, Ytest_r
 
 
-def predict_from_config(config, return_features=False):
+def predict_from_config(config, return_features=False, conditional=False):
     dd_input = os.path.join(config["general"]["wd"], config["empirical_predictions"]["empirical_input_file"])
     loaded_models = load_models(model_wd=os.path.join(config["general"]["wd"], config["empirical_predictions"]["model_folder"]))
 
     features = parse_dd_input(dd_input, present_diversity=config.getint("empirical_predictions", "present_diversity"))
+
+    if conditional:
+        present_div_vec = np.einsum('i, ib -> ib', features[:,0,-1] ,
+                                    np.ones((features.shape[0], features.shape[1])))
+
+        dict_inputs = {
+            "input_tbl": np_to_tf(features),
+            "present_div": np_to_tf(present_div_vec)
+        }
+        features = dict_inputs
 
     pred_list = []
     for model_i in range(len(loaded_models)):
@@ -452,14 +462,25 @@ def predict_from_config(config, return_features=False):
     else:
         return pred_list
 
-def predict_testset_from_config(config, test_feature_file, test_label_file, model_tag="rnn_model"):
+def predict_testset_from_config(config, test_feature_file, test_label_file, model_tag="rnn_model", conditional=False):
     loaded_models = load_models(model_wd=os.path.join(config["general"]["wd"],
                                                       config["empirical_predictions"]["model_folder"]),
                                 model_name_tag=model_tag)
 
+
     features = np.load(test_feature_file)
     labels = np.load(test_label_file)
     labels = normalize_labels(labels, rescaler=1, log=True)
+
+    if conditional:
+        present_div_vec = np.einsum('i, ib -> ib', features[:,0,-1] ,
+                                    np.ones((features.shape[0], features.shape[1])))
+
+        dict_inputs = {
+            "input_tbl": np_to_tf(features),
+            "present_div": np_to_tf(present_div_vec)
+        }
+        features = dict_inputs
 
     pred_list = []
     for model_i in range(len(loaded_models)):

@@ -201,7 +201,7 @@ def build_rnn_model(model_config: rnn_config,
                             name="input_tbl")
     present_div_input = keras.Input(shape=(model_config.n_bins,),
                             name="present_div")
-    print("SHAPE input", ali_input.shape, present_div_input.shape)
+    # print("SHAPE input", ali_input.shape, present_div_input.shape)
 
     inputs = [ali_input, present_div_input]
 
@@ -252,11 +252,9 @@ def build_rnn_model(model_config: rnn_config,
         rate_pred = layers.Flatten(name="per_site_rate")(layers.concatenate(rate_pred_list))
     else:
         def mean_rescale(x):
-            print(x.shape, present_div_input.shape)
+            # print(x.shape, present_div_input.shape)
             return tf.einsum('ix, i -> ix', x, x[:, 0])
-            # return tf.keras.layers.Multiply()(x / x[0], present_div_input)
             # return x / tf.reduce_mean(x, axis=1, keepdims=True)
-            # return x / x[:, 0] # * present_div_input
 
         generic_utils.get_custom_objects().update({'mean_rescale': Activation(mean_rescale)})
         rate_pred_tmp = layers.Flatten(name="per_site_rate_tmp")(layers.concatenate(rate_pred_list))
