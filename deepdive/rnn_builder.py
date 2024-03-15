@@ -264,9 +264,10 @@ def build_rnn_model(model_config: rnn_config,
         rate_pred = layers.Activation(mean_rescale, name='per_site_rate')(rate_pred_tmp)
         rate_pred = rate_pred * mul
 
-    outputs.append(rate_pred)
-    loss['per_site_rate'] = keras.losses.MeanSquaredError()
-    loss_w["per_site_rate"] = 1
+    outputs = rate_pred
+    loss = keras.losses.MeanSquaredError()
+    # loss['per_site_rate'] = keras.losses.MeanSquaredError()
+    # loss_w["per_site_rate"] = 1
 
 
 
