@@ -437,23 +437,14 @@ def predict_from_config(config, return_features=False, conditional=False):
 
     features = parse_dd_input(dd_input, present_diversity=config.getint("empirical_predictions", "present_diversity"))
 
-    if conditional:
-        present_div_vec = np.einsum('i, ib -> ib', features[:,0,-1] ,
-                                    np.ones((features.shape[0], features.shape[1])))
-
-        dict_inputs = {
-            "input_tbl": np_to_tf(features),
-            "present_div": np_to_tf(present_div_vec)
-        }
-        features = dict_inputs
-
     pred_list = []
     for model_i in range(len(loaded_models)):
         model = loaded_models[model_i]['model']
         feature_rescaler = loaded_models[model_i]['feature_rescaler']
 
         pred_div = predict(features, model, feature_rescaler,
-                           n_predictions=config.getint("empirical_predictions", "n_predictions"), dropout=False)
+                           n_predictions=config.getint("empirical_predictions", "n_predictions"), dropout=False,
+                           conditional=conditional)
 
         pred_list.append(pred_div)
 
@@ -472,23 +463,14 @@ def predict_testset_from_config(config, test_feature_file, test_label_file, mode
     labels = np.load(test_label_file)
     labels = normalize_labels(labels, rescaler=1, log=True)
 
-    if conditional:
-        present_div_vec = np.einsum('i, ib -> ib', features[:,0,-1] ,
-                                    np.ones((features.shape[0], features.shape[1])))
-
-        dict_inputs = {
-            "input_tbl": np_to_tf(features),
-            "present_div": np_to_tf(present_div_vec)
-        }
-        features = dict_inputs
-
     pred_list = []
     for model_i in range(len(loaded_models)):
         model = loaded_models[model_i]['model']
         feature_rescaler = loaded_models[model_i]['feature_rescaler']
 
         pred_div = predict(features, model, feature_rescaler,
-                           n_predictions=config.getint("empirical_predictions", "n_predictions"), dropout=False)
+                           n_predictions=config.getint("empirical_predictions", "n_predictions"), dropout=False,
+                           conditional=conditional)
 
         pred_list.append(pred_div)
 
