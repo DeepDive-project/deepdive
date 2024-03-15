@@ -260,7 +260,7 @@ def predict(features,
     if len(features.shape) == 2:
         Ytest_pred = np.array([np.array(model(dd_input, training=dropout)).flatten() for _ in range(n_predictions)])
     else:
-        Ytest_pred = np.array([np.array(model(dd_input, training=dropout)).reshape(dd_input.shape[:2]) for _ in range(n_predictions)])
+        Ytest_pred = np.array([np.array(model(dd_input, training=dropout)).reshape(features.shape[:2]) for _ in range(n_predictions)])
         # shape = (n_predictions, n_instances, n_time_bins)
     return Ytest_pred
 
