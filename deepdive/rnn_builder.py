@@ -252,14 +252,19 @@ def build_rnn_model(model_config: rnn_config,
         rate_pred = layers.Flatten(name="per_site_rate")(layers.concatenate(rate_pred_list))
     else:
         def mean_rescale(x):
-            # print(x.shape, present_div_input.shape)
+            print(x.shape, x[:, 0].shape, present_div_input.shape)
+            print(x, x[:,0])
+
             return tf.einsum('ix, i -> ix', x, x[:, 0])
             # return x / tf.reduce_mean(x, axis=1, keepdims=True)
 
         generic_utils.get_custom_objects().update({'mean_rescale': Activation(mean_rescale)})
         rate_pred_tmp = layers.Flatten(name="per_site_rate_tmp")(layers.concatenate(rate_pred_list))
         mul = layers.ReLU(name='layer_norm_input_two')(present_div_input)
-        rate_pred = layers.Activation(mean_rescale, name='per_site_rate')(rate_pred_tmp)
+
+        rate_pred = tf.keras.layers.Multiply()([rate_pred_tmp, 1 / rate_pred_tmp[:, 0]])
+
+        # rate_pred = layers.Activation(mean_rescale, name='per_site_rate')(rate_pred_tmp)
         rate_pred = rate_pred * mul
 
     outputs = rate_pred
