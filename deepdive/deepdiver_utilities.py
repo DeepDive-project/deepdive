@@ -278,7 +278,9 @@ def run_model_training_from_config(config, feature_file=None, label_file=None, c
     out_name = infile_name + model_settings[0]['model_name']
 
     # feature_rescaler() is a function to rescale the features the same way as done in the training set
-    Xt_r, feature_rescaler = normalize_features(Xt, log_last=config.get("general", "include_present_diversity"))
+    if config.get("general", "include_present_diversity") == 'TRUE':
+        log_last=True
+    Xt_r, feature_rescaler = normalize_features(Xt, log_last=log_last)
     Yt_r = normalize_labels(Yt, rescaler=1, log=True)
 
     if convert_to_tf:
@@ -292,6 +294,10 @@ def run_model_training_from_config(config, feature_file=None, label_file=None, c
         model = build_rnn_model(model_config, print_summary=True)
 
         present_div_vec = np.einsum('i, ib -> ib', Xt_r[:,0,-1] , np.ones((Xt_r.shape[0], Xt_r.shape[1])))
+        # print("Xt", Xt, Xt.shape)
+        # print("Xt_r", Xt_r)
+        # print("present_div_vec", present_div_vec)
+        # print(bvcx)
 
         dict_inputs = {
             "input_tbl": np_to_tf(Xt_r),

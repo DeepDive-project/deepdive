@@ -148,7 +148,7 @@ def normalize_features(Xt, log_last=False):
         den1d[-1] = 1
         def feature_rescaler(x):
             x_r = x / den1d
-            x_r[-1] = np.log(x_r[-1] + 1)
+            x_r[:,0,-1] = np.log(x_r[:,0,-1] + 1)
             return x_r
     else:
         def feature_rescaler(x):
