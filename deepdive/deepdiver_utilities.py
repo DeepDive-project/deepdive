@@ -280,7 +280,10 @@ def run_model_training_from_config(config, feature_file=None, label_file=None, c
     # feature_rescaler() is a function to rescale the features the same way as done in the training set
     if config.get("general", "include_present_diversity") == 'TRUE':
         log_last=True
-    Xt_r, feature_rescaler = normalize_features(Xt, log_last=log_last)
+    # Xt_r, feature_rescaler = normalize_features(Xt, log_last=log_last)
+    feature_rescaler = FeatureRescaler(Xt, log_last=log_last)
+    Xt_r = feature_rescaler.feature_rescale(Xt)
+
     Yt_r = normalize_labels(Yt, rescaler=1, log=True)
 
     if convert_to_tf:

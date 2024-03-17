@@ -9,7 +9,7 @@ import pandas as pd
 import tensorflow as tf
 import scipy.stats
 
-from .feature_extraction import extract_sim_features
+from .feature_extraction import extract_sim_features, FeatureRescaler
 
 def get_rnd_gen(seed=None):
     return np.random.default_rng(seed)
@@ -225,7 +225,7 @@ def prep_dd_input(wd,
 
 def predict(features,
             model,
-            feature_rescaler=None,
+            feature_rescaler: FeatureRescaler=None,
             drop_modern_diversity=False,
             n_predictions=1,
             dropout=True,
@@ -233,7 +233,11 @@ def predict(features,
             ):
     # next: rescale features using rescaler and run predictions with Dropout
     if feature_rescaler is not None:
-        features_rescaled = feature_rescaler(features)  # FROM RECENT TO OLD
+        try:
+            # for back compatibility
+            features_rescaled = feature_rescaler(features)  # FROM RECENT TO OLD
+        except:
+            features_rescaled = feature_rescaler.feature_rescale(features)
     else:
         features_rescaled = features
     if len(features.shape) == 2:

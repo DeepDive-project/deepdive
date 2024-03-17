@@ -3,6 +3,32 @@ import numpy as np
 import pandas as pd
 
 
+class FeatureRescaler(object):
+    def __init__(self, Xt, log_last=False):
+        den2d = np.mean(Xt, axis=1)
+        den1d = np.mean(den2d, axis=0)
+        if len(np.where(den1d == 0)[0]):
+            print("Warning - features %s is 0!" % np.where(den1d == 0))
+            den1d[den1d == 0] = 1  # prevent divide-by-0 in case a features is always zero
+        if log_last:
+            # present diversity feature
+            den1d[-1] = 1
+        self.log_last = log_last
+        self.den1d = den1d
+
+    def feature_rescale(self, features):
+
+        if len(features.shape) == 2:
+            features = features.reshape((1, features.shape[0], features.shape[1]))
+
+        x_r = features / self.den1d
+
+        if self.log_last:
+            x_r[:, 0, -1] = np.log(x_r[:, 0, -1] + 1)
+
+        return x_r
+
+
 def calculate_global_trajectory(species_space_time):
     # a 3D array with species, areas and time bins.
     temp = np.einsum('sat -> st', species_space_time)  # sum over areas
@@ -136,6 +162,7 @@ def extract_sim_features(sim, include_present_div=False):
     return feat
 
 
+
 def normalize_features(Xt, log_last=False):
     den2d = np.mean(Xt, axis=1)
     den1d = np.mean(den2d, axis=0)
@@ -148,7 +175,7 @@ def normalize_features(Xt, log_last=False):
         den1d[-1] = 1
         def feature_rescaler(x):
             x_r = x / den1d
-            x_r[:,0,-1] = np.log(x_r[:,0,-1] + 1)
+            x_r[-1] = np.log(x_r[-1] + 1)
             return x_r
     else:
         def feature_rescaler(x):
