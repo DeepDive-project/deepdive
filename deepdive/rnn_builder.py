@@ -154,7 +154,7 @@ def load_models(model_wd, model_name_tag="rnn_model"):
     for model_i in model_list:
         filename = model_i.split(sep="rnn_model")[1]
         print("\nLoading model:", filename)
-        history, model, feature_rescaler = gload_rnn_model(model_wd, filename=filename)
+        history, model, feature_rescaler = load_rnn_model(model_wd, filename=filename)
         models.append({
             'model_name' : filename,
             'history' : history,
