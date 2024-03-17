@@ -92,7 +92,7 @@ def load_rnn_model(wd, filename=""):
         with open(os.path.join(wd, "rnn_history" + filename + ".pkl"), 'rb') as h:
             history = pkl.load(h)
         with open(os.path.join(wd, "rnn_rescaler" + filename + ".pkl"), 'rb') as h:
-            den1d = pkl.load(h)
+            feature_rescaler = pkl.load(h)
     except:
         import pickle
         with open(os.path.join(wd, "rnn_history" + filename + ".pkl"), 'rb') as h:
@@ -100,8 +100,8 @@ def load_rnn_model(wd, filename=""):
         with open(os.path.join(wd, "rnn_rescaler" + filename + ".pkl"), 'rb') as h:
             den1d = pickle.load(h)
 
-    def feature_rescaler(x):
-        return x * den1d
+    # def feature_rescaler(x):
+    #     return x * den1d
     model = tf.keras.models.load_model(os.path.join(wd, 'rnn_model' + filename))
     return history, model, feature_rescaler
 
@@ -154,7 +154,7 @@ def load_models(model_wd, model_name_tag="rnn_model"):
     for model_i in model_list:
         filename = model_i.split(sep="rnn_model")[1]
         print("\nLoading model:", filename)
-        history, model, feature_rescaler = load_rnn_model(model_wd, filename=filename)
+        history, model, feature_rescaler = gload_rnn_model(model_wd, filename=filename)
         models.append({
             'model_name' : filename,
             'history' : history,
