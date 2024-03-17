@@ -233,11 +233,11 @@ def predict(features,
             ):
     # next: rescale features using rescaler and run predictions with Dropout
     if feature_rescaler is not None:
-        try:
-            # for back compatibility
-            features_rescaled = feature_rescaler(features)  # FROM RECENT TO OLD
-        except:
-            features_rescaled = feature_rescaler.feature_rescale(features)
+        # try:
+        #     for back compatibility
+        # features_rescaled = feature_rescaler(features)  # FROM RECENT TO OLD
+        # except:
+        features_rescaled = feature_rescaler.feature_rescale(features)
     else:
         features_rescaled = features
     if len(features.shape) == 2:
