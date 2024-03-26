@@ -450,7 +450,7 @@ def predict_from_config(config, return_features=False, calibrated=False):
     dd_input = os.path.join(config["general"]["wd"], config["empirical_predictions"]["empirical_input_file"])
     loaded_models = load_models(model_wd=os.path.join(config["general"]["wd"], config["empirical_predictions"]["model_folder"]))
 
-    pres_div = config["predict_from_config"]["present_diversity"]
+    pres_div = config["empirical_predictions"]["present_diversity"]
     if pres_div == "NA":
         features = parse_dd_input(dd_input)
     else:
