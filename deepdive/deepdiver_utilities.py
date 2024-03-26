@@ -245,11 +245,15 @@ def get_model_settings_from_config(config):
 
     list_settings = []
     model_n = 0
+    if config["model_training"]["model_tag"] != "NA":
+        model_tag = ""
+    else:
+        model_tag = config["model_training"]["model_tag"]
     for l in lstm_nodes:
         for d in dense_nodes:
             for f in loss_f:
                 for o in dropout_frac:
-                    out = 'lstm%s_d%s_o%s_%s' % (len(l), len(d), o, f)
+                    out = 'lstm%s_d%s_o%s_%s_%s' % (len(l), len(d), o, f, model_tag)
                     d_item = {
                         'model_n': model_n,
                         'lstm_nodes': l,
