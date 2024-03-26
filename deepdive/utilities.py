@@ -237,7 +237,16 @@ def predict(features,
         #     for back compatibility
         # features_rescaled = feature_rescaler(features)  # FROM RECENT TO OLD
         # except:
-        features_rescaled = feature_rescaler.feature_rescale(features)
+        try:
+            features_rescaled = feature_rescaler.feature_rescale(features)
+        except ValueError:
+            features_tmp = features + 0
+            if len(features.shape) == 2:
+                features_tmp = features_tmp[:, 0:-1]
+            elif len(features.shape) == 3:
+                features_tmp = features_tmp[:, :, 0:-1]
+            features_rescaled = feature_rescaler.feature_rescale(features_tmp)
+
     else:
         features_rescaled = features
     if len(features.shape) == 2:
