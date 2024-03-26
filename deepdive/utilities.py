@@ -229,7 +229,7 @@ def predict(features,
             drop_modern_diversity=False,
             n_predictions=1,
             dropout=True,
-            conditional=False
+            calibrated=False
             ):
     # next: rescale features using rescaler and run predictions with Dropout
     if feature_rescaler is not None:
@@ -250,7 +250,7 @@ def predict(features,
     if drop_modern_diversity:
         # leave only low res data!
         dd_input = dd_input[:, :, :-1]
-    if conditional:
+    if calibrated:
         present_div_vec = np.einsum('i, ib -> ib', dd_input[:, 0, -1],
                                     np.ones((dd_input.shape[0], dd_input.shape[1])))
 

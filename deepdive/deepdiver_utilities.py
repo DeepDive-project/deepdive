@@ -446,7 +446,7 @@ def run_test_from_config(abs_path,
     return mean_prediction, nmean_prediction, Ytest_r
 
 
-def predict_from_config(config, return_features=False, conditional=False):
+def predict_from_config(config, return_features=False, calibrated=False):
     dd_input = os.path.join(config["general"]["wd"], config["empirical_predictions"]["empirical_input_file"])
     loaded_models = load_models(model_wd=os.path.join(config["general"]["wd"], config["empirical_predictions"]["model_folder"]))
 
@@ -459,7 +459,7 @@ def predict_from_config(config, return_features=False, conditional=False):
 
         pred_div = predict(features, model, feature_rescaler,
                            n_predictions=config.getint("empirical_predictions", "n_predictions"), dropout=False,
-                           conditional=conditional)
+                           calibrated=calibrated)
 
         pred_list.append(pred_div)
 
@@ -468,7 +468,7 @@ def predict_from_config(config, return_features=False, conditional=False):
     else:
         return pred_list
 
-def predict_testset_from_config(config, test_feature_file, test_label_file, model_tag="rnn_model", conditional=False):
+def predict_testset_from_config(config, test_feature_file, test_label_file, model_tag="rnn_model", calibrated=False):
     loaded_models = load_models(model_wd=os.path.join(config["general"]["wd"],
                                                       config["empirical_predictions"]["model_folder"]),
                                 model_name_tag=model_tag)
@@ -485,7 +485,7 @@ def predict_testset_from_config(config, test_feature_file, test_label_file, mode
 
         pred_div = predict(features, model, feature_rescaler,
                            n_predictions=config.getint("empirical_predictions", "n_predictions"), dropout=False,
-                           conditional=conditional)
+                           calibrated=calibrated)
 
         pred_list.append(pred_div)
 
