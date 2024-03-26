@@ -450,8 +450,10 @@ def predict_from_config(config, return_features=False, calibrated=False):
     dd_input = os.path.join(config["general"]["wd"], config["empirical_predictions"]["empirical_input_file"])
     loaded_models = load_models(model_wd=os.path.join(config["general"]["wd"], config["empirical_predictions"]["model_folder"]))
 
-    features = parse_dd_input(dd_input, present_diversity=config.getint("empirical_predictions", "present_diversity"))
-
+    try:
+        features = parse_dd_input(dd_input, present_diversity=config.getint("predict_from_config", "present_diversity"))
+    except configparser.NoOptionError:
+        features = parse_dd_input(dd_input)
     pred_list = []
     for model_i in range(len(loaded_models)):
         model = loaded_models[model_i]['model']
