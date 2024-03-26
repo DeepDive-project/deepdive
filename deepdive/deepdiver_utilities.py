@@ -281,7 +281,7 @@ def run_model_training_from_config(config, feature_file=None, label_file=None, c
     calibrate_output = False
     if config.get("general", "include_present_diversity") == 'TRUE':
         include_present_div=True
-        if config.get("general", "calibrate_to_present_diversity") == "TRUE":
+        if config.get("general", "calibrate_diversity") == "TRUE":
             calibrate_output = True
     else:
         include_present_div=False
