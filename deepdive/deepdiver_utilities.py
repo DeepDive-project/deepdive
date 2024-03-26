@@ -245,7 +245,7 @@ def get_model_settings_from_config(config):
 
     list_settings = []
     model_n = 0
-    if config["model_training"]["model_tag"] != "NA":
+    if config["model_training"]["model_tag"] == "NA":
         model_tag = ""
     else:
         model_tag = config["model_training"]["model_tag"]
@@ -279,7 +279,7 @@ def run_model_training_from_config(config, feature_file=None, label_file=None, c
     Xt = np.load(os.path.join(sims_path, feature_file))
     Yt = np.load(os.path.join(sims_path, label_file))
     infile_name = os.path.basename(feature_file).split('.npy')[0]
-    out_name = infile_name + model_settings[0]['model_name']
+    out_name = infile_name + "_" + model_settings[0]['model_name']
 
     # feature_rescaler() is a function to rescale the features the same way as done in the training set
     calibrate_output = False
