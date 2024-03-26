@@ -167,9 +167,9 @@ def load_models(model_wd, model_name_tag="rnn_model"):
 class rnn_config():
     def __init__(self,
                  lstm_nodes: list = None,
-                 nn_dense: list = None,
+                 dense_nodes: list = None,
                  pool_per_bin = True,
-                 mean_normalize_rates = True,
+                 calibrate_curve = True,
                  layers_normalization = False,
                  output_f: list = None,
                  n_features: int = None,
@@ -178,21 +178,99 @@ class rnn_config():
 
         if lstm_nodes is None:
             lstm_nodes = [128, 64]
-        if nn_dense is None:
-            nn_dense = [64, 32]
+        if dense_nodes is None:
+            dense_nodes = [64, 32]
         if output_f is None:
             output_f = 'softplus'
 
         self.lstm_nodes = lstm_nodes
-        self.nn_dense = nn_dense
-        self.mean_normalize_rates = mean_normalize_rates
+        self.dense_nodes = dense_nodes
+        self.calibrate_curve = calibrate_curve
         self.layers_norm = layers_normalization
         self.output_f = output_f
         self.n_features = n_features
         self.n_bins = n_bins
         self.pool_per_bin = pool_per_bin
 
+
 def build_rnn_model(model_config: rnn_config,
+                    optimizer=keras.optimizers.RMSprop(1e-3),
+                    print_summary=False
+                    ):
+    ali_input = keras.Input(shape=(model_config.n_bins, model_config.n_features,),
+                            name="input_tbl")
+    present_div_input = keras.Input(shape=(model_config.n_bins,),
+                            name="present_div")
+    # print("SHAPE input", ali_input.shape, present_div_input.shape)
+
+    inputs = [ali_input, present_div_input]
+
+    if len(model_config.lstm_nodes) == 0:
+        model_config.lstm_nodes = [0]
+    if len(model_config.dense_nodes) == 0:
+        model_config.dense_nodes = [0]
+
+    if model_config.lstm_nodes[0] > 0:
+        rnn_out = layers.Bidirectional(
+            layers.LSTM(model_config.lstm_nodes[0], return_sequences=True, activation='tanh',
+                        recurrent_activation='sigmoid', name="sequence_LSTM_1"))(ali_input)
+        if model_config.layers_norm:
+            rnn_out = layers.LayerNormalization(name='layer_norm_rnn1')(rnn_out)
+
+        # add other LSTM layers
+        for i_lstm in range(1, len(model_config.lstm_nodes)):
+            rnn_out = layers.Bidirectional(
+                layers.LSTM(model_config.lstm_nodes[1], return_sequences=True, activation='tanh',
+                            recurrent_activation='sigmoid', name="sequence_LSTM_2"))(rnn_out)
+            if model_config.layers_norm:
+                rnn_out = layers.LayerNormalization(name='layer_norm_rnn2')(rnn_out)
+    else:
+        # skip LSTM
+        rnn_out = ali_input
+
+
+    #--- block w shared prms
+    if model_config.dense_nodes[0] > 0:
+        dnn_out = layers.Dense(model_config.dense_nodes[0], activation='swish', name="dense_NN")(rnn_out)
+
+        for i_dd in range(1, len(model_config.dense_nodes)):
+            dnn_out = layers.Dense(model_config.dense_nodes[1], activation='swish', name="site_rate_hidden")(dnn_out)
+    else:
+        dnn_out = rnn_out
+    dnn_out = layers.Dense(1, activation=model_config.output_f, name="per_site_rate_split")(dnn_out)
+
+    dnn_out = layers.Flatten(name="per_site_rate")(dnn_out)
+
+    if model_config.calibrate_curve:
+        rate_pred_tmp = layers.Flatten(name="per_site_rate_tmp")(dnn_out)
+        mul = layers.ReLU(name='layer_norm_input_two')(present_div_input)
+        rate_pred = tf.keras.layers.Multiply()([rate_pred_tmp, 1 / rate_pred_tmp[:, 0]])
+        rate_pred = rate_pred * mul
+    else:
+        rate_pred = dnn_out
+
+    outputs = rate_pred
+    loss = keras.losses.MeanSquaredError()
+    model = keras.Model(
+        inputs=inputs,
+        outputs=outputs,
+    )
+
+    model.compile(
+        optimizer=optimizer,
+        loss=loss,
+    )
+
+    if print_summary:
+        print(model.summary())
+
+    print("N. model parameters:", model.count_params())
+
+    return model
+
+
+
+def build_rnn_model_(model_config: rnn_config,
                     optimizer=keras.optimizers.RMSprop(1e-3),
                     print_summary=False
                     ):
@@ -223,7 +301,7 @@ def build_rnn_model(model_config: rnn_config,
 
 
     #--- block w shared prms
-    site_dnn_1 = layers.Dense(model_config.nn_dense[0], activation='swish', name="site_NN")
+    site_dnn_1 = layers.Dense(model_config.dense_nodes[0], activation='swish', name="site_NN")
 
     print("Creating blocks...")
     comb_outputs = [layers.Flatten()(i) for i in tf.split(ali_rnn_2n, model_config.n_bins, axis=1)]
@@ -239,8 +317,8 @@ def build_rnn_model(model_config: rnn_config,
     loss = {}
     loss_w = {}
     # output: diversity per bin
-    site_rate_1 = layers.Dense(model_config.nn_dense[1], activation='swish', name="site_rate_hidden")
-    if len(model_config.nn_dense) > 2:
+    site_rate_1 = layers.Dense(model_config.dense_nodes[1], activation='swish', name="site_rate_hidden")
+    if len(model_config.dense_nodes) > 2:
         print("Warning: only two dense layers are currently supported!")
     site_rate_1_list = [site_rate_1(i) for i in site_sp_dnn_1_list]
     rate_pred_nn = layers.Dense(1, activation=model_config.output_f, name="per_site_rate_split")
@@ -250,14 +328,14 @@ def build_rnn_model(model_config: rnn_config,
     if not model_config.mean_normalize_rates:
         rate_pred = layers.Flatten(name="per_site_rate")(layers.concatenate(rate_pred_list))
     else:
-        def mean_rescale(x):
-            print(x.shape, x[:, 0].shape, present_div_input.shape)
-            print(x, x[:,0])
-
-            return tf.einsum('ix, i -> ix', x, x[:, 0])
-            # return x / tf.reduce_mean(x, axis=1, keepdims=True)
-
-        generic_utils.get_custom_objects().update({'mean_rescale': Activation(mean_rescale)})
+        # def mean_rescale(x):
+        #     print(x.shape, x[:, 0].shape, present_div_input.shape)
+        #     print(x, x[:,0])
+        #
+        #     return tf.einsum('ix, i -> ix', x, x[:, 0])
+        #     # return x / tf.reduce_mean(x, axis=1, keepdims=True)
+        #
+        # generic_utils.get_custom_objects().update({'mean_rescale': Activation(mean_rescale)})
         rate_pred_tmp = layers.Flatten(name="per_site_rate_tmp")(layers.concatenate(rate_pred_list))
         mul = layers.ReLU(name='layer_norm_input_two')(present_div_input)
 
