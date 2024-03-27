@@ -453,9 +453,11 @@ def run_test_from_config(abs_path,
     return mean_prediction, nmean_prediction, Ytest_r
 
 
-def predict_from_config(config, return_features=False, calibrated=False):
+def predict_from_config(config, return_features=False, model_tag="rnn_model", calibrated=False):
     dd_input = os.path.join(config["general"]["wd"], config["empirical_predictions"]["empirical_input_file"])
-    loaded_models = load_models(model_wd=os.path.join(config["general"]["wd"], config["empirical_predictions"]["model_folder"]))
+    loaded_models = load_models(model_wd=os.path.join(config["general"]["wd"],
+                                                      config["empirical_predictions"]["model_folder"]),
+                                model_name_tag=model_tag)
 
     pres_div = config["empirical_predictions"]["present_diversity"]
     if pres_div == "NA":
