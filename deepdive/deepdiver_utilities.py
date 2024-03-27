@@ -245,10 +245,13 @@ def get_model_settings_from_config(config):
 
     list_settings = []
     model_n = 0
-    if config["model_training"]["model_tag"] == "NA":
+    try:
+        if config["model_training"]["model_tag"] == "NA":
+            model_tag = ""
+        else:
+            model_tag = config["model_training"]["model_tag"]
+    except KeyError:
         model_tag = ""
-    else:
-        model_tag = config["model_training"]["model_tag"]
     for l in lstm_nodes:
         for d in dense_nodes:
             for f in loss_f:
