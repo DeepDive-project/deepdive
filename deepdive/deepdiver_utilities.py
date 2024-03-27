@@ -466,10 +466,12 @@ def predict_from_config(config, return_features=False, calibrated=False):
     for model_i in range(len(loaded_models)):
         model = loaded_models[model_i]['model']
         feature_rescaler = loaded_models[model_i]['feature_rescaler']
-
-        pred_div = predict(features, model, feature_rescaler,
-                           n_predictions=config.getint("empirical_predictions", "n_predictions"), dropout=False,
-                           calibrated=calibrated)
+        try:
+            pred_div = predict(features, model, feature_rescaler,
+                               n_predictions=config.getint("empirical_predictions", "n_predictions"), dropout=False,
+                               calibrated=calibrated)
+        except:
+            pass
 
         pred_list.append(pred_div)
 
