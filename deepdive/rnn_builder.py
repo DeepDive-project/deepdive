@@ -148,11 +148,11 @@ def get_avg_mse(Ytrue, Ypred):
     return res
 
 
-def load_models(model_wd, model_name_tag="rnn_model"):
-    model_list = glob.glob(os.path.join(model_wd, "*%s*" % model_name_tag))
+def load_models(model_wd, model_dir_id="rnn_model", model_name_tag=""):
+    model_list = glob.glob(os.path.join(model_wd, "%s*%s*" % (model_dir_id, model_name_tag)))
     models = []
     for model_i in model_list:
-        filename = model_i.split(sep="rnn_model")[1]
+        filename = model_i.split(sep=model_dir_id)[1]
         print("\nLoading model:", filename)
         history, model, feature_rescaler = load_rnn_model(model_wd, filename=filename)
         models.append({

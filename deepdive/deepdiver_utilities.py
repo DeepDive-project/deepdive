@@ -453,11 +453,12 @@ def run_test_from_config(abs_path,
     return mean_prediction, nmean_prediction, Ytest_r
 
 
-def predict_from_config(config, return_features=False, model_tag="rnn_model", calibrated=False):
+def predict_from_config(config, return_features=False,
+                        model_tag="", model_dir_id="rnn_model", calibrated=False):
     dd_input = os.path.join(config["general"]["wd"], config["empirical_predictions"]["empirical_input_file"])
     loaded_models = load_models(model_wd=os.path.join(config["general"]["wd"],
                                                       config["empirical_predictions"]["model_folder"]),
-                                model_name_tag=model_tag)
+                                model_name_tag=model_tag, model_dir_id=model_dir_id)
 
     pres_div = config["empirical_predictions"]["present_diversity"]
     if pres_div == "NA":
@@ -482,10 +483,11 @@ def predict_from_config(config, return_features=False, model_tag="rnn_model", ca
     else:
         return pred_list
 
-def predict_testset_from_config(config, test_feature_file, test_label_file, model_tag="rnn_model", calibrated=False):
+def predict_testset_from_config(config, test_feature_file, test_label_file,
+                                model_tag="", model_dir_id="rnn_model", calibrated=False):
     loaded_models = load_models(model_wd=os.path.join(config["general"]["wd"],
                                                       config["empirical_predictions"]["model_folder"]),
-                                model_name_tag=model_tag)
+                                model_name_tag=model_tag, model_dir_id=model_dir_id)
 
 
     features = np.load(test_feature_file)

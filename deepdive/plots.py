@@ -1918,8 +1918,7 @@ def plot_all_models(data_wd, loaded_models, present_diversity, clade_name, outpu
             print_update("Running replicate n. %s" % replicate)
 
             # from recent to old
-            pred_div = predict(features, model, feature_rescaler,
-                                  n_predictions=n_predictions, dropout=False)
+            pred_div = predict(features, model, feature_rescaler, n_predictions=n_predictions, dropout=False)
 
             pred = np.mean(np.exp(pred_div) - 1, axis=0)
             if scaling == "1-mean":
