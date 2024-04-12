@@ -27,7 +27,7 @@ requirements_list = [
 
 setuptools.setup(
     name="DeepDive",
-    version="1.1",
+    version="1.15",
     author="Daniele Silvestro",
     description="Diversity estimation using deep learning",
     packages=setuptools.find_packages(),
