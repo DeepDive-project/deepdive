@@ -20,9 +20,15 @@ from .simulation_utilities import *
 
 # create simulator object
 def create_sim_obj_from_config(config, rseed=None):
+    try:
+        s_species = config.getint("simulations", "s_species")
+    except:
+        s_species = list(map(int, config["simulations"]["s_species"].split()))
+
+
     if rseed is None:
         rseed = config.getint("simulations", "training_seed")
-    bd_sim = bd_simulator(s_species=config.getint("simulations", "s_species"),  # number of starting species
+    bd_sim = bd_simulator(s_species=s_species,  # number of starting species
                           rangeSP=list(map(float, config["simulations"]["total_sp"].split())),  # min/max size data set
                           minEX_SP=config.getint("simulations", "min_extinct_sp"),  # list(map(float, config["simulations"]["minex_sp"].split())),  # minimum number of extinct lineages
                           root_r=list(map(float, config["simulations"]["root_r"].split())),  # range root ages
@@ -454,7 +460,8 @@ def run_test_from_config(abs_path,
 
 
 def predict_from_config(config, return_features=False,
-                        model_tag="", model_dir_id="rnn_model", calibrated=False):
+                        model_tag="", model_dir_id="rnn_model", calibrated=False,
+                        return_transformed_diversity=False):
     dd_input = os.path.join(config["general"]["wd"], config["empirical_predictions"]["empirical_input_file"])
     loaded_models = load_models(model_wd=os.path.join(config["general"]["wd"],
                                                       config["empirical_predictions"]["model_folder"]),
@@ -477,6 +484,10 @@ def predict_from_config(config, return_features=False,
             pass
 
         pred_list.append(pred_div)
+
+    if return_transformed_diversity:
+        pred_div = np.exp(np.squeeze(np.array(pred_list))) - 1
+        pred_list = np.hstack((pred_div[:, 0].reshape(pred_div.shape[0], 1), pred_div))
 
     if return_features:
         return pred_list, features
@@ -504,6 +515,8 @@ def predict_testset_from_config(config, test_feature_file, test_label_file,
                            calibrated=calibrated)
 
         pred_list.append(pred_div)
+
+    pred_list = np.squeeze(np.array(pred_list))
 
     return pred_list, labels
 
