@@ -151,6 +151,8 @@ def get_avg_mse(Ytrue, Ypred):
 def load_models(model_wd, model_dir_id="rnn_model", model_name_tag=""):
     model_list = glob.glob(os.path.join(model_wd, "%s*%s*" % (model_dir_id, model_name_tag)))
     models = []
+    if len(model_list) == 0:
+        print("No models in", os.path.join(model_wd, "%s*%s*" % (model_dir_id, model_name_tag)))
     for model_i in model_list:
         filename = model_i.split(sep=model_dir_id)[1]
         print("\nLoading model:", filename)

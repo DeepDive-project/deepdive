@@ -19,14 +19,14 @@ def run_config(config_file, wd=None, CPU=None):
         config["general"]["wd"] = wd
 
     if config["general"]["include_present_diversity"] == "FALSE":
-        out_tag = "conditional"
-    else:
         out_tag = "unconditional"
+    else:
+        out_tag = "conditional"
     if config["general"]["calibrate_diversity"] == "TRUE":
         calibrated = True
+        out_tag = "calibrated"
     else:
         calibrated = False
-        out_tag = "calibrated"
 
     # Run simulations in parallel
     if "simulations" in config.sections():
@@ -48,7 +48,8 @@ def run_config(config_file, wd=None, CPU=None):
 
     # Train a model
     if "model_training" in config.sections():
-        run_model_training_from_config(config, feature_file=feature_file, label_file=label_file)
+        run_model_training_from_config(config, feature_file=feature_file, label_file=label_file,
+                                       model_tag=out_tag)
 
     # run test set
     if "simulations" in config.sections() and "model_training" in config.sections():
@@ -56,8 +57,9 @@ def run_config(config_file, wd=None, CPU=None):
                                                         test_feature_file,
                                                         test_label_file,
                                                         model_tag=out_tag,
-                                                        calibrated=calibrated)
-
+                                                        calibrated=calibrated
+                                                        )
+        print("test_pred", test_pred, test_feature_file, test_label_file)
         print("Test set MSE:", np.mean((test_pred - labels) ** 2))
         pred_file = "testset_pred_%s.npy" % out_tag
         np.save(os.path.join(config["general"]["wd"], pred_file), test_pred)
