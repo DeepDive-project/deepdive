@@ -88,6 +88,15 @@ def run_config(config_file, wd=None, CPU=None):
                                features_names=None,
                                log_occurrences=True,
                                wd=config["general"]["wd"],
+                               output_name="Feature_plot_log" + out_tag)
+
+            plot_feature_hists(test_features=testset_features,
+                               empirical_features=feat[0],
+                               show=False,
+                               n_bins=30,
+                               features_names=None,
+                               log_occurrences=False,
+                               wd=config["general"]["wd"],
                                output_name="Feature_plot_" + out_tag)
 
         print(feat.shape, pred_div.shape)
