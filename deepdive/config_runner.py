@@ -53,18 +53,22 @@ def run_config(config_file, wd=None, CPU=None):
 
     # run test set
     if "simulations" in config.sections() and "model_training" in config.sections():
-        test_pred, labels = predict_testset_from_config(config,
-                                                        test_feature_file,
-                                                        test_label_file,
-                                                        model_tag=out_tag,
-                                                        calibrated=calibrated
-                                                        )
+        test_pred, labels, testset_features = predict_testset_from_config(config,
+                                                                          test_feature_file,
+                                                                          test_label_file,
+                                                                          model_tag=out_tag,
+                                                                          calibrated=calibrated,
+                                                                          return_features=True
+                                                                          )
         print("test_pred", test_pred, test_feature_file, test_label_file)
         print("Test set MSE:", np.mean((test_pred - labels) ** 2))
         pred_file = "testset_pred_%s.npy" % out_tag
         np.save(os.path.join(config["general"]["wd"], pred_file), test_pred)
         print("Saved testset predictions in:\n",
               os.path.join(config["general"]["wd"], pred_file))
+    else:
+        testset_features = None
+
 
     # Predict diversity curves
     if "empirical_predictions" in config.sections():
@@ -75,7 +79,17 @@ def run_config(config_file, wd=None, CPU=None):
                                              model_tag=out_tag,
                                              calibrated=calibrated,
                                              return_transformed_diversity=True)
-                                             
+
+        if testset_features is not None:
+            plot_feature_hists(test_features=testset_features,
+                               empirical_features=feat[0],
+                               show=False,
+                               n_bins=30,
+                               features_names=None,
+                               log_occurrences=True,
+                               wd=config["general"]["wd"],
+                               output_name="Feature_plot_" + out_tag)
+
         print(feat.shape, pred_div.shape)
 
         pred = np.mean(pred_div, axis=0)

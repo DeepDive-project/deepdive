@@ -495,7 +495,8 @@ def predict_from_config(config, return_features=False,
         return pred_list
 
 def predict_testset_from_config(config, test_feature_file, test_label_file,
-                                model_tag="", model_dir_id="rnn_model", calibrated=False):
+                                model_tag="", model_dir_id="rnn_model", calibrated=False,
+                                return_features=False):
     loaded_models = load_models(model_wd=os.path.join(config["general"]["wd"],
                                                       config["empirical_predictions"]["model_folder"]),
                                 model_name_tag=model_tag, model_dir_id=model_dir_id)
@@ -518,7 +519,10 @@ def predict_testset_from_config(config, test_feature_file, test_label_file,
 
     pred_list = np.squeeze(np.array(pred_list))
 
-    return pred_list, labels
+    if return_features:
+        return pred_list, labels, features
+    else:
+        return pred_list, labels
 
 
 def config_autotune(config_init):
