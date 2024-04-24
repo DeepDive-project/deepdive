@@ -76,7 +76,7 @@ def run_config(config_file, wd=None, CPU=None):
                                              calibrated=calibrated,
                                              return_transformed_diversity=True)
                                              
-        print(feat.shape)
+        print(feat.shape, pred_div.shape)
 
         pred = np.mean(pred_div, axis=0)
 
@@ -90,8 +90,10 @@ def run_config(config_file, wd=None, CPU=None):
                  c="b",
                  alpha=0.05)
 
-        plt.step(-time_bins,
-                 feat[:,5].flatten(),
+        rt_div = np.mean(feat[:, :, 5], axis=0)
+        rt_div = np.array(list(rt_div[0]) + list(rt_div)) 
+        print(rt_div.shape)
+        plt.step(-time_bins, rt_div
                  label="Range-through",
                  linewidth=2,
                  )
