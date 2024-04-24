@@ -75,6 +75,8 @@ def run_config(config_file, wd=None, CPU=None):
                                              model_tag=out_tag,
                                              calibrated=calibrated,
                                              return_transformed_diversity=True)
+                                             
+        print(feat.shape)
 
         pred = np.mean(pred_div, axis=0)
 
