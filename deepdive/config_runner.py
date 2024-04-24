@@ -91,7 +91,7 @@ def run_config(config_file, wd=None, CPU=None):
                  alpha=0.05)
 
         rt_div = np.mean(feat[:, :, 5], axis=0)
-        rt_div = np.array(list(rt_div[0]) + list(rt_div)) 
+        rt_div = np.array([rt_div[0]] + list(rt_div)) 
         print(rt_div.shape)
         plt.step(-time_bins, rt_div,
                  label="Range-through",
