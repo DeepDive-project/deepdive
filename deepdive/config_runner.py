@@ -88,7 +88,13 @@ def run_config(config_file, wd=None, CPU=None):
                  c="b",
                  alpha=0.05)
 
-        add_geochrono(0, -4.8, max_ma=-(np.max(time_bins) * 1.05), min_ma=0)
+        plt.step(-time_bins,
+                 feat[:,5].flatten(),
+                 label="Range-through",
+                 linewidth=2,
+                 )
+
+        add_geochrono(0, -0.1 * np.max(pred), max_ma=-(np.max(time_bins) * 1.05), min_ma=0)
         plt.ylim(bottom=-5, top=np.max(pred) * 1.05)
         plt.xlim(-(np.max(time_bins) * 1.05), -np.min(time_bins) + 2)
         plt.ylabel("Diversity", fontsize=15)
