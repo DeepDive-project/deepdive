@@ -422,8 +422,9 @@ class fossil_simulator():
                 m = self.target_n_occs / self.target_n_occs_range
 
             fossils_per_area = np.round(fossils_per_area / n_fossils * m).astype(int)
-            max_n_loc = np.einsum('sat -> at', n_fossils)
-            expected_n_localities_with_fossils = expected_n_localities_with_fossils[
+            # print("fossils_per_area", fossils_per_area.shape)
+            max_n_loc = np.einsum('sat -> at', fossils_per_area)
+            expected_n_localities_with_fossils[
                 expected_n_localities_with_fossils > max_n_loc] = max_n_loc[
                 expected_n_localities_with_fossils > max_n_loc] + 0
 

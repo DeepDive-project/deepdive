@@ -50,7 +50,7 @@ def create_sim_obj_from_config(config, rseed=None):
     # create fossil simulator object
     try:
         target_n_occs = config.getint("simulations", "target_n_occs")
-        target_n_occs_range = config.getgloat("simulations", "target_n_occs_range")
+        target_n_occs_range = config.getfloat("simulations", "target_n_occs_range")
     except:
         target_n_occs = None
         target_n_occs_range = 10
