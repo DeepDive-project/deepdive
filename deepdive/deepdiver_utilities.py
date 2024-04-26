@@ -554,7 +554,7 @@ def config_autotune(config_init, target_n_occs_range=10):
     n_singletons = feat_emp[0][:, feat_names.index("n_singletons")]
     n_endemics = feat_emp[0][:,feat_names.index("n_endemics")]
     prop_endemics = np.mean(n_endemics / (n_species + 1))
-    config["simulations"]["disp_rate_mean"] = "0 %s" % (1 / prop_endemics)
+    config["simulations"]["disp_rate_mean"] = "%s %s" % (0.5 * (1 / prop_endemics), 2 * (1 / prop_endemics))
 
     indx = np.array([i for i in range(len(feat_names)) if "n_locs_area_" in feat_names[i]])
     n_localities_area = feat_emp[0][:,indx]
