@@ -48,6 +48,13 @@ def create_sim_obj_from_config(config, rseed=None):
                           vectorize=config.getboolean("simulations", "vectorize"))
 
     # create fossil simulator object
+    try:
+        target_n_occs = config.getint("simulations", "target_n_occs")
+        target_n_occs_range = config.getgloat("simulations", "target_n_occs_range")
+    except:
+        target_n_occs = None
+        target_n_occs_range = 10
+
     fossil_sim = fossil_simulator(n_areas=config.getint("general", "n_areas"),
                                   n_bins=len(list(map(float, config["general"]["time_bins"].split())))-1,  # number of time bins
                                   time_bins=np.array(list(map(float, config["general"]["time_bins"].split())))[::-1],
@@ -79,6 +86,8 @@ def create_sim_obj_from_config(config, rseed=None):
                                   maximum_localities_per_bin=config.getint("simulations", "maximum_localities_per_bin"),
                                   singletons_frequency=config.getfloat("simulations", "singletons_frequency"),
                                   species_per_locality_multiplier=list(map(float, config["simulations"]["species_per_locality_multiplier"].split())),
+                                  target_n_occs=target_n_occs,
+                                  target_n_occs_range=target_n_occs_range,
                                   seed=rseed)  # if > 0 fixes the random seed to make simulations reproducible
     return bd_sim, fossil_sim
 

@@ -43,7 +43,9 @@ class fossil_simulator():
                  fraction_skyline_sampling=0.5,
                  locality_rate_multiplier=None,  # array of shape = (n_areas x n_time_bins)
                  carrying_capacity_multiplier=None,  # array of shape = (n_species x n_areas). Must be between 0 and 1
-                 sampling_rate_multiplier=None,
+                 sampling_rate_multiplier=None, # array of shape = (n_areas x n_time_bins)
+                 target_n_occs=None,  # Integer
+                 target_n_occs_range=10, # [target_n_occs / target_n_occs_range, target_n_occs * target_n_occs_range]
                  species_per_locality_multiplier=None,
                  seed=None):
 
@@ -78,6 +80,8 @@ class fossil_simulator():
         self.locality_rate_multiplier = locality_rate_multiplier
         self.carrying_capacity_multiplier = carrying_capacity_multiplier
         self.sampling_rate_multiplier = sampling_rate_multiplier
+        self.target_n_occs = target_n_occs
+        self.target_n_occs_range = target_n_occs_range
         self.species_per_locality_multiplier = species_per_locality_multiplier
         self._additional_info = None
         self._rs = get_rnd_gen(seed)
@@ -409,6 +413,20 @@ class fossil_simulator():
         if self.singletons_frequency is not None:
             fossils_per_area = self.add_singletons(fossils_per_area)
         # print(np.sum(fossils_per_area))
+
+        if self.target_n_occs is not None:
+            n_fossils = np.sum(fossils_per_area)
+            if n_fossils > self.target_n_occs * self.target_n_occs_range:
+                m = self.target_n_occs * self.target_n_occs_range
+            elif n_fossils < self.target_n_occs / self.target_n_occs_range:
+                m = self.target_n_occs / self.target_n_occs_range
+
+            fossils_per_area = np.round(fossils_per_area / n_fossils * m).astype(int)
+            max_n_loc = np.einsum('sat -> at', n_fossils)
+            expected_n_localities_with_fossils = expected_n_localities_with_fossils[
+                expected_n_localities_with_fossils > max_n_loc] = max_n_loc[
+                expected_n_localities_with_fossils > max_n_loc] + 0
+
 
         # fossils_per_area is the number of localities per area in which a species is sampled
         return fossils_per_area, expected_n_localities_with_fossils
