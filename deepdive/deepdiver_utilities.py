@@ -525,7 +525,7 @@ def predict_testset_from_config(config, test_feature_file, test_label_file,
         return pred_list, labels
 
 
-def config_autotune(config_init):
+def config_autotune(config_init, target_n_occs_range=10):
     config = copy.deepcopy(config_init)
     n_areas = int(config["general"]["n_areas"])
     # load empirical
@@ -599,6 +599,8 @@ def config_autotune(config_init):
 
     config["simulations"]["total_sp"] = "%s %s" % (int(np.max(n_species) * 2), int(np.sum(n_species) * 2))
 
+    config["simulations"]["target_n_occs"] = "%s" % np.sum(n_occs)
+    config["simulations"]["target_n_occs_range"] = "%s" % target_n_occs_range
 
     return config
 
