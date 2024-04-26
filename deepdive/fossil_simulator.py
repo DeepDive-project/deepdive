@@ -415,7 +415,7 @@ class fossil_simulator():
         # print(np.sum(fossils_per_area))
 
         if self.target_n_occs is not None:
-            n_fossils = np.sum(fossils_per_area)
+            n_fossils = np.max([1, np.sum(fossils_per_area)])
             if n_fossils > self.target_n_occs * self.target_n_occs_range:
                 m = self.target_n_occs * self.target_n_occs_range
             elif n_fossils < self.target_n_occs / self.target_n_occs_range:

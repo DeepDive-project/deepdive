@@ -36,7 +36,7 @@ def run_config(config_file, wd=None, CPU=None):
 
         if config["general"]["autotune"] == "TRUE":
             print("Running autotune...")
-            config = config_autotune(config)
+            config = config_autotune(config, target_n_occs_range=1.2)
             auto_tuned_config_file = config_file.split(".ini")[0] + "_autotuned.ini"
             with open(auto_tuned_config_file, 'w') as configfile:
                 config.write(configfile)

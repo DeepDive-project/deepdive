@@ -546,13 +546,15 @@ def config_autotune(config_init, target_n_occs_range=10):
     feat_names_df = get_features_names(n_areas=n_areas, include_present_div=True, as_dataframe=True)
     feat_names = get_features_names(n_areas=n_areas, include_present_div=True, as_dataframe=False)
 
-
     time_bins = np.sort(list(map(float, config["general"]["time_bins"].split())))
     n_localities = feat_emp[0][:,feat_names.index("n_localities")]
     n_species = feat_emp[0][:,feat_names.index("n_species")]
     n_occs = feat_emp[0][:,feat_names.index("n_occs")]
     range_through_div = feat_emp[0][:, feat_names.index("range_through_div")]
     n_singletons = feat_emp[0][:, feat_names.index("n_singletons")]
+    n_endemics = feat_emp[0][:,feat_names.index("n_endemics")]
+    prop_endemics = np.mean(n_endemics / (n_species + 1))
+    config["simulations"]["disp_rate_mean"] = "0 %s" % (1 / prop_endemics)
 
     indx = np.array([i for i in range(len(feat_names)) if "n_locs_area_" in feat_names[i]])
     n_localities_area = feat_emp[0][:,indx]
