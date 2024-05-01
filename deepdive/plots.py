@@ -1376,13 +1376,10 @@ def add_geochrono_no_labels(Y1, Y2, max_ma, min_ma):
                      "#A0C96D", "#BAD25F", "#F8B77D", "#FAC18A", "#FBCC98", "#FFED00", "#FFF7B2", "#FFF1C4", "#FEF6F2"])
     for i in range(len(series)-1):
         if series[i] >= max_ma and series[i+1] < min_ma:
-            plt.text(0.5 * (series[i] + series[i+1]), 0.5 * (Y2 + Y1), ha="center", va="center", fontsize=14)
             plt.fill_between(x=np.array([series[i], series[i + 1]]), y1=Y1, y2=Y2, color=cols[i], edgecolor="black")
         if series[i] < max_ma < series[i+1]:
-            plt.text(0.5 * (max_ma + series[i+1]), 0.5 * (Y2 + Y1), ha="center", va="center", fontsize=14)
             plt.fill_between(x=np.array([series[i], series[i + 1]]), y1=Y1, y2=Y2, color=cols[i], edgecolor="black")
         if series[i] < min_ma < series[i+1]:
-            plt.text(0.5 * (series[i] + min_ma), 0.5 * (Y2 + Y1), ha="center", va="center", fontsize=14)
             plt.fill_between(x=np.array([series[i], series[i + 1]]), y1=Y1, y2=Y2, color=cols[i], edgecolor="black")
         else:
             pass
