@@ -76,7 +76,7 @@ def fit_rnn(Xt, Yt, model,
     return history
 
 
-def save_rnn_model(wd, history, model, feature_rescaler, filename=""):
+def save_rnn_model(wd, history, model, feature_rescaler, filename="", return_model_dir=False):
     # save rescaler
     with open(os.path.join(wd, "rnn_rescaler" + filename + ".pkl").replace("\\", "/"), 'wb') as output:  # Overwrites any existing file.
         pkl.dump(feature_rescaler, output, pkl.HIGHEST_PROTOCOL)
@@ -85,6 +85,8 @@ def save_rnn_model(wd, history, model, feature_rescaler, filename=""):
         pkl.dump(history.history, output, pkl.HIGHEST_PROTOCOL)
     # save model
     tf.keras.models.save_model(model, os.path.join(wd, 'rnn_model' + filename).replace("\\", "/"))
+    if return_model_dir:
+        return os.path.join(wd, 'rnn_model' + filename)
 
 
 def load_rnn_model(wd, filename=""):

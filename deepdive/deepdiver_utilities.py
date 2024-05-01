@@ -285,7 +285,8 @@ def get_model_settings_from_config(config):
 
     return list_settings
 
-def run_model_training_from_config(config, feature_file=None, label_file=None, convert_to_tf=True, model_tag=None):
+def run_model_training_from_config(config, feature_file=None, label_file=None,
+                                   convert_to_tf=True, model_tag=None, return_model_dir=False):
     model_settings = get_model_settings_from_config(config)
     sims_path = os.path.join(config["general"]["wd"], config["model_training"]["sims_folder"])
     if feature_file is None:
@@ -360,13 +361,18 @@ def run_model_training_from_config(config, feature_file=None, label_file=None, c
                           patience=config.getint("model_training", "patience"),
                           batch_size=config.getint("model_training", "batch_size"),
                           validation_split=config.getfloat("model_training", "validation_split"))
+
+    model_dir = os.path.join(model_wd, out_name)
     try:
-        os.mkdir(model_wd)
+        os.mkdir(model_dir)
     except FileExistsError:
         pass
+    plot_training_history(history, criterion='val_loss', wd=model_dir, show=False, filename=out_name)
 
-    save_rnn_model(model_wd, history, model, feature_rescaler, filename=out_name)
-    plot_training_history(history, criterion='val_loss', wd=model_wd, show=False, filename=out_name)
+    save_rnn_model(model_dir, history, model, feature_rescaler, filename=out_name)
+
+    if return_model_dir:
+        return model_dir
 
 
 # NEED AN ALTERNATIVE PATH TO PREDICT FROM A TEST SET! SHOULD THIS BE A DIFFERENT FUNCTION OR A DIFFERENT PATH WITHIN
@@ -505,10 +511,13 @@ def predict_from_config(config, return_features=False,
 
 def predict_testset_from_config(config, test_feature_file, test_label_file,
                                 model_tag="", model_dir_id="rnn_model", calibrated=False,
-                                return_features=False):
-    loaded_models = load_models(model_wd=os.path.join(config["general"]["wd"],
-                                                      config["empirical_predictions"]["model_folder"]),
-                                model_name_tag=model_tag, model_dir_id=model_dir_id)
+                                return_features=False, model_dir=None):
+    if model_dir is not None:
+        loaded_models = load_models(model_wd=model_dir)
+    else:
+        loaded_models = load_models(model_wd=os.path.join(config["general"]["wd"],
+                                                          config["empirical_predictions"]["model_folder"]),
+                                    model_name_tag=model_tag, model_dir_id=model_dir_id)
 
 
     features = np.load(test_feature_file)
@@ -532,6 +541,24 @@ def predict_testset_from_config(config, test_feature_file, test_label_file,
         return pred_list, labels, features
     else:
         return pred_list, labels
+
+def predict_testset_from_config_one_model(config, test_feature_file, test_label_file,
+                                model_dir, calibrated=False,
+                                return_features=False):
+    history, model, feature_rescaler = load_rnn_model(model_dir, filename=filename)
+
+    features = np.load(test_feature_file)
+    labels = np.load(test_label_file)
+    labels = normalize_labels(labels, rescaler=1, log=True)
+
+    pred_div = predict(features, model, feature_rescaler,
+                       n_predictions=config.getint("empirical_predictions", "n_predictions"), dropout=False,
+                       calibrated=calibrated)
+
+    if return_features:
+        return pred_div, labels, features
+    else:
+        return pred_div, labels
 
 
 def config_autotune(config_init, target_n_occs_range=10):

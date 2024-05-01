@@ -1369,6 +1369,25 @@ def add_geochrono(Y1, Y2, max_ma, min_ma):
             pass
 
 
+def add_geochrono_no_labels(Y1, Y2, max_ma, min_ma):
+    series = -np.array([298.9, 272.95, 259.51, 251.902, 247.2, 237, 201.3, 174.1, 163.5, 145, 100.5, 66, 56, 33.9,
+                        23.03, 5.33, 2.58, 0.0117])
+    cols = np.array(["#e87864", "#f68d76", "#f9b4a3", "#a05da5", "#b282ba", "#bc9dca", "#00b4eb", "#71cfeb", "#abe1fa",
+                     "#A0C96D", "#BAD25F", "#F8B77D", "#FAC18A", "#FBCC98", "#FFED00", "#FFF7B2", "#FFF1C4", "#FEF6F2"])
+    for i in range(len(series)-1):
+        if series[i] >= max_ma and series[i+1] < min_ma:
+            plt.text(0.5 * (series[i] + series[i+1]), 0.5 * (Y2 + Y1), ha="center", va="center", fontsize=14)
+            plt.fill_between(x=np.array([series[i], series[i + 1]]), y1=Y1, y2=Y2, color=cols[i], edgecolor="black")
+        if series[i] < max_ma < series[i+1]:
+            plt.text(0.5 * (max_ma + series[i+1]), 0.5 * (Y2 + Y1), ha="center", va="center", fontsize=14)
+            plt.fill_between(x=np.array([series[i], series[i + 1]]), y1=Y1, y2=Y2, color=cols[i], edgecolor="black")
+        if series[i] < min_ma < series[i+1]:
+            plt.text(0.5 * (series[i] + min_ma), 0.5 * (Y2 + Y1), ha="center", va="center", fontsize=14)
+            plt.fill_between(x=np.array([series[i], series[i + 1]]), y1=Y1, y2=Y2, color=cols[i], edgecolor="black")
+        else:
+            pass
+
+
 def add_pt_events(height):
     plt.fill_between(x=np.array([-252]), y1=0, y2=height, color="red", alpha=0.3)
     plt.fill_between(x=np.array([-234, -232]), y1=0, y2=height, color="red", alpha=0.3)

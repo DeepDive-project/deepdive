@@ -7,11 +7,12 @@ import configparser  # read the config file (".ini") created by the r function '
 import matplotlib
 import matplotlib.pyplot as plt
 from .deepdiver_utilities import *
-from .plots import add_geochrono
+from .plots import add_geochrono_no_labels
 
 np.set_printoptions(suppress=True, precision=3)
 
-def run_config(config_file, wd=None, CPU=None):
+def run_config(config_file, wd=None, CPU=None,
+               train_set=None, test_set=None, lstm=None, dense=None):
     config = configparser.ConfigParser()
     config.read(config_file)
 
@@ -20,16 +21,24 @@ def run_config(config_file, wd=None, CPU=None):
 
     if config["general"]["include_present_diversity"] == "FALSE":
         out_tag = "unconditional"
+        include_present_diversity = False
     else:
         out_tag = "conditional"
+        include_present_diversity = True
     if config["general"]["calibrate_diversity"] == "TRUE":
         calibrated = True
         out_tag = "calibrated"
     else:
         calibrated = False
 
+    if lstm is not None:
+        config["model_training"]["lstm_layers"] = " ".join([str(i) for i in lstm])
+    if dense is not None:
+        config["model_training"]["dense_layer"] = " ".join([str(i) for i in dense])
+
     # Run simulations in parallel
-    if "simulations" in config.sections():
+    feature_file = None
+    if "simulations" in config.sections() and train_set is not None:
         if CPU is not None:
             config["simulations"]["n_CPUS"] = str(CPU)
             # print("CPU", config["simulations"]["n_CPUS"] , CPU)
@@ -43,22 +52,44 @@ def run_config(config_file, wd=None, CPU=None):
 
         feature_file, label_file = run_sim_from_config(config)
 
+    elif train_set is not None:
+        if "features.npy" in train_set:
+            feature_file = train_set
+            label_file = train_set.replace("features.npy", "labels.npy")
+        elif "labels.npy" in train_set:
+            feature_file = train_set.replace("labels.npy", "features.npy")
+            label_file = train_set
+        else:
+            sys.exit("No features or labels files found")
+
+    test_feature_file = None
+
+    if test_set is not None:
+        if "features.npy" in test_set:
+            test_feature_file = train_set
+            test_label_file = test_set.replace("features.npy", "labels.npy")
+        elif "labels.npy" in test_set:
+            test_feature_file = test_set.replace("labels.npy", "features.npy")
+            test_label_file = test_set
+        else:
+            sys.exit("No features or labels files found")
+
     if "simulations" in config.sections() and config.getint("simulations", "n_test_simulations"):
         test_feature_file, test_label_file = run_test_sim_from_config(config)
 
     # Train a model
     if "model_training" in config.sections():
-        run_model_training_from_config(config, feature_file=feature_file, label_file=label_file,
-                                       model_tag=out_tag)
+        model_dir = run_model_training_from_config(config, feature_file=feature_file, label_file=label_file,
+                                       model_tag=out_tag, return_model_dir=True)
 
     # run test set
-    if "simulations" in config.sections() and "model_training" in config.sections():
+    if test_feature_file is not None and "model_training" in config.sections():
         test_pred, labels, testset_features = predict_testset_from_config(config,
                                                                           test_feature_file,
                                                                           test_label_file,
-                                                                          model_tag=out_tag,
                                                                           calibrated=calibrated,
-                                                                          return_features=True
+                                                                          return_features=True,
+                                                                          model_dir=model_dir
                                                                           )
         print("test_pred", test_pred, test_feature_file, test_label_file)
         print("Test set MSE:", np.mean((test_pred - labels) ** 2))
@@ -72,6 +103,8 @@ def run_config(config_file, wd=None, CPU=None):
 
     # Predict diversity curves
     if "empirical_predictions" in config.sections():
+        features_names = get_features_names(n_areas=int(config['general']['n_areas']),
+                                            include_present_div=include_present_diversity)
         time_bins = np.sort(list(map(float, config["general"]["time_bins"].split())))
 
         pred_div, feat = predict_from_config(config,
@@ -85,7 +118,7 @@ def run_config(config_file, wd=None, CPU=None):
                                empirical_features=feat[0],
                                show=False,
                                n_bins=30,
-                               features_names=None,
+                               features_names=features_names,
                                log_occurrences=True,
                                wd=config["general"]["wd"],
                                output_name="Feature_plot_log" + out_tag)
@@ -94,7 +127,7 @@ def run_config(config_file, wd=None, CPU=None):
                                empirical_features=feat[0],
                                show=False,
                                n_bins=30,
-                               features_names=None,
+                               features_names=features_names,
                                log_occurrences=False,
                                wd=config["general"]["wd"],
                                output_name="Feature_plot_" + out_tag)
@@ -121,7 +154,7 @@ def run_config(config_file, wd=None, CPU=None):
                  linewidth=2,
                  )
 
-        add_geochrono(0, -0.1 * np.max(pred), max_ma=-(np.max(time_bins) * 1.05), min_ma=0)
+        add_geochrono_no_labels(0, -0.1 * np.max(pred), max_ma=-(np.max(time_bins) * 1.05), min_ma=0)
         plt.ylim(bottom=-5, top=np.max(pred) * 1.05)
         plt.xlim(-(np.max(time_bins) * 1.05), -np.min(time_bins) + 2)
         plt.ylabel("Diversity", fontsize=15)
