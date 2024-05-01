@@ -640,5 +640,7 @@ def config_autotune(config_init, target_n_occs_range=10):
     config["simulations"]["target_n_occs"] = "%s" % np.sum(n_occs)
     config["simulations"]["target_n_occs_range"] = "%s" % target_n_occs_range
 
+    config["general"]["autotune"] = "FALSE"
+
     return config
 
