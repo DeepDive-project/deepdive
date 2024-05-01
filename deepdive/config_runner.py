@@ -94,9 +94,9 @@ def run_config(config_file, wd=None, CPU=None,
         print("test_pred", test_pred, test_feature_file, test_label_file)
         print("Test set MSE:", np.mean((test_pred - labels) ** 2))
         pred_file = "testset_pred_%s.npy" % out_tag
-        np.save(os.path.join(config["general"]["wd"], pred_file), test_pred)
+        np.save(os.path.join(model_dir, pred_file), test_pred)
         print("Saved testset predictions in:\n",
-              os.path.join(config["general"]["wd"], pred_file))
+              os.path.join(model_dir, pred_file))
     else:
         testset_features = None
 
@@ -120,7 +120,7 @@ def run_config(config_file, wd=None, CPU=None,
                                n_bins=30,
                                features_names=features_names,
                                log_occurrences=True,
-                               wd=config["general"]["wd"],
+                               wd=model_dir,
                                output_name="Feature_plot_log" + out_tag)
 
             plot_feature_hists(test_features=testset_features,
@@ -129,7 +129,7 @@ def run_config(config_file, wd=None, CPU=None,
                                n_bins=30,
                                features_names=features_names,
                                log_occurrences=False,
-                               wd=config["general"]["wd"],
+                               wd=model_dir,
                                output_name="Feature_plot_" + out_tag)
 
         print(feat.shape, pred_div.shape)
@@ -159,7 +159,7 @@ def run_config(config_file, wd=None, CPU=None,
         plt.xlim(-(np.max(time_bins) * 1.05), -np.min(time_bins) + 2)
         plt.ylabel("Diversity", fontsize=15)
         plt.xlabel("Time (Ma)", fontsize=15)
-        file_name = os.path.join(config["general"]["wd"], "predictions_%s.pdf" % out_tag)
+        file_name = os.path.join(model_dir, "predictions_%s.pdf" % out_tag)
         div_plot = matplotlib.backends.backend_pdf.PdfPages(file_name)
         div_plot.savefig(fig)
         div_plot.close()
@@ -167,5 +167,5 @@ def run_config(config_file, wd=None, CPU=None,
 
         predictions = pd.DataFrame(pred_div)
         predictions.columns = time_bins
-        predictions.to_csv(config["empirical_predictions"]['empirical_input_file'] + "_predictions_%s.csv" % out_tag,
+        predictions.to_csv(os.path.join(model_dir, "_predictions_%s.csv" % out_tag),
                            index=False)
