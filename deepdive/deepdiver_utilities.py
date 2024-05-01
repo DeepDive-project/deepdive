@@ -271,7 +271,9 @@ def get_model_settings_from_config(config):
         for d in dense_nodes:
             for f in loss_f:
                 for o in dropout_frac:
-                    out = 'lstm%s_d%s_o%s_%s_%s' % (len(l), len(d), o, f, model_tag)
+                    lstm_name = "_".join([str(i) for i in l])
+                    dense_name = "_".join([str(i) for i in d])
+                    out = 'lstm%s_d%s_%s' % (lstm_name, dense_name, model_tag)
                     d_item = {
                         'model_n': model_n,
                         'lstm_nodes': l,
@@ -375,112 +377,17 @@ def run_model_training_from_config(config, feature_file=None, label_file=None,
         return model_dir
 
 
-# NEED AN ALTERNATIVE PATH TO PREDICT FROM A TEST SET! SHOULD THIS BE A DIFFERENT FUNCTION OR A DIFFERENT PATH WITHIN
-# THIS ONE. CHECK IF THERE'S ANY REDUNDANCY, REMOVE AND RENAME TO MAKE A PLOTTING FUNCTION.
-def plot_predictions(config, pred_list):
-    fig = plt.figure(figsize=(12, 8))
-
-    # from recent to old
-    plot_time_axis = np.sort(list(map(float, config["general"]["time_bins"].split())))
-
-    # from recent to old
-    pred_div = predict(features, model, feature_rescaler, n_predictions=n_predictions, dropout=use_dropout)
-
-    pred = np.mean(np.exp(pred_div) - 1, axis=0)
-    if scaling == "1-mean":
-        den = np.mean(pred)
-    elif scaling == "first-bin":
-        den = pred[-1]
-    else:
-        den = 1
-    pred /= den
-
-    plt.step(-plot_time_axis,  # pred,
-             [pred[0]] + list(pred),
-             label="Mean prediction",
-             linewidth=2,
-             c=prediction_color,
-             alpha=0.05)
-
-    predictions.append(pred)
-
-    predictions = np.array(predictions)
-
-    add_geochrono(0, -4.8, max_ma=-66, min_ma=0)
-    plt.ylim(bottom=-4.8, top=80)
-    plt.xlim(-66, 0)
-    plt.ylabel("Diversity", fontsize=15)
-    plt.xlabel("Time (Ma)", fontsize=15)
-    fig.show()
-    file_name = os.path.join(config["general"]["wd"], "predictions.pdf")
-    div_plot = matplotlib.backends.backend_pdf.PdfPages(file_name)
-    div_plot.savefig(fig)
-    div_plot.close()
-    print("Plot saved as:", file_name)
-
-    # Get stats for model training in a pandas dataframe
-    # res = list()
-    # for i in model_list:
-    #     filename = i.split(sep="rnn_model")[1]
-    #     history, model, feature_rescaler = dd.load_rnn_model(model_wd, filename=filename)
-    #     val_loss = np.min(history["val_loss"])  # check validation loss
-    #     t_loss = history["loss"][np.argmin(history["val_loss"])]  # training loss
-    #     epochs = np.argmin(history["val_loss"])  # number of epochs used to train
-    #     res.append([filename, val_loss, t_loss, epochs])
-    # res = pd.DataFrame(res)
-
-    return predictions, res
-
-
-def run_test_from_config(abs_path,
-                         model_wd,
-                         new_model_wd,
-                         Ytest,
-                         Xtest,
-                         sqs,
-                         output_names,
-                         new_output_names=None,
-                         test_folder="test"):
-    #  predictions for test sets, get stats
-    outname = 'sim_features' + output_names[0] + 'lstm3_d2_o0.05_mse'
-    print("Running:", outname)
-    history, model, feature_rescaler = load_rnn_model(model_wd, filename=outname)
-    Ytest_r = normalize_labels(Ytest, rescaler=1, log=True)
-    Ytest_pred = predict(features=Xtest, model=model, feature_rescaler=feature_rescaler, n_predictions=10)
-    mean_prediction = np.mean(Ytest_pred, axis=0)
-
-    sqs_log_transform = normalize_labels(sqs, rescaler=1, log=True)
-    res = calc_time_series_diff2D(mean_prediction, Ytest_r, sqs_log_transform)
-    sqs_res = calc_time_series_diff2D(sqs_log_transform, Ytest_r, sqs_log_transform)
-    res.to_csv(os.path.join(abs_path + '/test_sets/' + test_folder + '/' + output_names[0] + '_t_series_diff_2d.csv'),
-               index=False)
-    sqs_res.to_csv(os.path.join(abs_path + '/test_sets/' + test_folder + '/' + output_names[0] + '_t_series_diff_2d_sqs.csv'),
-                   index=False)
-
-    if new_model_wd is not None:
-        new_outname = 'sim_features' + new_output_names[0] + 'lstm3_d2_o0.05_mse'
-        print("Running:", new_outname)
-        history, model, feature_rescaler = dd.load_rnn_model(new_model_wd, filename=new_outname)
-        nYtest_pred = dd.predict(features=Xtest, model=model, feature_rescaler=feature_rescaler, n_predictions=10)
-        nmean_prediction = np.mean(nYtest_pred, axis=0)
-
-        res = dd.calc_time_series_diff2D(nmean_prediction, Ytest_r, sqs_log_transform)
-        sqs_res = dd.calc_time_series_diff2D(sqs_log_transform, Ytest_r, sqs_log_transform)
-        res.to_csv(os.path.join(abs_path + '/test_sets/' + test_folder + '/' + new_output_names[0] + '_t_series_diff_2d.csv'),
-                   index=False)
-        sqs_res.to_csv(os.path.join(abs_path + '/test_sets/' + test_folder + '/' + new_output_names[0] + '_t_series_diff_2d_sqs.csv'),
-                   index=False)
-
-    return mean_prediction, nmean_prediction, Ytest_r
-
 
 def predict_from_config(config, return_features=False,
                         model_tag="", model_dir_id="rnn_model", calibrated=False,
-                        return_transformed_diversity=False):
+                        return_transformed_diversity=False, model_dir=None):
     dd_input = os.path.join(config["general"]["wd"], config["empirical_predictions"]["empirical_input_file"])
-    loaded_models = load_models(model_wd=os.path.join(config["general"]["wd"],
-                                                      config["empirical_predictions"]["model_folder"]),
-                                model_name_tag=model_tag, model_dir_id=model_dir_id)
+    if model_dir is not None:
+        loaded_models = load_models(model_wd=model_dir)
+    else:
+        loaded_models = load_models(model_wd=os.path.join(config["general"]["wd"],
+                                                          config["empirical_predictions"]["model_folder"]),
+                                    model_name_tag=model_tag, model_dir_id=model_dir_id)
 
     pres_div = config["empirical_predictions"]["present_diversity"]
     if pres_div == "NA":
@@ -495,10 +402,10 @@ def predict_from_config(config, return_features=False,
             pred_div = predict(features, model, feature_rescaler,
                                n_predictions=config.getint("empirical_predictions", "n_predictions"), dropout=False,
                                calibrated=calibrated)
+            pred_list.append(pred_div)
         except:
             pass
 
-        pred_list.append(pred_div)
 
     if return_transformed_diversity:
         pred_div = np.exp(np.squeeze(np.array(pred_list))) - 1
@@ -541,24 +448,6 @@ def predict_testset_from_config(config, test_feature_file, test_label_file,
         return pred_list, labels, features
     else:
         return pred_list, labels
-
-def predict_testset_from_config_one_model(config, test_feature_file, test_label_file,
-                                model_dir, calibrated=False,
-                                return_features=False):
-    history, model, feature_rescaler = load_rnn_model(model_dir, filename=filename)
-
-    features = np.load(test_feature_file)
-    labels = np.load(test_label_file)
-    labels = normalize_labels(labels, rescaler=1, log=True)
-
-    pred_div = predict(features, model, feature_rescaler,
-                       n_predictions=config.getint("empirical_predictions", "n_predictions"), dropout=False,
-                       calibrated=calibrated)
-
-    if return_features:
-        return pred_div, labels, features
-    else:
-        return pred_div, labels
 
 
 def config_autotune(config_init, target_n_occs_range=10):
