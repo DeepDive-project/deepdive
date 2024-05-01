@@ -111,7 +111,8 @@ def run_config(config_file, wd=None, CPU=None,
                                              return_features=True,
                                              model_tag=out_tag,
                                              calibrated=calibrated,
-                                             return_transformed_diversity=True)
+                                             return_transformed_diversity=True,
+                                             model_dir=model_dir)
 
         if testset_features is not None:
             plot_feature_hists(test_features=testset_features,
