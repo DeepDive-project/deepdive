@@ -66,7 +66,7 @@ def run_config(config_file, wd=None, CPU=None,
 
     if test_set is not None:
         if "features.npy" in test_set:
-            test_feature_file = train_set
+            test_feature_file = test_set
             test_label_file = test_set.replace("features.npy", "labels.npy")
         elif "labels.npy" in test_set:
             test_feature_file = test_set.replace("labels.npy", "features.npy")
@@ -159,7 +159,7 @@ def run_config(config_file, wd=None, CPU=None,
         plt.xlim(-(np.max(time_bins) * 1.05), -np.min(time_bins) + 2)
         plt.ylabel("Diversity", fontsize=15)
         plt.xlabel("Time (Ma)", fontsize=15)
-        file_name = os.path.join(model_dir, "predictions_%s.pdf" % out_tag)
+        file_name = os.path.join(model_dir, "Empirical_predictions_%s.pdf" % out_tag)
         div_plot = matplotlib.backends.backend_pdf.PdfPages(file_name)
         div_plot.savefig(fig)
         div_plot.close()
@@ -167,5 +167,5 @@ def run_config(config_file, wd=None, CPU=None,
 
         predictions = pd.DataFrame(pred_div)
         predictions.columns = time_bins
-        predictions.to_csv(os.path.join(model_dir, "_predictions_%s.csv" % out_tag),
+        predictions.to_csv(os.path.join(model_dir, "Empirical_predictions_%s.csv" % out_tag),
                            index=False)
