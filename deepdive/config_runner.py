@@ -38,7 +38,7 @@ def run_config(config_file, wd=None, CPU=None,
 
     # Run simulations in parallel
     feature_file = None
-    if "simulations" in config.sections() and train_set is not None:
+    if "simulations" in config.sections() and train_set is None:
         if CPU is not None:
             config["simulations"]["n_CPUS"] = str(CPU)
             # print("CPU", config["simulations"]["n_CPUS"] , CPU)
@@ -52,7 +52,7 @@ def run_config(config_file, wd=None, CPU=None,
 
         feature_file, label_file = run_sim_from_config(config)
 
-    elif train_set is not None:
+    if train_set is not None:
         if "features.npy" in train_set:
             feature_file = train_set
             label_file = train_set.replace("features.npy", "labels.npy")
@@ -73,12 +73,12 @@ def run_config(config_file, wd=None, CPU=None,
             test_label_file = test_set
         else:
             sys.exit("No features or labels files found")
-
-    if "simulations" in config.sections() and config.getint("simulations", "n_test_simulations"):
-        test_feature_file, test_label_file = run_test_sim_from_config(config)
+    else:
+        if "simulations" in config.sections() and config.getint("simulations", "n_test_simulations"):
+            test_feature_file, test_label_file = run_test_sim_from_config(config)
 
     # Train a model
-    if "model_training" in config.sections():
+    if feature_file is not None and "model_training" in config.sections():
         model_dir = run_model_training_from_config(config, feature_file=feature_file, label_file=label_file,
                                        model_tag=out_tag, return_model_dir=True)
 
