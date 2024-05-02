@@ -364,6 +364,11 @@ def run_model_training_from_config(config, feature_file=None, label_file=None,
                           batch_size=config.getint("model_training", "batch_size"),
                           validation_split=config.getfloat("model_training", "validation_split"))
 
+    try:
+        os.mkdir(model_wd)
+    except FileExistsError:
+        pass
+
     model_dir = os.path.join(model_wd, out_name)
     try:
         os.mkdir(model_dir)
