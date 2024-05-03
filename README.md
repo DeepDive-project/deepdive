@@ -21,7 +21,7 @@ or on Windows:
 .\desired_path_to_env\dd_env\Scripts\activate
 ```  
 
-3) Install DeepDive in the virtual env (on Windows use `py` instead of `python`) after replacing `your_path` with the correct path to the `deepdive_for_review` directory:
+3) Install DeepDive in the virtual env (on Windows use `py` instead of `python`) after replacing `your_path` with the correct path to the `deepdive` directory:
 
 ```
 python -m pip install --upgrade pip # check that pip is up to date
