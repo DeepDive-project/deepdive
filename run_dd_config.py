@@ -18,7 +18,7 @@ p.add_argument('-cpu', type=int, help='number of CPUs', default=None, metavar="N
 p.add_argument('-lstm', type=int, help='nodes in LSTM layers', default=None, metavar="None", nargs='+')
 p.add_argument('-dense', type=int, help='nodes in Dense layers', default=None, metavar="None", nargs='+')
 p.add_argument('-train_set', type=str, help='training set file names', default=None, metavar="None")
-p.add_argument('-test_set', type=str, help='training set file', default=None, metavar="None")
+p.add_argument('-test_set', type=str, help='test set file', default=None, metavar="None")
 args = p.parse_args()
 
 #TODO:
