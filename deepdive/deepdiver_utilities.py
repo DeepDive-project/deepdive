@@ -442,8 +442,7 @@ def predict_testset_from_config(config, test_feature_file, test_label_file,
         feature_rescaler = loaded_models[model_i]['feature_rescaler']
 
         pred_div = predict(features, model, feature_rescaler,
-                           n_predictions=config.getint("empirical_predictions", "n_predictions"), dropout=False,
-                           calibrated=calibrated)
+                           dropout=False, calibrated=calibrated)
 
         pred_list.append(pred_div)
 
