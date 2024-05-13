@@ -263,6 +263,7 @@ def build_rnn_model(model_config: rnn_config,
     model.compile(
         optimizer=optimizer,
         loss=loss,
+        metrics=['mae'],
     )
 
     if print_summary:
