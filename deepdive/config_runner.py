@@ -11,7 +11,7 @@ from .plots import add_geochrono_no_labels
 
 np.set_printoptions(suppress=True, precision=3)
 
-def run_config(config_file, wd=None, CPU=None,
+def run_config(config_file, wd=None, CPU=None, trained_model=None,
                train_set=None, test_set=None, lstm=None, dense=None):
     config = configparser.ConfigParser()
     config.read(config_file)
@@ -38,7 +38,7 @@ def run_config(config_file, wd=None, CPU=None,
 
     # Run simulations in parallel
     feature_file = None
-    if "simulations" in config.sections() and train_set is None:
+    if "simulations" in config.sections() and train_set is None and trained_model is None:
         if CPU is not None:
             config["simulations"]["n_CPUS"] = str(CPU)
             # print("CPU", config["simulations"]["n_CPUS"] , CPU)
@@ -52,7 +52,7 @@ def run_config(config_file, wd=None, CPU=None,
 
         feature_file, label_file = run_sim_from_config(config)
 
-    if train_set is not None:
+    if train_set is not None and trained_model is None:
         if "features.npy" in train_set:
             feature_file = train_set
             label_file = train_set.replace("features.npy", "labels.npy")
@@ -60,7 +60,7 @@ def run_config(config_file, wd=None, CPU=None,
             feature_file = train_set.replace("labels.npy", "features.npy")
             label_file = train_set
         else:
-            sys.exit("No features or labels files found")
+            sys.exit("No training features or labels files found")
 
     test_feature_file = None
 
@@ -72,18 +72,22 @@ def run_config(config_file, wd=None, CPU=None,
             test_feature_file = test_set.replace("labels.npy", "features.npy")
             test_label_file = test_set
         else:
-            sys.exit("No features or labels files found")
+            sys.exit("No test features or labels files found")
     else:
         if "simulations" in config.sections() and config.getint("simulations", "n_test_simulations"):
             test_feature_file, test_label_file = run_test_sim_from_config(config)
 
-    # Train a model
-    if feature_file is not None and "model_training" in config.sections():
-        model_dir = run_model_training_from_config(config, feature_file=feature_file, label_file=label_file,
-                                       model_tag=out_tag, return_model_dir=True)
+    model_dir = None
+    if trained_model is None:
+        # Train a model
+        if feature_file is not None and "model_training" in config.sections():
+            model_dir = run_model_training_from_config(config, feature_file=feature_file, label_file=label_file,
+                                           model_tag=out_tag, return_model_dir=True)
+    else:
+        model_dir = trained_model
 
     # run test set
-    if test_feature_file is not None and "model_training" in config.sections():
+    if test_feature_file is not None and model_dir is not None:
         test_pred, labels, testset_features = predict_testset_from_config(config,
                                                                           test_feature_file,
                                                                           test_label_file,
