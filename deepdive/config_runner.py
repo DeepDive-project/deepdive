@@ -42,7 +42,7 @@ def run_config(config_file, wd=None, CPU=None, trained_model=None,
 
     # Run simulations in parallel
     feature_file = None
-    if "simulations" in config.sections() and train_set is None and trained_model is None and test_set is None:
+    if "simulations" in config.sections() and train_set is None and test_set is None:
         if CPU is not None:
             config["simulations"]["n_CPUS"] = str(CPU)
             # print("CPU", config["simulations"]["n_CPUS"] , CPU)
