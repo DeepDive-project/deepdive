@@ -12,24 +12,28 @@ from .plots import add_geochrono_no_labels
 np.set_printoptions(suppress=True, precision=3)
 
 def run_config(config_file, wd=None, CPU=None, trained_model=None,
-               train_set=None, test_set=None, lstm=None, dense=None):
+               train_set=None, test_set=None, lstm=None, dense=None,
+               out_tag=""
+               ):
     config = configparser.ConfigParser()
     config.read(config_file)
 
     if wd is not None:
         config["general"]["wd"] = wd
 
-    if config["general"]["include_present_diversity"] == "FALSE":
-        out_tag = "unconditional"
-        include_present_diversity = False
-    else:
-        out_tag = "conditional"
-        include_present_diversity = True
-    if config["general"]["calibrate_diversity"] == "TRUE":
-        calibrated = True
-        out_tag = "calibrated"
-    else:
-        calibrated = False
+    calibrated = False
+    try:
+        if config["general"]["present_diversity"] == "NA":
+            out_tag = "unconditional"
+            include_present_diversity = False
+        else:
+            out_tag = "conditional"
+            include_present_diversity = True
+            # if config["general"]["calibrate_diversity"] == "TRUE":
+            #     calibrated = True
+            #     out_tag = "calibrated"
+    except:
+        pass
 
     if lstm is not None:
         config["model_training"]["lstm_layers"] = " ".join([str(i) for i in lstm])

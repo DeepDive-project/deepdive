@@ -41,6 +41,7 @@ def create_sim_obj_from_config(config, rseed=None):
                           p_equilibrium=config.getfloat("simulations", "p_equilibrium"),
                           p_constant_bd=config.getfloat("simulations", "p_constant_bd"),
                           p_mass_speciation=float(config["simulations"]["p_mass_speciation"]),
+                          pr_extant_clade=float(config["simulations"]["pr_extant_clade"]),
                           poiL=config.getfloat("simulations", "poil"),  # expected number of birth rate shifts
                           poiM=config.getfloat("simulations", "poim"),  # expected number of death rate shifts
                           seed=rseed,  # if > 0 fixes the random seed to make simulations reproducible
