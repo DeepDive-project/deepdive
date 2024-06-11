@@ -78,7 +78,10 @@ def run_config(config_file, wd=None, CPU=None, trained_model=None,
         else:
             sys.exit("No test features or labels files found")
     else:
-        if "simulations" in config.sections() and config.getint("simulations", "n_test_simulations"):
+        if feature_file is not None:
+            test_feature_file = feature_file
+            test_label_file = label_file
+        elif "simulations" in config.sections() and config.getint("simulations", "n_test_simulations"):
             test_feature_file, test_label_file = run_test_sim_from_config(config)
 
     model_dir = None
