@@ -97,6 +97,12 @@ def run_sim_from_config(config):
     # simulate training data
     bd_sim, fossil_sim = create_sim_obj_from_config(config, rseed=config.getint("simulations", "training_seed"))
 
+    try:
+        _ = int(config['general']['present_diversity'])
+        include_present_diversity = True
+    except:
+        include_present_diversity = False
+
     # AREA CONSTRAINTS
     area_start = [i for i in config['simulations'] if 'area_start' in i]
     area_end = [i for i in config['simulations'] if 'area_end' in i]
@@ -145,7 +151,7 @@ def run_sim_from_config(config):
                                     min_age=np.min(list(map(float, config["general"]["time_bins"].split()))),
                                     max_age=np.max(list(map(float, config["general"]["time_bins"].split()))),
                                     seed=config.getint("simulations", "training_seed"), keys=[],
-                                    include_present_diversity=config.get("general", "include_present_diversity"),
+                                    include_present_diversity=include_present_diversity,
                                     area_constraint=area_constraint
                                     )
 
@@ -208,6 +214,11 @@ def run_test_sim_from_config(config):
     else:
         area_constraint = None
 
+    try:
+        _ = int(config['general']['present_diversity'])
+        include_present_diversity = True
+    except:
+        include_present_diversity = False
 
     test_set = sim_settings_obj(bd_sim, fossil_sim, n_simulations=config.getint("simulations", "n_test_simulations"),
                                 min_age=np.min(list(map(float, config["general"]["time_bins"].split()))),
@@ -219,7 +230,7 @@ def run_test_sim_from_config(config):
                                 'time_bins_duration', 'eta', 'p_gap', 'area_size_concentration_prm',
                                 'link_area_size_carrying_capacity', 'slope_log_sampling',
                                 'intercept_initial_sampling', 'sd_through_time', 'additional_info'],
-                                include_present_diversity=config.get("general", "include_present_diversity"),
+                                include_present_diversity=include_present_diversity,
                                 area_constraint=area_constraint
                                 )
 
@@ -305,12 +316,18 @@ def run_model_training_from_config(config, feature_file=None, label_file=None,
 
     # feature_rescaler() is a function to rescale the features the same way as done in the training set
     calibrate_output = False
-    if config.get("general", "include_present_diversity") == 'TRUE':
-        include_present_div=True
-        if config.get("general", "calibrate_diversity") == "TRUE":
-            calibrate_output = True
-    else:
-        include_present_div=False
+
+    try:
+        _ = int(config['general']['present_diversity'])
+        include_present_div = True
+    except:
+        include_present_div = False
+
+        # if config.get("general", "include_present_diversity") == 'TRUE':
+        #     include_present_div=True
+        #     if config.get("general", "calibrate_diversity") == "TRUE":
+        #         calibrate_output = True
+        # else:
         # remove present diversity if it was included
         Xt = Xt[:, :, 0:len(get_features_names(n_areas=config.getint("general", "n_areas")))]
 
