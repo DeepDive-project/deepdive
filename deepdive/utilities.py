@@ -230,6 +230,7 @@ def predict(features,
             n_predictions=1,
             dropout=True,
             calibrated=False
+
             ):
     # next: rescale features using rescaler and run predictions with Dropout
     if feature_rescaler is not None:
@@ -251,15 +252,15 @@ def predict(features,
     else:
         features_rescaled = features
     if len(features.shape) == 2:
-        dd_input = features_rescaled.reshape((1, features.shape[0], features.shape[1]))
+        dd_input = np_to_tf(features_rescaled.reshape((1, features.shape[0], features.shape[1])))
     elif len(features.shape) == 3:
-        dd_input = features_rescaled
+        dd_input = np_to_tf(features_rescaled)
     else:
         print("Cannot reshape feature file")
         return "Error"
     if drop_modern_diversity:
         # leave only low res data!
-        dd_input = dd_input[:, :, :-1]
+        dd_input = np_to_tf(dd_input[:, :, :-1])
     if calibrated:
         present_div_vec = np.einsum('i, ib -> ib', dd_input[:, 0, -1],
                                     np.ones((dd_input.shape[0], dd_input.shape[1])))

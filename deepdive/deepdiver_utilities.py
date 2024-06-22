@@ -441,7 +441,7 @@ def predict_from_config(config, return_features=False,
 
 def predict_testset_from_config(config, test_feature_file, test_label_file,
                                 model_tag="", model_dir_id="rnn_model", calibrated=False,
-                                return_features=False, model_dir=None, convert_to_tf=True):
+                                return_features=False, model_dir=None):
     if model_dir is not None:
         loaded_models = load_models(model_wd=model_dir)
     else:
@@ -453,12 +453,6 @@ def predict_testset_from_config(config, test_feature_file, test_label_file,
     features = np.load(test_feature_file)
     labels = np.load(test_label_file)
     labels = normalize_labels(labels, rescaler=1, log=True)
-
-    if convert_to_tf:
-        # convert to tf tensors
-        features = np_to_tf(features)
-        labels = np_to_tf(labels)
-
 
     pred_list = []
     for model_i in range(len(loaded_models)):
