@@ -178,6 +178,16 @@ def run_config(config_file, wd=None, CPU=None, trained_model=None,
         div_plot.close()
         print("Plot saved as:", file_name)
 
+        empirical_features_1d = pd.DataFrame(feat[0])
+        empirical_features_1d.columns = time_bins
+        empirical_features1d.to_csv(os.path.join(model_dir, "Empirical_features_1d_%s.csv" % out_tag),
+                           index=False)
+
+        empirical_features_2d = pd.DataFrame(feat[1])
+        empirical_features_2d.columns = time_bins
+        empirical_features2d.to_csv(os.path.join(model_dir, "Empirical_features_2d_%s.csv" % out_tag),
+                           index=False)
+
         predictions = pd.DataFrame(pred_div)
         predictions.columns = time_bins
         predictions.to_csv(os.path.join(model_dir, "Empirical_predictions_%s.csv" % out_tag),
