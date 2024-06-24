@@ -168,7 +168,7 @@ def run_config(config_file, wd=None, CPU=None, trained_model=None,
                  )
 
         add_geochrono_no_labels(0, -0.1 * np.max(pred), max_ma=-(np.max(time_bins) * 1.05), min_ma=0)
-        plt.ylim(bottom=-0.1*np.max(pred), top=np.max(pred) * 1.05)
+        plt.ylim(bottom=-0.1*np.max(pred), top=np.max(pred_div) * 1.05)
         plt.xlim(-(np.max(time_bins) * 1.05), -np.min(time_bins) + 2)
         plt.ylabel("Diversity", fontsize=15)
         plt.xlabel("Time (Ma)", fontsize=15)
@@ -180,12 +180,12 @@ def run_config(config_file, wd=None, CPU=None, trained_model=None,
 
         empirical_features_1d = pd.DataFrame(feat[0])
         empirical_features_1d.columns = time_bins
-        empirical_features1d.to_csv(os.path.join(model_dir, "Empirical_features_1d_%s.csv" % out_tag),
+        empirical_features_1d.to_csv(os.path.join(model_dir, "Empirical_features_1d_%s.csv" % out_tag),
                            index=False)
 
         empirical_features_2d = pd.DataFrame(feat[1])
         empirical_features_2d.columns = time_bins
-        empirical_features2d.to_csv(os.path.join(model_dir, "Empirical_features_2d_%s.csv" % out_tag),
+        empirical_features_2d.to_csv(os.path.join(model_dir, "Empirical_features_2d_%s.csv" % out_tag),
                            index=False)
 
         predictions = pd.DataFrame(pred_div)
