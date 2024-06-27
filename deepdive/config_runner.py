@@ -170,19 +170,20 @@ def run_config(config_file, wd=None, CPU=None, trained_model=None,
         # fig = plt.figure(figsize=(12, 8))
         # plt.step(-time_bins, pred.T)
 
-        plt.step(-time_bins,
-                 pred.T,
-                 label="Mean prediction",
-                 linewidth=2,
-                 c="b",
-                 alpha=0.05)
-
         plt.fill_between(-time_bins,
                          y1=np.max(pred_div, axis=0).T,
                          y2=np.min(pred_div, axis=0).T,
                          step="pre",
                          color="b",
                          alpha=0.2)
+
+        plt.step(-time_bins,
+                 pred.T,
+                 label="Mean prediction",
+                 linewidth=2,
+                 c="b",
+                 alpha=1)
+
 
 
         add_geochrono_no_labels(0, -0.1 * np.max(pred), max_ma=-(np.max(time_bins) * 1.05), min_ma=0)
