@@ -21,6 +21,7 @@ p.add_argument('-train_set', type=str, help='training set file names', default=N
 p.add_argument('-test_set', type=str, help='test set file', default=None, metavar="None")
 p.add_argument("-trained_model", default=None, type=str)
 p.add_argument("-out_tag", default="", type=str)
+p.add_argument("-calibrated", default=False, action='store_true')
 args = p.parse_args()
 
 #TODO:
@@ -36,4 +37,4 @@ config_init = configparser.ConfigParser()
 config_runner.run_config(args.config_file, wd=args.wd, CPU=args.cpu,
                          train_set=args.train_set, test_set=args.test_set,
                          lstm=args.lstm, dense=args.dense, trained_model=args.trained_model,
-                         out_tag=args.out_tag)
+                         out_tag=args.out_tag, calibrated=args.calibrated)

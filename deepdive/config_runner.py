@@ -13,7 +13,7 @@ np.set_printoptions(suppress=True, precision=3)
 
 def run_config(config_file, wd=None, CPU=None, trained_model=None,
                train_set=None, test_set=None, lstm=None, dense=None,
-               out_tag=""
+               out_tag="", calibrated=False
                ):
     config = configparser.ConfigParser()
     config.read(config_file)
@@ -21,7 +21,7 @@ def run_config(config_file, wd=None, CPU=None, trained_model=None,
     if wd is not None:
         config["general"]["wd"] = wd
 
-    calibrated = False
+    # calibrated = False
     try:
         if config["general"]["present_diversity"] == "NA":
             out_tag = "unconditional"
@@ -29,9 +29,9 @@ def run_config(config_file, wd=None, CPU=None, trained_model=None,
         else:
             out_tag = "conditional"
             include_present_diversity = True
-            # if config["general"]["calibrate_diversity"] == "TRUE":
-            #     calibrated = True
-            #     out_tag = "calibrated"
+            if config["general"]["calibrate_diversity"] == "TRUE":
+                calibrated = True
+                out_tag = "calibrated"
     except:
         pass
 
