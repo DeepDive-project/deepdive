@@ -150,22 +150,40 @@ def run_config(config_file, wd=None, CPU=None, trained_model=None,
         pred = np.mean(pred_div, axis=0)
 
         fig = plt.figure(figsize=(12, 8))
-        plt.step(-time_bins, pred.T)
+        # plt.step(-time_bins, pred.T)
+        #
+        # plt.step(-time_bins,
+        #          pred_div.T,
+        #          label="Mean prediction",
+        #          linewidth=2,
+        #          c="b",
+        #          alpha=0.05)
+
+        # rt_div = np.mean(feat[:, :, 5], axis=0)
+        # rt_div = np.array([rt_div[0]] + list(rt_div))
+        # print(rt_div.shape)
+        # plt.step(-time_bins, rt_div,
+        #          label="Range-through",
+        #          linewidth=2,
+        #          )
+
+        # fig = plt.figure(figsize=(12, 8))
+        # plt.step(-time_bins, pred.T)
 
         plt.step(-time_bins,
-                 pred_div.T,
+                 pred.T,
                  label="Mean prediction",
                  linewidth=2,
                  c="b",
                  alpha=0.05)
 
-        rt_div = np.mean(feat[:, :, 5], axis=0)
-        rt_div = np.array([rt_div[0]] + list(rt_div)) 
-        print(rt_div.shape)
-        plt.step(-time_bins, rt_div,
-                 label="Range-through",
-                 linewidth=2,
-                 )
+        plt.fill_between(-time_bins,
+                         y1=np.max(pred_div, axis=0).T,
+                         y2=np.min(pred_div, axis=0).T,
+                         step="pre",
+                         color="b",
+                         alpha=0.2)
+
 
         add_geochrono_no_labels(0, -0.1 * np.max(pred), max_ma=-(np.max(time_bins) * 1.05), min_ma=0)
         plt.ylim(bottom=-0.1*np.max(pred), top=np.max(pred_div) * 1.05)
