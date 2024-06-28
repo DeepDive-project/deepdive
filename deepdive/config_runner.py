@@ -21,7 +21,12 @@ def run_config(config_file, wd=None, CPU=None, trained_model=None,
     if wd is not None:
         config["general"]["wd"] = wd
 
-    # calibrated = False
+    try:
+        if config["general"]["calibrate_diversity"] == "TRUE":
+            calibrated = True
+    except:
+        pass
+
     try:
         if config["general"]["present_diversity"] == "NA":
             out_tag = "unconditional"
@@ -29,8 +34,7 @@ def run_config(config_file, wd=None, CPU=None, trained_model=None,
         else:
             out_tag = "conditional"
             include_present_diversity = True
-            if config["general"]["calibrate_diversity"] == "TRUE":
-                calibrated = True
+            if calibrated:
                 out_tag = "calibrated"
     except:
         pass
