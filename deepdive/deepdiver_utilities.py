@@ -300,7 +300,8 @@ def get_model_settings_from_config(config):
     return list_settings
 
 def run_model_training_from_config(config, feature_file=None, label_file=None,
-                                   convert_to_tf=True, model_tag=None, return_model_dir=False):
+                                   convert_to_tf=True, model_tag=None, return_model_dir=False,
+                                   calibrate_output=False):
     model_settings = get_model_settings_from_config(config)
     sims_path = os.path.join(config["general"]["wd"], config["model_training"]["sims_folder"])
     if feature_file is None:
@@ -315,7 +316,6 @@ def run_model_training_from_config(config, feature_file=None, label_file=None,
     out_name = infile_name + "_" + model_settings[0]['model_name'] + model_tag
 
     # feature_rescaler() is a function to rescale the features the same way as done in the training set
-    calibrate_output = False
 
     try:
         _ = int(config['general']['present_diversity'])
