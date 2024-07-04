@@ -56,9 +56,29 @@ def create_sim_obj_from_config(config, rseed=None):
         target_n_occs = None
         target_n_occs_range = 10
 
+    if 2 > 1: #try:
+        freq_bin_sampling = config.getfloat("simulations", "bin_sampling")
+        bin_mean_rates = np.array(list(map(float, config["simulations"]["bin_mean_rates"].split())))
+        bin_std_rates = np.array(list(map(float, config["simulations"]["bin_std_rates"].split())))
+    # except:
+    #     freq_bin_sampling = 0
+    #     bin_std_rates = None
+    #     bin_mean_rates = None
+
+    try:
+        singleton = config.getfloat("simulations", "singletons_frequency")
+    except:
+        singleton = list(map(float, config["simulations"]["singletons_frequency"].split()))
+
+    try:
+        locality_rate_multiplier = list(map(float, config["simulations"]["locality_rate_multiplier"].split()))
+    except:
+        locality_rate_multiplier = None
+
+    time_bins = np.sort(np.array(list(map(float, config["general"]["time_bins"].split()))))
     fossil_sim = fossil_simulator(n_areas=config.getint("general", "n_areas"),
                                   n_bins=len(list(map(float, config["general"]["time_bins"].split())))-1,  # number of time bins
-                                  time_bins=np.array(list(map(float, config["general"]["time_bins"].split())))[::-1],
+                                  time_bins=time_bins,
                                   eta=list(map(float, config["simulations"]["eta"].split())),  # area-sp stochasticity
                                   p_gap=list(map(float, config["simulations"]["p_gap"].split())),  # probability of 0 preservation in a time bin
                                   dispersal_rate=config["simulations"]["dispersal_rate"],
@@ -84,9 +104,13 @@ def create_sim_obj_from_config(config, rseed=None):
                                   mean_rate_skyline=list(map(float, config["simulations"]["mean_skyline_sampling"].split())),
                                   mean_n_epochs_skyline=config.getfloat("simulations", "mean_n_epochs_skyline"),
                                   fraction_skyline_sampling=config.getfloat("simulations", "fraction_skyline_sampling"),
+                                  bin_sampling=freq_bin_sampling,
+                                  bin_std_rates=bin_std_rates,
+                                  bin_mean_rates=bin_mean_rates,
                                   maximum_localities_per_bin=config.getint("simulations", "maximum_localities_per_bin"),
-                                  singletons_frequency=config.getfloat("simulations", "singletons_frequency"),
+                                  singletons_frequency=singleton,
                                   species_per_locality_multiplier=list(map(float, config["simulations"]["species_per_locality_multiplier"].split())),
+                                  locality_rate_multiplier=locality_rate_multiplier,
                                   target_n_occs=target_n_occs,
                                   target_n_occs_range=target_n_occs_range,
                                   seed=rseed)  # if > 0 fixes the random seed to make simulations reproducible
@@ -478,7 +502,7 @@ def config_autotune(config_init, target_n_occs_range=10):
     # load empirical
     dd_input = os.path.join(config["general"]["wd"], config["empirical_predictions"]["empirical_input_file"])
     feat_emp = parse_dd_input(dd_input,
-                                 present_diversity=config.getint("empirical_predictions", "present_diversity"))
+                              present_diversity=config.getint("general", "present_diversity"))
 
 
     feat_names_df = get_features_names(n_areas=n_areas, include_present_div=True, as_dataframe=True)
@@ -492,9 +516,11 @@ def config_autotune(config_init, target_n_occs_range=10):
     n_singletons = feat_emp[0][:, feat_names.index("n_singletons")]
     n_endemics = feat_emp[0][:,feat_names.index("n_endemics")]
     prop_endemics = np.mean(n_endemics / (n_species + 1))
-    config["simulations"]["disp_rate_mean"] = "%s %s" % (0.5 * (1 / prop_endemics), 2 * (1 / prop_endemics))
+    print("prop_endemics", prop_endemics)
+    config["simulations"]["disp_rate_mean"] = "%s %s" % (0.2 * (1 - prop_endemics), 5 * (1 - prop_endemics))
 
     indx = np.array([i for i in range(len(feat_names)) if "n_locs_area_" in feat_names[i]])
+    # print(feat_names)
     n_localities_area = feat_emp[0][:,indx]
 
     indx = np.array([i for i in range(len(feat_names)) if "n_species_area_" in feat_names[i]])
@@ -526,7 +552,7 @@ def config_autotune(config_init, target_n_occs_range=10):
     # re-set mean skyline sampling
     config["simulations"]["mean_skyline_sampling"] = "%s %s" % (np.log(np.mean(n_localities_area) / 2),
                                                                 np.log(np.mean(n_localities_area) * 2))
-    config["simulations"]["sd_through_time_skyline"] = "%s" % np.log(np.var(n_localities_area))
+    config["simulations"]["sd_through_time_skyline"] = "%s" % np.std(np.log(n_localities_area + 1))
 
     # re-set carrying capacity
     config["simulations"]["dd_K"] = "%s %s" % (np.mean(range_through_div) / 2, np.max(range_through_div) * 5)
@@ -539,17 +565,48 @@ def config_autotune(config_init, target_n_occs_range=10):
     config["simulations"]["p_gap"] = "%s %s" % (0, np.sum(n_occs_area == 0) / np.size(n_occs_area))
 
     # reset freq singletons
-    f_singl = np.mean(n_singletons[n_species > 0] / n_species[n_species > 0])
-    config["simulations"]["p_gap"] = "%s %s" % (f_singl / 2, f_singl * 2)
+    f_singl_m = np.mean(n_singletons[n_species > 0] / n_species[n_species > 0])
+    f_singl_M = np.max(n_singletons[n_species > 1] / n_species[n_species > 1])
+    config["simulations"]["singletons_frequency"] = "%s %s" % (f_singl_m, f_singl_M)
 
-    pres_species = int(config["empirical_predictions"]["present_diversity"])
+    pres_species = int(config["general"]["present_diversity"])
     config["simulations"]["extant_sp"] = "%s %s" % (int(pres_species / 2),
                                                     int(pres_species * 10))
 
-    config["simulations"]["total_sp"] = "%s %s" % (int(np.max(n_species) * 2), int(np.sum(n_species) * 2))
+    config["simulations"]["total_sp"] = "%s %s" % (int(np.max(n_species) * 2), int(np.sum(n_species) * 20))
 
     config["simulations"]["target_n_occs"] = "%s" % np.sum(n_occs)
     config["simulations"]["target_n_occs_range"] = "%s" % target_n_occs_range
+
+    mean_bin_rates = np.mean(n_localities_area, axis=1)
+    mean_bin_rates[mean_bin_rates == 0] = np.min(mean_bin_rates[mean_bin_rates > 0])
+    list_feat = np.log(mean_bin_rates)
+
+    s = ""
+    for i in list_feat:
+        s = s + "%s " % i
+    config["simulations"]["bin_mean_rates"] = s
+
+    var_bin_rates = np.std(np.log(1 + n_localities_area), axis=1)
+    var_bin_rates[var_bin_rates == 0] = np.mean(var_bin_rates[var_bin_rates > 0])
+    list_feat = var_bin_rates
+
+    s = ""
+    for i in list_feat:
+        s = s + "%s " % i
+    config["simulations"]["bin_std_rates"] = s
+
+    n_localities_area[n_localities_area == 0] = np.nan
+    mean_loc_area = np.nanmean(n_localities_area, axis=0)
+    mean_loc_area_r = mean_loc_area / np.mean(mean_loc_area)
+    # print("np.mean(n_localities_area, axis=1)", mean_loc_area, mean_loc_area_r)
+    s = ""
+    for i in mean_loc_area_r:
+        s = s + "%s " % i
+    config["simulations"]["locality_rate_multiplier"] = s
+
+    config["simulations"]["fraction_skyline_sampling"] = "0.75"
+    config["simulations"]["bin_sampling"] = "0.67" # 50% of simulations overall with empirical loc rates
 
     config["general"]["autotune"] = "FALSE"
 
