@@ -436,7 +436,7 @@ def predict_from_config(config, return_features=False,
                                                           config["empirical_predictions"]["model_folder"]),
                                     model_name_tag=model_tag, model_dir_id=model_dir_id)
 
-    pres_div = config["empirical_predictions"]["present_diversity"]
+    pres_div = config["general"]["present_diversity"]
     if pres_div == "NA":
         features = parse_dd_input(dd_input)
     else:
