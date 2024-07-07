@@ -1987,7 +1987,7 @@ def features_through_time(features_names, time_bins, sim_features, empirical_fea
         fig = plt.figure(figsize=(12, 8))
 
         plt.step(-time_bins,
-                 empirical_features[[features_names[i]]],
+                 empirical_features[:,i],
                  label="Empirical feature",
                  linewidth=2,
                  color="C0")
