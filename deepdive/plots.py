@@ -1974,3 +1974,44 @@ def plot_all_models(data_wd, loaded_models, present_diversity, clade_name, outpu
 
 
 
+def features_through_time(features_names, time_bins, sim_features, empirical_features, wd):
+    for i in range(0, len(features_names)):
+        # retrieve simulated features for plotting
+        n_feat = np.mean(sim_features[:, :, i], axis=0)
+        n_feat = np.insert(n_feat, -len(n_feat), values=n_feat[0])
+        feat_10 = np.percentile(sim_features[:, :, i], q=10, axis=0)
+        feat_10 = np.insert(feat_10, -len(feat_10), values=feat_10[0])
+        feat_90 = np.percentile(sim_features[:, :, i], q=90, axis=0)
+        feat_90 = np.insert(feat_90, -len(feat_90), values=feat_90[0])
+
+        fig = plt.figure(figsize=(12, 8))
+
+        plt.step(-time_bins,
+                 empirical_features[[features_names[i]]],
+                 label="Empirical feature",
+                 linewidth=2,
+                 color="C0")
+
+        plt.step(-time_bins,
+                 n_feat,
+                 label="Simulated feature",
+                 linewidth=2,
+                 color="C1")
+
+        plt.fill_between(-time_bins,
+                         feat_10,
+                         feat_90,
+                         linewidth=2,
+                         step="pre",
+                         alpha=0.2,
+                         color="C1")
+
+        plt.ylabel(features_names[i], fontsize=15)
+        plt.xlabel("Time (Ma)", fontsize=15)
+        c0 = mpatches.Patch(color='C0', label="Empirical feature")
+        c1 = mpatches.Patch(color='C1', label='Mean simulated feature')
+        plt.legend(handles=[c0, c1])
+        file_name = os.path.join(wd, features_names[i] + "_through_time.pdf")
+        plot = matplotlib.backends.backend_pdf.PdfPages(file_name)
+        plot.savefig(fig)
+        plot.close()

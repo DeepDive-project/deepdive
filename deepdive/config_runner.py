@@ -8,6 +8,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 from .deepdiver_utilities import *
 from .plots import add_geochrono_no_labels
+from .plots import features_through_time
 
 np.set_printoptions(suppress=True, precision=3)
 
@@ -50,7 +51,7 @@ def run_config(config_file, wd=None, CPU=None, trained_model=None,
     if "simulations" in config.sections() and train_set is None and test_set is None:
         if CPU is not None:
             config["simulations"]["n_CPUS"] = str(CPU)
-            # print("CPU", config["simulations"]["n_CPUS"] , CPU)
+            print("CPU", config["simulations"]["n_CPUS"] , CPU)
 
         if config["general"]["autotune"] == "TRUE":
             print("Running autotune...")
@@ -148,6 +149,10 @@ def run_config(config_file, wd=None, CPU=None, trained_model=None,
                                log_occurrences=False,
                                wd=model_dir,
                                output_name="Feature_plot_" + out_tag)
+
+            features_through_time(features_names=features_names, time_bins=time_bins, testset_features=testset_features,
+                                  empirical_features=feat[0], wd=model_dir)
+
 
         print(feat.shape, pred_div.shape)
 
