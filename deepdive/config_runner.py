@@ -150,7 +150,7 @@ def run_config(config_file, wd=None, CPU=None, trained_model=None,
                                wd=model_dir,
                                output_name="Feature_plot_" + out_tag)
 
-            print(time_bins.shape, testset_features.shape,feat[0].shape)
+            print(time_bins[:-1].shape, testset_features.shape,feat[0].shape)
 
 
             features_through_time(features_names=features_names, time_bins=time_bins[:-1],
