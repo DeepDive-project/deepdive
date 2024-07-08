@@ -1979,9 +1979,9 @@ def features_through_time(features_names, time_bins, sim_features, empirical_fea
         # retrieve simulated features for plotting
         n_feat = np.mean(sim_features[:, :, i], axis=0)
         n_feat = np.insert(n_feat, -len(n_feat), values=n_feat[0])
-        feat_10 = np.percentile(sim_features[:, :, i], q=0, axis=0)
+        feat_10 = np.percentile(sim_features[:, :, i], q=1, axis=0)
         feat_10 = np.insert(feat_10, -len(feat_10), values=feat_10[0])
-        feat_90 = np.percentile(sim_features[:, :, i], q=100, axis=0)
+        feat_90 = np.percentile(sim_features[:, :, i], q=99, axis=0)
         feat_90 = np.insert(feat_90, -len(feat_90), values=feat_90[0])
 
         fig = plt.figure(figsize=(12, 8))
