@@ -1975,7 +1975,7 @@ def plot_all_models(data_wd, loaded_models, present_diversity, clade_name, outpu
 
 
 def features_through_time(features_names, time_bins, sim_features, empirical_features, wd):
-    for i in range(0, len(features_names)):
+    for i in range(len(features_names)):
         # retrieve simulated features for plotting
         n_feat = np.mean(sim_features[:, :, i], axis=0)
         n_feat = np.insert(n_feat, -len(n_feat), values=n_feat[0])
@@ -1986,8 +1986,10 @@ def features_through_time(features_names, time_bins, sim_features, empirical_fea
 
         fig = plt.figure(figsize=(12, 8))
 
+        emp_feat = empirical_features[:,i] + 0
+        emp_feat = np.insert(emp_feat, -len(emp_feat), values=emp_feat[0])
         plt.step(-time_bins,
-                 empirical_features[:,i],
+                 emp_feat,
                  label="Empirical feature",
                  linewidth=2,
                  color="C0")

@@ -153,7 +153,7 @@ def run_config(config_file, wd=None, CPU=None, trained_model=None,
             print(time_bins[:-1].shape, testset_features.shape,feat[0].shape)
 
 
-            features_through_time(features_names=features_names, time_bins=time_bins[:-1],
+            features_through_time(features_names=features_names, time_bins=time_bins,
                                   sim_features=testset_features,
                                   empirical_features=feat[0], wd=model_dir)
 
