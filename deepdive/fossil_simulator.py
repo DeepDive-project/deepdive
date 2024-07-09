@@ -231,7 +231,8 @@ class fossil_simulator():
 
         if self.carrying_capacity_multiplier is not None:
             # remove species from areas with 0-carrying capacity
-            geo_table *= self.carrying_capacity_multiplier[1]
+            # print("geo_table", geo_table.shape, self.carrying_capacity_multiplier[1].shape)
+            geo_table *= self.carrying_capacity_multiplier[0]
 
         return geo_table, slope_pr, pr_at_origination, kappa, disp_rate_mean
 
