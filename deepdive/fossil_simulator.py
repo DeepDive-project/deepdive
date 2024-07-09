@@ -180,6 +180,8 @@ class fossil_simulator():
                 pass
             else:
                 # prevent overflows
+                # print(pr_at_origination)
+                # quit()
                 p_tmp = self.carrying_capacity_multiplier[0] + SMALL_NUMBER
                 pr_at_origination = np.einsum('sa, s -> sa', p_tmp,
                                               1 / (np.sum(p_tmp, 1)))
@@ -538,6 +540,10 @@ class fossil_simulator():
         species_presence_absence_data = self.species_presence_absence_in_time_bin()
         e_species_space_time_table_fraction = self.einsum_species_space_time_fraction(geo_table,
                                                                                       species_presence_absence_data)
+
+        if self.carrying_capacity_multiplier is not None:
+            e_species_space_time_table_fraction *= self.carrying_capacity_multiplier[1]
+
         e_species_space_time_table = self.einsum_species_space_time(geo_table,
                                                                     species_presence_absence_data)
 
@@ -554,6 +560,13 @@ class fossil_simulator():
         #       )
         number_of_localities, locality_rate = self.draw_localities(area_rate=area_specific_rate, area_size=area_size,
                                                                    time_rate=time_specific_rate, a_var=a_var)
+
+        if self.carrying_capacity_multiplier is not None:
+            # print(self.carrying_capacity_multiplier[0].shape , number_of_localities.shape)
+            # area_time_carrying_capacity_multiplier = self.carrying_capacity_multiplier[1][0]
+            number_of_localities = self.carrying_capacity_multiplier[1][0].astype(int) * number_of_localities
+
+
         # set to 0 the number opf localities outside the clade age range
         clade_span = (global_true_trajectory == 0).nonzero()[0]
         number_of_localities[:, clade_span] = 0

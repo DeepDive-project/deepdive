@@ -81,6 +81,7 @@ def run_sim(args):
 
             area_tbl[:, 2] = rnd_d
         if area_tbl is not None:
+            # print(sp_x)
             area_tbl = pd.DataFrame(area_tbl)
             # print("area_tbl:", area_tbl)
             # area constraints
@@ -88,10 +89,13 @@ def run_sim(args):
             # the dataframe can also be read from a file e.g. using pd.read_csv()
 
             c1, c2 = set_area_constraints(sp_x=sp_x,
-                                             n_time_bins=fossil_sim.n_bins,
-                                             area_tbl=area_tbl,
-                                             mid_time_bins=fossil_sim.mid_time_bins)
+                                          n_time_bins=fossil_sim.n_bins,
+                                          area_tbl=area_tbl,
+                                          mid_time_bins=fossil_sim.mid_time_bins)
 
+            # print("c1:", c1.shape)
+            # print("c2:", c2.shape)
+            # quit()
             fossil_sim.set_carrying_capacity_multiplier(m_species_origin=c1, m_sp_area_time=c2)
 
         sim = fossil_sim.run_simulation(sp_x, min_age=settings_obj.min_age, max_age=settings_obj.max_age)
