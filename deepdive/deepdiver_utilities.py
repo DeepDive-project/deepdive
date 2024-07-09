@@ -589,7 +589,7 @@ def config_autotune(config_init, target_n_occs_range=10):
 
     var_bin_rates = np.std(np.log(1 + n_localities_area), axis=1)
     var_bin_rates[var_bin_rates == 0] = np.mean(var_bin_rates[var_bin_rates > 0])
-    list_feat = var_bin_rates
+    list_feat = var_bin_rates * 2
 
     s = ""
     for i in list_feat:
