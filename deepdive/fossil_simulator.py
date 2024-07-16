@@ -50,7 +50,8 @@ class fossil_simulator():
                  target_n_occs=None,  # Integer
                  target_n_occs_range=10, # [target_n_occs / target_n_occs_range, target_n_occs * target_n_occs_range]
                  species_per_locality_multiplier=None,
-                 seed=None):
+                 seed=None,
+                 verbose=False):
 
         self.n_areas = n_areas
         self.n_bins = n_bins
@@ -91,6 +92,7 @@ class fossil_simulator():
         self.species_per_locality_multiplier = species_per_locality_multiplier
         self._additional_info = None
         self._rs = get_rnd_gen(seed)
+        self.verbose = verbose
 
     def reset_seed(self, seed):
         self._rs = get_rnd_gen(seed)
@@ -278,13 +280,15 @@ class fossil_simulator():
             mu = np.einsum('a, t -> at', slope, self.mid_time_bins) + np.log(intercept)
             # print(mu)
             loc_rates = self._rs.normal(loc=mu, scale=sd_through_time)
-            # print("continuous rates", np.exp(loc_rates)[0])
+            if self.verbose:
+                print("continuous rates", np.exp(loc_rates)[0])
         else:
 
             if self._rs.random() < self.bin_sampling:
                 loc_rates = self._rs.normal(loc=self.bin_mean_rates,
                                             scale=self.bin_std_rates)
-                # print("bin_sampling", np.exp(loc_rates)[0])
+                if self.verbose:
+                    print("bin_sampling", np.exp(loc_rates)[0])
             else:
                 if self.mean_rate_skyline is None:
                     mu = np.mean(np.einsum('a, t -> at', slope, self.mid_time_bins) + np.log(intercept))
@@ -301,7 +305,8 @@ class fossil_simulator():
                                               scale=self.sd_through_time_skyline,
                                               size=(n_preservation_bins))
                 loc_rates = loc_rates_b[time_id_area]
-                # print("skyline", np.exp(loc_rates)[0])
+                if self.verbose:
+                    print("skyline", np.exp(loc_rates)[0])
         return np.exp(loc_rates), slope, intercept, sd_through_time
 
     # consider that each area has its own preservation and sampling rate, generate preservation rate per area function
@@ -358,7 +363,7 @@ class fossil_simulator():
         l[l > self.max_localities] = self.max_localities  # truncate the number of localities that can be drawn per bin
         # locality_rate[locality_rate > self.max_localities] = self.max_localities
         if self.locality_rate_multiplier is not None:
-            l = l * self.locality_rate_multiplier
+            l = np.einsum('at, a -> at', l, self.locality_rate_multiplier)
         # print(self.time_bins_duration)
         return self._rs.poisson(l), l
 
@@ -477,7 +482,6 @@ class fossil_simulator():
                     #       fa_species_i,
                     #       end_time_bin_i,
                     #       la_species_i)
-
                     species_duration_in_time_bin_i = np.min([start_time_bin_i, fa_species_i]) - np.max(
                         [end_time_bin_i, la_species_i])
                     relative_duration_in_time_bin_i = species_duration_in_time_bin_i / (
