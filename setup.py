@@ -16,13 +16,13 @@ install it on Python {}.{}.
     sys.exit(1)
 
 requirements_list = [
-     "numpy~=1.22.3",
-     "matplotlib~=3.5.2",
-     "pandas~=1.4.3",
-     "scipy~=1.8.1",
-     "tensorflow~=2.8.0",
-     "seaborn~=0.11.2",
-     "keras~=2.8.0",   
+     "numpy>=1.22.3",
+     "matplotlib>=3.5.2",
+     "pandas>=1.4.3",
+     "scipy>=1.8.1",
+     "tensorflow>=2.8.0",
+     "seaborn>=0.11.2",
+     "keras>=2.8.0",   
     ]
 
 setuptools.setup(
