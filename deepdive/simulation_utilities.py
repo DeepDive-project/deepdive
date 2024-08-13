@@ -6,6 +6,8 @@ import os
 from .utilities import print_update, save_pkl, set_area_constraints
 from .feature_extraction import extract_sim_features, get_features_names
 from .plots import plot_feature_hists
+from multiprocessing import get_context
+
 class sim_settings_obj():
     def __init__(self,
                  bd_sim,
@@ -117,13 +119,18 @@ def run_sim(args):
 
 def run_sim_parallel(training_set: sim_settings_obj, n_CPUS):
     if n_CPUS == 1:
+        print("\nSimulating data...")
         res = [run_sim([0, training_set])]
     else:
         training_args = [[i, training_set] for i in range(n_CPUS)]
-        print("\nSimulating data...")
-        pool = multiprocessing.Pool()
-        res = pool.map(run_sim, training_args)
-        pool.close()
+        print("\nSimulating data (parallelized on %s CPUs)..." % n_CPUS)
+
+        p = get_context("fork").Pool(n_CPUS)
+        res = p.map(run_sim, training_args)
+        p.close()
+        # pool = multiprocessing.Pool()
+        # res = pool.map(run_sim, training_args)
+        # pool.close()
 
     features = []
     labels = []
