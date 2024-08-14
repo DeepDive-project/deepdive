@@ -171,7 +171,12 @@ def run_sim_from_config(config):
     else:
         area_constraint = None
 
-    training_set = sim_settings_obj(bd_sim, fossil_sim, n_simulations=config.getint("simulations", "n_training_simulations"),
+    n_simulations = config.getint("simulations", "n_training_simulations")
+    n_cpus = config.getint("simulations", "n_CPUS")
+    if n_cpus > 1:
+        n_simulations = int(np.ceil(n_simulations / n_cpus))
+
+    training_set = sim_settings_obj(bd_sim, fossil_sim, n_simulations=n_simulations,
                                     min_age=np.min(list(map(float, config["general"]["time_bins"].split()))),
                                     max_age=np.max(list(map(float, config["general"]["time_bins"].split()))),
                                     seed=config.getint("simulations", "training_seed"), keys=[],
