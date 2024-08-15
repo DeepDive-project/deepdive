@@ -2017,3 +2017,4 @@ def features_through_time(features_names, time_bins, sim_features, empirical_fea
         plot = matplotlib.backends.backend_pdf.PdfPages(file_name)
         plot.savefig(fig)
         plot.close()
+        plt.close()

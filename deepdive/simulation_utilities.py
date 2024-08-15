@@ -109,8 +109,8 @@ def run_sim(args):
 
         s = {key: sim[key] for key in settings_obj.keys}
         sim_settings.append(s)
-    if rep == 0:
-        print("\ndone.\n")
+    # if rep == 0:
+    #     print("\ndone.\n")
 
     res = {'features': np.array(batch_features),
             'labels': np.array(batch_labels),
@@ -123,7 +123,7 @@ def run_sim_parallel(training_set: sim_settings_obj, n_CPUS):
         res = [run_sim([0, training_set])]
     else:
         training_args = [[i, training_set] for i in range(n_CPUS)]
-        print("\nSimulating data (parallelized on %s CPUs)..." % n_CPUS)
+        print("\nSimulating %s datasets (parallelized on %s CPUs)..." % (n_CPUS * training_set.n_simulations,  n_CPUS))
 
         p = get_context("fork").Pool(n_CPUS)
         res = p.map(run_sim, training_args)
@@ -131,6 +131,8 @@ def run_sim_parallel(training_set: sim_settings_obj, n_CPUS):
         # pool = multiprocessing.Pool()
         # res = pool.map(run_sim, training_args)
         # pool.close()
+
+    print("\ndone.\n")
 
     features = []
     labels = []

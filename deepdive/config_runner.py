@@ -132,13 +132,18 @@ def run_config(config_file, wd=None, CPU=None, trained_model=None,
                                              model_dir=model_dir)
 
         if testset_features is not None:
+            feature_plot_dir = os.path.join(model_dir, "feature_plots")
+            try:
+                os.mkdir(feature_plot_dir)
+            except FileExistsError:
+                pass
             plot_feature_hists(test_features=testset_features,
                                empirical_features=feat[0],
                                show=False,
                                n_bins=30,
                                features_names=features_names,
                                log_occurrences=True,
-                               wd=model_dir,
+                               wd=feature_plot_dir,
                                output_name="Feature_plot_log" + out_tag)
 
             plot_feature_hists(test_features=testset_features,
@@ -147,7 +152,7 @@ def run_config(config_file, wd=None, CPU=None, trained_model=None,
                                n_bins=30,
                                features_names=features_names,
                                log_occurrences=False,
-                               wd=model_dir,
+                               wd=feature_plot_dir,
                                output_name="Feature_plot_" + out_tag)
 
             print(time_bins[:-1].shape, testset_features.shape,feat[0].shape)
@@ -155,7 +160,7 @@ def run_config(config_file, wd=None, CPU=None, trained_model=None,
 
             features_through_time(features_names=features_names, time_bins=time_bins,
                                   sim_features=testset_features,
-                                  empirical_features=feat[0], wd=model_dir)
+                                  empirical_features=feat[0], wd=feature_plot_dir)
 
 
         print(feat.shape, pred_div.shape)

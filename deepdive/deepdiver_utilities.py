@@ -249,7 +249,13 @@ def run_test_sim_from_config(config):
     except:
         include_present_diversity = False
 
-    test_set = sim_settings_obj(bd_sim, fossil_sim, n_simulations=config.getint("simulations", "n_test_simulations"),
+    n_simulations = config.getint("simulations", "n_test_simulations")
+    n_cpus = config.getint("simulations", "n_CPUS")
+    if n_cpus > 1:
+        n_simulations = int(np.ceil(n_simulations / n_cpus))
+
+
+    test_set = sim_settings_obj(bd_sim, fossil_sim, n_simulations=n_simulations,
                                 min_age=np.min(list(map(float, config["general"]["time_bins"].split()))),
                                 max_age=np.max(list(map(float, config["general"]["time_bins"].split()))),
                                 seed=config.getint("simulations", "test_seed"),
@@ -341,7 +347,7 @@ def run_model_training_from_config(config, feature_file=None, label_file=None,
     model_wd = os.path.join(config["general"]["wd"], config["model_training"]["model_folder"]).replace("\\", "/")
     Xt = np.load(os.path.join(sims_path, feature_file))
     Yt = np.load(os.path.join(sims_path, label_file))
-    infile_name = os.path.basename(feature_file).split('.npy')[0]
+    infile_name = os.path.basename(feature_file).split('.npy')[0].replace("_training_features", "")
     out_name = infile_name + "_" + model_settings[0]['model_name'] + model_tag
 
     # feature_rescaler() is a function to rescale the features the same way as done in the training set

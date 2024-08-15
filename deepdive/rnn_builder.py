@@ -84,7 +84,12 @@ def save_rnn_model(wd, history, model, feature_rescaler, filename="", return_mod
     with open(os.path.join(wd, "rnn_history" + filename + ".pkl").replace("\\", "/"), 'wb') as output:  # Overwrites any existing file.
         pkl.dump(history.history, output, pkl.HIGHEST_PROTOCOL)
     # save model
-    tf.keras.models.save_model(model, os.path.join(wd, 'rnn_model' + filename).replace("\\", "/"))
+    try:
+        tf.keras.models.save_model(model, os.path.join(wd, 'rnn_model' + filename).replace("\\", "/"))
+    except:
+        tf.keras.models.save_model(model, os.path.join(wd, 'rnn_model' + filename + ".keras").replace("\\", "/"))
+    # model.export(os.path.join(wd, 'rnn_model' + filename).replace("\\", "/"))
+
     if return_model_dir:
         return os.path.join(wd, 'rnn_model' + filename)
 
@@ -104,7 +109,10 @@ def load_rnn_model(wd, filename=""):
 
     # def feature_rescaler(x):
     #     return x * den1d
-    model = tf.keras.models.load_model(os.path.join(wd, 'rnn_model' + filename))
+    try:
+        model = tf.keras.models.load_model(os.path.join(wd, 'rnn_model' + filename)) # + ".keras"))
+    except:
+        model = tf.keras.models.load_model(os.path.join(wd, 'rnn_model' + filename + ".keras"))
     return history, model, feature_rescaler
 
 
@@ -156,7 +164,7 @@ def load_models(model_wd, model_dir_id="rnn_model", model_name_tag=""):
     if len(model_list) == 0:
         print("No models in", os.path.join(model_wd, "%s*%s*" % (model_dir_id, model_name_tag)))
     for model_i in model_list:
-        filename = model_i.split(sep=model_dir_id)[1]
+        filename = model_i.split(sep=model_dir_id)[1].replace(".keras", "")
         print("\nLoading model:", filename)
         history, model, feature_rescaler = load_rnn_model(model_wd, filename=filename)
         models.append({
