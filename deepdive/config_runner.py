@@ -108,8 +108,8 @@ def run_config(config_file, wd=None, CPU=None, trained_model=None,
                                                                           return_features=True,
                                                                           model_dir=model_dir
                                                                           )
-        print("test_pred", test_pred, test_feature_file, test_label_file)
-        print("Test set MSE:", np.mean((test_pred - labels) ** 2))
+        # print("test_pred", test_pred, test_feature_file, test_label_file)
+        print("\nTest set MSE:", np.mean((test_pred - labels) ** 2))
         pred_file = "testset_pred_%s.npy" % out_tag
         np.save(os.path.join(model_dir, pred_file), test_pred)
         print("Saved testset predictions in:\n",
