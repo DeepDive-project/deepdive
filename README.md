@@ -2,7 +2,7 @@
 
 ## Installing DeepDive in a virtual environment
 You can install DeepDive in a virtual environment to make sure all the compatible dependencies are included without affecting your system Python installation following the steps below:  
-Before you start, make sure Python (v.3.9 or above) is installed in your computer.    
+Before you start, make sure Python (v.3.10 or above) is installed in your computer (you can find installers [here](https://www.python.org/downloads/)).    
 
 1) Create a virtual environment typing in a terminal console (on Windows open a *command prompt* window and use `py` instead of `python`): 
 
