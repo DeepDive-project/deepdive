@@ -298,7 +298,7 @@ class fossil_simulator():
                 else:
                     mu = self.mean_rate_skyline
 
-                n_preservation_bins = self._rs.poisson(self.mean_n_epochs_skyline * self.n_areas)
+                n_preservation_bins = np.maximum(1, self._rs.poisson(self.mean_n_epochs_skyline * self.n_areas))
                 time_id = np.sort(self._rs.integers(0, n_preservation_bins, self.n_areas * self.n_bins))
                 time_id_area = time_id.reshape((self.n_areas, self.n_bins))
                 loc_rates_b = self._rs.normal(loc=mu,
