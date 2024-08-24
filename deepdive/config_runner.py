@@ -225,3 +225,83 @@ def run_config(config_file, wd=None, CPU=None, trained_model=None,
         predictions.columns = time_bins
         predictions.to_csv(os.path.join(model_dir, "Empirical_predictions_%s.csv" % out_tag),
                            index=False)
+
+
+def sim_and_plot_features(config_file, wd=None, CPU=None, n_sims=None):
+
+    config = configparser.ConfigParser()
+    config.read(config_file)
+
+    if wd is not None:
+        config["general"]["wd"] = wd
+
+    try:
+        if config["general"]["present_diversity"] == "NA":
+            include_present_diversity = False
+        else:
+            include_present_diversity = True
+    except:
+        pass
+    # Run simulations in parallel
+    if CPU is not None:
+        config["simulations"]["n_CPUS"] = str(CPU)
+
+    if n_sims is not None:
+        config["simulations"]["n_test_simulations"] = str(n_sims)
+
+    if config["general"]["autotune"] == "TRUE":
+        print("Running autotune...")
+        config = config_autotune(config, target_n_occs_range=1.2)
+        auto_tuned_config_file = config_file.split(".ini")[0] + "_autotuned.ini"
+        with open(auto_tuned_config_file, 'w') as configfile:
+            config.write(configfile)
+
+
+    test_feature_file, test_label_file = run_test_sim_from_config(config)
+    testset_features = np.load(test_feature_file)
+    feature_plot_dir = os.path.join(config["general"]["wd"], "feature_plots")
+
+    # load empirical features
+    features_names = get_features_names(n_areas=int(config['general']['n_areas']),
+                                        include_present_div=include_present_diversity)
+    time_bins = np.sort(list(map(float, config["general"]["time_bins"].split())))
+
+    pres_div = config["general"]["present_diversity"]
+    dd_input = os.path.join(config["general"]["wd"], config["empirical_predictions"]["empirical_input_file"])
+    if pres_div == "NA":
+        feat = parse_dd_input(dd_input)
+    else:
+        feat = parse_dd_input(dd_input, present_diversity=int(pres_div))
+
+
+    try:
+        os.mkdir(feature_plot_dir)
+    except FileExistsError:
+        pass
+    plot_feature_hists(test_features=testset_features,
+                       empirical_features=feat[0],
+                       show=False,
+                       n_bins=30,
+                       features_names=features_names,
+                       log_occurrences=True,
+                       wd=feature_plot_dir,
+                       output_name="Feature_plot_log")
+
+    plot_feature_hists(test_features=testset_features,
+                       empirical_features=feat[0],
+                       show=False,
+                       n_bins=30,
+                       features_names=features_names,
+                       log_occurrences=False,
+                       wd=feature_plot_dir,
+                       output_name="Feature_plot")
+
+    print(time_bins[:-1].shape, testset_features.shape,feat[0].shape)
+
+
+    features_through_time(features_names=features_names, time_bins=time_bins,
+                          sim_features=testset_features,
+                          empirical_features=feat[0], wd=feature_plot_dir)
+
+
+    print("Feature plots saved in {}".format(feature_plot_dir))
