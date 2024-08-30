@@ -411,8 +411,9 @@ class fossil_simulator():
         if self.sampling_rate_multiplier is not None:
             p_3d = np.einsum('sat, at -> sat', p_3d, self.sampling_rate_multiplier)
         # ---
-        p_3d_no_fossil = 1 - p_3d
+        p_3d_no_fossil = np.nan_to_num(1 - p_3d)
         p_3d_no_fossil[p_3d_no_fossil == 0] += SMALL_NUMBER
+
         # product of probabilities (in log space to use einsum)
         p_no_fossil_in_locality = np.exp(np.einsum('sat -> at', np.log(p_3d_no_fossil)))
         expected_n_localities_with_fossils = self._rs.binomial(number_of_localities, 1 - p_no_fossil_in_locality)
@@ -484,8 +485,18 @@ class fossil_simulator():
                     #       la_species_i)
                     species_duration_in_time_bin_i = np.min([start_time_bin_i, fa_species_i]) - np.max(
                         [end_time_bin_i, la_species_i])
+
+                    if species_duration_in_time_bin_i == 0: # for species just at the edge
+                        species_duration_in_time_bin_i += SMALL_NUMBER
+
+                    delta_t = start_time_bin_i - end_time_bin_i # if a time bin happens to have length 0 (eg rounding error)
+                    if delta_t == 0:
+                        delta_t = SMALL_NUMBER
+                    # print("species_duration_in_time_bin_i", start_time_bin_i - end_time_bin_i,
+                    #       start_time_bin_i, end_time_bin_i , fa_species_i, la_species_i , )
+
                     relative_duration_in_time_bin_i = species_duration_in_time_bin_i / (
-                                start_time_bin_i - end_time_bin_i)
+                                delta_t)
                     species_presence_absence_data[species_i, bin_i] = relative_duration_in_time_bin_i
         return species_presence_absence_data
 
