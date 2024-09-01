@@ -63,6 +63,7 @@ class bd_simulator():
         self.vectorize = vectorize
         self._rs = get_rnd_gen(seed)
 
+
     def reset_seed(self, seed):
         self._rs = get_rnd_gen(seed)
 
@@ -140,6 +141,8 @@ class bd_simulator():
                 l = self._rs.uniform(self.magnitude_mass_sp[0], self.magnitude_mass_sp[1])
 
             if self.vectorize:
+                if m == 1: # all go extinct, no speciation events possible
+                    l = 0
                 te = np.array(te)
                 ext_species = np.where((ran_vec > l) & (ran_vec < (l + m)) & (te == 0))[0]
                 te[ext_species] = t
@@ -221,7 +224,7 @@ class bd_simulator():
 
         if self.pr_extant_clade is not None:
             if self._rs.random() < self.pr_extant_clade:
-                min_extant = 1 # clade is extant
+                min_extant = np.maximum(1, self.minEXTANT_SP) # clade is extant
                 max_extant = self.maxEXTANT_SP
             else:
                 min_extant = 0
@@ -239,7 +242,6 @@ class bd_simulator():
             FAtrue, LOtrue = self.simulate(L, M, timesL, timesM, root, dd_model=dd_model, verbose=print_res)
             n_extinct = len(LOtrue[LOtrue > 0])
             n_extant = len(LOtrue[LOtrue == 0])
-            # print(n_extant, n_extinct, len(LOtrue))
 
         ts_te = np.array([FAtrue, LOtrue])
         if print_res:
