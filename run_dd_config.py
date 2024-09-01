@@ -10,6 +10,8 @@ import matplotlib.pyplot as plt
 import argparse
 np.set_printoptions(suppress=True, precision=3)
 
+print("Loaded DeepDive v.", dd.__version__)
+
 p = argparse.ArgumentParser()
 p.add_argument('config_file', metavar='<config file>', type=str, 
         help='Input config file')
@@ -24,14 +26,17 @@ p.add_argument("-out_tag", default="", type=str)
 p.add_argument("-calibrated", default=False, action='store_true')
 p.add_argument("-plot_features", default=False, action='store_true')
 p.add_argument('-n_sims', type=int, help='n simulations for plotting', default=100)
+p.add_argument("-autotune", default=False, action='store_true')
 
 args = p.parse_args()
 
 
 if args.plot_features:
     config_runner.sim_and_plot_features(args.config_file, wd=args.wd, CPU=args.cpu, n_sims=args.n_sims)
+elif args.autotune:
+    config_runner.run_autotune(args.config_file)
 else:
-    config_init = configparser.ConfigParser()
+    # config_init = configparser.ConfigParser()
     config_runner.run_config(args.config_file, wd=args.wd, CPU=args.cpu,
                              train_set=args.train_set, test_set=args.test_set,
                              lstm=args.lstm, dense=args.dense, trained_model=args.trained_model,

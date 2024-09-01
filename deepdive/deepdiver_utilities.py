@@ -20,11 +20,15 @@ from .simulation_utilities import *
 
 # create simulator object
 def create_sim_obj_from_config(config, rseed=None):
-    try:
-        s_species = config.getint("simulations", "s_species")
-    except:
-        s_species = list(map(int, config["simulations"]["s_species"].split()))
 
+    s_species = list(map(int, config["simulations"]["s_species"].split()))
+    if len(s_species) == 1:
+        s_species = s_species[0]
+
+    if "fixed_mass_extinction" in config["simulations"]:
+        fixed_mass_extinction = list(map(int, config["simulations"]["fixed_mass_extinction"].split()))
+    else:
+        fixed_mass_extinction = None
 
     if rseed is None:
         rseed = config.getint("simulations", "training_seed")
@@ -38,10 +42,12 @@ def create_sim_obj_from_config(config, rseed=None):
                           rangeM=list(map(float, config["simulations"]["rangem"].split())),  # range of death rates
                           log_uniform_rates=config.getboolean("simulations", "log_uniform_rates"),
                           p_mass_extinction=float(config["simulations"]["p_mass_extinction"]),  # probability of mass extinction per my
+                          magnitude_mass_ext=list(map(float, config["simulations"]["magnitude_mass_ext"].split())),
                           p_equilibrium=config.getfloat("simulations", "p_equilibrium"),
                           p_constant_bd=config.getfloat("simulations", "p_constant_bd"),
                           p_mass_speciation=float(config["simulations"]["p_mass_speciation"]),
                           pr_extant_clade=float(config["simulations"]["pr_extant_clade"]),
+                          fixed_mass_extinction=fixed_mass_extinction,
                           poiL=config.getfloat("simulations", "poil"),  # expected number of birth rate shifts
                           poiM=config.getfloat("simulations", "poim"),  # expected number of death rate shifts
                           seed=rseed,  # if > 0 fixes the random seed to make simulations reproducible
@@ -56,24 +62,29 @@ def create_sim_obj_from_config(config, rseed=None):
         target_n_occs = None
         target_n_occs_range = 10
 
-    if 2 > 1: #try:
+    try:
         freq_bin_sampling = config.getfloat("simulations", "bin_sampling")
         bin_mean_rates = np.array(list(map(float, config["simulations"]["bin_mean_rates"].split())))
         bin_std_rates = np.array(list(map(float, config["simulations"]["bin_std_rates"].split())))
-    # except:
-    #     freq_bin_sampling = 0
-    #     bin_std_rates = None
-    #     bin_mean_rates = None
+    except:
+        freq_bin_sampling = 0
+        bin_std_rates = None
+        bin_mean_rates = None
 
     try:
         singleton = config.getfloat("simulations", "singletons_frequency")
     except:
         singleton = list(map(float, config["simulations"]["singletons_frequency"].split()))
 
-    try:
+    if "locality_rate_multiplier" in config["simulations"]:
         locality_rate_multiplier = list(map(float, config["simulations"]["locality_rate_multiplier"].split()))
-    except:
+    else:
         locality_rate_multiplier = None
+
+    if "species_per_locality_multiplier" in config["simulations"]:
+        species_per_locality_multiplier = list(map(float, config["simulations"]["species_per_locality_multiplier"].split()))
+    else:
+        species_per_locality_multiplier = None
 
     time_bins = np.sort(np.array(list(map(float, config["general"]["time_bins"].split()))))
     fossil_sim = fossil_simulator(n_areas=config.getint("general", "n_areas"),
@@ -109,7 +120,7 @@ def create_sim_obj_from_config(config, rseed=None):
                                   bin_mean_rates=bin_mean_rates,
                                   maximum_localities_per_bin=config.getint("simulations", "maximum_localities_per_bin"),
                                   singletons_frequency=singleton,
-                                  species_per_locality_multiplier=list(map(float, config["simulations"]["species_per_locality_multiplier"].split())),
+                                  species_per_locality_multiplier=species_per_locality_multiplier,
                                   locality_rate_multiplier=locality_rate_multiplier,
                                   target_n_occs=target_n_occs,
                                   target_n_occs_range=target_n_occs_range,
@@ -370,12 +381,23 @@ def run_model_training_from_config(config, feature_file=None, label_file=None,
     feature_rescaler = FeatureRescaler(Xt, log_last=include_present_div)
     Xt_r = feature_rescaler.feature_rescale(Xt)
 
+
+
     Yt_r = normalize_labels(Yt, rescaler=1, log=True)
 
     if convert_to_tf:
         # convert to tf tensors
         Xt_r = np_to_tf(Xt_r)
         Yt_r = np_to_tf(Yt_r)
+
+    try:
+        r_tmp = config["model_training"]["predict_total_diversity"]
+        if r_tmp == "TRUE":
+            return_sequences = False
+        else:
+            return_sequences = True
+    except:
+        return_sequences = True
 
     if calibrate_output:
         model_config = rnn_config(n_features=Xt_r.shape[2], n_bins=Xt_r.shape[1],
@@ -406,7 +428,8 @@ def run_model_training_from_config(config, feature_file=None, label_file=None,
                           lstm_nodes=model_settings[0]['lstm_nodes'],
                           dense_nodes=model_settings[0]['dense_nodes'],
                           loss_f=model_settings[0]['loss_f'],
-                          dropout_rate=model_settings[0]['dropout'])
+                          dropout_rate=model_settings[0]['dropout'],
+                          return_sequences=return_sequences)
 
         verbose = 0
         if model_settings[0]['model_n'] == 0:
@@ -512,8 +535,18 @@ def config_autotune(config_init, target_n_occs_range=10):
     n_areas = int(config["general"]["n_areas"])
     # load empirical
     dd_input = os.path.join(config["general"]["wd"], config["empirical_predictions"]["empirical_input_file"])
+
+    try:
+        pres_div = config["general"]["present_diversity"]
+        if pres_div == "NA":
+            pres_div = None
+        else:
+            pres_div = config.getint("general", "present_diversity")
+    except KeyError:
+        pres_div = None
+
     feat_emp = parse_dd_input(dd_input,
-                              present_diversity=config.getint("general", "present_diversity"))
+                              present_diversity=pres_div)
 
 
     feat_names_df = get_features_names(n_areas=n_areas, include_present_div=True, as_dataframe=True)
@@ -580,9 +613,10 @@ def config_autotune(config_init, target_n_occs_range=10):
     f_singl_M = np.max(n_singletons[n_species > 1] / n_species[n_species > 1])
     config["simulations"]["singletons_frequency"] = "%s %s" % (f_singl_m, f_singl_M)
 
-    pres_species = int(config["general"]["present_diversity"])
-    config["simulations"]["extant_sp"] = "%s %s" % (int(pres_species / 2),
-                                                    int(pres_species * 10))
+    # pres_species = int(config["general"]["present_diversity"])
+    if pres_div is not None:
+        config["simulations"]["extant_sp"] = "%s %s" % (int(pres_div / 2),
+                                                        int(pres_div * 10))
 
     config["simulations"]["total_sp"] = "%s %s" % (int(np.max(n_species) * 2), int(np.sum(n_species) * 20))
 

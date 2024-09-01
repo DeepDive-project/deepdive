@@ -235,13 +235,17 @@ def sim_and_plot_features(config_file, wd=None, CPU=None, n_sims=None):
     if wd is not None:
         config["general"]["wd"] = wd
 
+
     try:
-        if config["general"]["present_diversity"] == "NA":
-            include_present_diversity = False
-        else:
-            include_present_diversity = True
-    except:
-        pass
+        pres_div = config["general"]["present_diversity"]
+    except KeyError:
+        pres_div = "NA"
+
+    if pres_div == "NA":
+        include_present_diversity = False
+    else:
+        include_present_diversity = True
+
     # Run simulations in parallel
     if CPU is not None:
         config["simulations"]["n_CPUS"] = str(CPU)
@@ -266,7 +270,6 @@ def sim_and_plot_features(config_file, wd=None, CPU=None, n_sims=None):
                                         include_present_div=include_present_diversity)
     time_bins = np.sort(list(map(float, config["general"]["time_bins"].split())))
 
-    pres_div = config["general"]["present_diversity"]
     dd_input = os.path.join(config["general"]["wd"], config["empirical_predictions"]["empirical_input_file"])
     if pres_div == "NA":
         feat = parse_dd_input(dd_input)
@@ -305,3 +308,28 @@ def sim_and_plot_features(config_file, wd=None, CPU=None, n_sims=None):
 
 
     print("Feature plots saved in {}".format(feature_plot_dir))
+
+
+def run_autotune(config_file, wd=None):
+
+    config = configparser.ConfigParser()
+    config.read(config_file)
+
+    if wd is not None:
+        config["general"]["wd"] = wd
+
+    try:
+        pres_div = config["general"]["present_diversity"]
+    except KeyError:
+        pres_div = "NA"
+
+    if pres_div == "NA":
+        include_present_diversity = False
+    else:
+        include_present_diversity = True
+
+    print("Running autotune...")
+    config = config_autotune(config, target_n_occs_range=1.2)
+    auto_tuned_config_file = config_file.split(".ini")[0] + "_autotuned.ini"
+    with open(auto_tuned_config_file, 'w') as configfile:
+        config.write(configfile)
