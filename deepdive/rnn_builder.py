@@ -18,6 +18,7 @@ def build_rnn(Xt,
               output_act_f='softplus',
               loss_f='mse',
               dropout_rate=0.2,
+              return_sequences=True,
               verbose=1):
     if lstm_nodes is None:
         lstm_nodes = [64, 32]
@@ -27,14 +28,14 @@ def build_rnn(Xt,
 
     model.add(
         layers.Bidirectional(layers.LSTM(lstm_nodes[0],
-                                         return_sequences=True,
+                                         return_sequences=return_sequences,
                                          activation='tanh',
                                          recurrent_activation='sigmoid'),
                              input_shape=Xt.shape[1:])
     )
     for i in range(1, len(lstm_nodes)):
         model.add(layers.Bidirectional(layers.LSTM(lstm_nodes[i],
-                                                   return_sequences=True,
+                                                   return_sequences=return_sequences,
                                                    activation='tanh',
                                                    recurrent_activation='sigmoid')))
     for i in range(len(dense_nodes)):
@@ -233,7 +234,9 @@ def build_rnn_model(model_config: rnn_config,
         for i_lstm in range(1, len(model_config.lstm_nodes)):
             rnn_out = layers.Bidirectional(
                 layers.LSTM(model_config.lstm_nodes[1], return_sequences=True, activation='tanh',
-                            recurrent_activation='sigmoid', name="sequence_LSTM_2"))(rnn_out)
+                            recurrent_activation='sigmoid', name="sequence_LSTM_%s" % (i_lstm + 1)
+                            )
+            )(rnn_out)
             if model_config.layers_norm:
                 rnn_out = layers.LayerNormalization(name='layer_norm_rnn2')(rnn_out)
     else:
