@@ -13,6 +13,66 @@ from .feature_extraction import *
 from .utilities import prep_dd_input, print_update, predict
 
 
+def plot_dd_predictions(pred_div, time_bins, wd, out_tag=""):
+
+    pred = np.mean(pred_div, axis=0)
+
+    fig = plt.figure(figsize=(12, 8))
+
+    plt.fill_between(-time_bins,
+                     y1=np.max(pred_div, axis=0).T,
+                     y2=np.min(pred_div, axis=0).T,
+                     step="pre",
+                     color="b",
+                     alpha=0.2)
+
+    plt.fill_between(-time_bins,
+                     y1=np.quantile(pred_div, q=0.975, axis=0).T,
+                     y2=np.quantile(pred_div, q=0.025, axis=0).T,
+                     step="pre",
+                     color="b",
+                     alpha=0.2)
+
+    plt.fill_between(-time_bins,
+                     y1=np.quantile(pred_div, q=0.75, axis=0).T,
+                     y2=np.quantile(pred_div, q=0.25, axis=0).T,
+                     step="pre",
+                     color="b",
+                     alpha=0.2)
+
+    plt.step(-time_bins,
+             pred.T,
+             label="Mean prediction",
+             linewidth=2,
+             c="b",
+             alpha=1)
+
+    add_geochrono_no_labels(0, -0.1 * np.max(pred), max_ma=-(np.max(time_bins) * 1.05), min_ma=0)
+    plt.ylim(bottom=-0.1 * np.max(pred), top=np.max(pred_div) * 1.05)
+    plt.xlim(-(np.max(time_bins) * 1.05), -np.min(time_bins) + 2)
+    plt.ylabel("Diversity", fontsize=15)
+    plt.xlabel("Time (Ma)", fontsize=15)
+    file_name = os.path.join(wd, "Empirical_predictions_%s.pdf" % out_tag)
+    div_plot = matplotlib.backends.backend_pdf.PdfPages(file_name)
+    div_plot.savefig(fig)
+    div_plot.close()
+    print("Plot saved as:", file_name)
+
+
+def plot_ensemble_predictions(csv_files, wd, out_tag=""):
+    pred_div_list = None
+    for f in csv_files:
+        f_pd = pd.read_csv(f)
+        time_bins = f_pd.columns.to_numpy().astype(float)
+        if pred_div_list is None:
+            pred_div_list = f_pd.to_numpy().astype(float)
+        else:
+            pred_div_list = np.vstack((pred_div_list, f_pd.to_numpy().astype(float)))
+
+    plot_dd_predictions(pred_div_list, time_bins, wd, out_tag)
+
+
+
 def plot_trajectories(sim_obj,
                       simulation,
                       file_name="div_traj.pdf",

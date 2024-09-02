@@ -603,8 +603,8 @@ class fossil_simulator():
                         for i in range(n):
                             sqs_input.append([species_names[s], collection_names[a], t + 1])
                             # print(sqs_input)
-            sqs_data = pd.DataFrame(sqs_input, columns=["genus", "collection_no", "stg"])
-            sqs_data.to_csv('sqs_data.csv', index=False)
+            sqs_input = pd.DataFrame(sqs_input, columns=["genus", "collection_no", "stg"])
+            # sqs_data.to_csv('sqs_data.csv', index=False)
         else:
             sqs_input = None
 
@@ -662,7 +662,7 @@ class fossil_simulator():
              'sd_through_time': sd_through_time,
              'sqs_data': sqs_input,
              'locality_rate': locality_rate,
-             'additional_info': self._additional_info
+             'additional_info': self._additional_info,
              }
 
         return d
