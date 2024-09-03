@@ -8,7 +8,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 from .deepdiver_utilities import *
 from .plots import add_geochrono_no_labels
-from .plots import features_through_time
+from .plots import features_through_time, plot_dd_predictions
 
 np.set_printoptions(suppress=True, precision=3)
 
@@ -165,55 +165,7 @@ def run_config(config_file, wd=None, CPU=None, trained_model=None,
 
         print(feat.shape, pred_div.shape)
 
-        pred = np.mean(pred_div, axis=0)
-
-        fig = plt.figure(figsize=(12, 8))
-        # plt.step(-time_bins, pred.T)
-        #
-        # plt.step(-time_bins,
-        #          pred_div.T,
-        #          label="Mean prediction",
-        #          linewidth=2,
-        #          c="b",
-        #          alpha=0.05)
-
-        # rt_div = np.mean(feat[:, :, 5], axis=0)
-        # rt_div = np.array([rt_div[0]] + list(rt_div))
-        # print(rt_div.shape)
-        # plt.step(-time_bins, rt_div,
-        #          label="Range-through",
-        #          linewidth=2,
-        #          )
-
-        # fig = plt.figure(figsize=(12, 8))
-        # plt.step(-time_bins, pred.T)
-
-        plt.fill_between(-time_bins,
-                         y1=np.max(pred_div, axis=0).T,
-                         y2=np.min(pred_div, axis=0).T,
-                         step="pre",
-                         color="b",
-                         alpha=0.2)
-
-        plt.step(-time_bins,
-                 pred.T,
-                 label="Mean prediction",
-                 linewidth=2,
-                 c="b",
-                 alpha=1)
-
-
-
-        add_geochrono_no_labels(0, -0.1 * np.max(pred), max_ma=-(np.max(time_bins) * 1.05), min_ma=0)
-        plt.ylim(bottom=-0.1*np.max(pred), top=np.max(pred_div) * 1.05)
-        plt.xlim(-(np.max(time_bins) * 1.05), -np.min(time_bins) + 2)
-        plt.ylabel("Diversity", fontsize=15)
-        plt.xlabel("Time (Ma)", fontsize=15)
-        file_name = os.path.join(model_dir, "Empirical_predictions_%s.pdf" % out_tag)
-        div_plot = matplotlib.backends.backend_pdf.PdfPages(file_name)
-        div_plot.savefig(fig)
-        div_plot.close()
-        print("Plot saved as:", file_name)
+        plot_dd_predictions(pred_div, time_bins, wd=model_dir, out_tag=out_tag)
 
         mean_features = np.mean(feat, axis=0)
         feat_tbl = pd.DataFrame(mean_features)
