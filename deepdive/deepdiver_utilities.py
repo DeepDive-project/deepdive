@@ -26,7 +26,10 @@ def create_sim_obj_from_config(config, rseed=None):
         s_species = s_species[0]
 
     if "fixed_mass_extinction" in config["simulations"]:
-        fixed_mass_extinction = list(map(int, config["simulations"]["fixed_mass_extinction"].split()))
+        try:
+            fixed_mass_extinction = list(map(int, config["simulations"]["fixed_mass_extinction"].split()))
+        except ValueError:
+            fixed_mass_extinction = None
     else:
         fixed_mass_extinction = None
 
