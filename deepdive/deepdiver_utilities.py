@@ -621,7 +621,7 @@ def config_autotune(config_init, target_n_occs_range=10):
     config["simulations"]["sd_through_time_skyline"] = "%s" % np.std(np.log(n_localities_area + 1))
 
     # re-set carrying capacity
-    config["simulations"]["dd_K"] = "%s %s" % (np.mean(range_through_div) / 2, np.max(range_through_div) * 5)
+    config["simulations"]["dd_K"] = "%s %s" % (int(np.mean(range_through_div) / 2), int(np.max(range_through_div) * 5))
 
     # re-set per-species sampling rate
     m = (n_species - n_singletons)[range_through_div > 0] / range_through_div[range_through_div > 0]
@@ -674,6 +674,11 @@ def config_autotune(config_init, target_n_occs_range=10):
 
     config["simulations"]["fraction_skyline_sampling"] = "0.75"
     config["simulations"]["bin_sampling"] = "0.67" # 50% of simulations overall with empirical loc rates
+
+    if config["simulations"]["s_species"] == "NA":
+        config["simulations"]["s_species"] = config["simulations"]["dd_K"]
+
+
 
     config["general"]["autotune"] = "FALSE"
 
