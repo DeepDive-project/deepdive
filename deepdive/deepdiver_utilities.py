@@ -207,9 +207,9 @@ def run_sim_from_config(config):
         os.mkdir(os.path.join(config["general"]["wd"], config["simulations"]["sims_folder"]))
     except FileExistsError:
         pass
-    f, l = save_simulations(res, os.path.join(config["general"]["wd"], config["simulations"]["sims_folder"]),
+    f, l, d = save_simulations(res, os.path.join(config["general"]["wd"], config["simulations"]["sims_folder"]),
                             config["simulations"]["sim_name"] + "_" + now + "_training", return_file_names=True)
-    return f, l
+    return f, l, d
 
 
 def run_test_sim_from_config(config):
@@ -288,13 +288,16 @@ def run_test_sim_from_config(config):
 
     res = run_sim_parallel(test_set, n_CPUS=config.getint("simulations", "n_CPUS"))
     now = datetime.now().strftime('%Y%m%d')
-    f, l = save_simulations(res, os.path.join(config["general"]["wd"], config["simulations"]["sims_folder"]),
+    f, l, d = save_simulations(res, os.path.join(config["general"]["wd"], config["simulations"]["sims_folder"]),
                             config["simulations"]["sim_name"] + "_" + now + "_test", return_file_names=True)
-    return f, l
+    return f, l, d
 
 
-def get_model_settings_from_config(config):
-    ## Otherwise, how to structure the config that it reads correctly in python? Can't use list
+def get_model_settings_from_config(config, total_diversity=False):
+    if total_diversity:
+        return_sequences = False
+    else: return_sequences = True
+
     lstm_nodes = np.array(list(map(int, config["model_training"]["lstm_layers"].split())))
     arrays = [[lstm_nodes[0]]]
     indx = 0
@@ -331,20 +334,25 @@ def get_model_settings_from_config(config):
             model_tag = config["model_training"]["model_tag"]
     except KeyError:
         model_tag = ""
+
+    if model_tag != "":
+        model_tag = "_" + model_tag
+
     for l in lstm_nodes:
         for d in dense_nodes:
             for f in loss_f:
                 for o in dropout_frac:
                     lstm_name = "_".join([str(i) for i in l])
                     dense_name = "_".join([str(i) for i in d])
-                    out = 'lstm%s_d%s_%s' % (lstm_name, dense_name, model_tag)
+                    out = 'lstm%s_d%s%s' % (lstm_name, dense_name, model_tag)
                     d_item = {
                         'model_n': model_n,
                         'lstm_nodes': l,
                         'dense_nodes': d,
                         'loss_f': f,
                         'dropout': o,
-                        'model_name': out
+                        'model_name': out,
+                        'return_sequences': return_sequences
                     }
                     list_settings.append(d_item)
                     model_n += 1
@@ -353,8 +361,18 @@ def get_model_settings_from_config(config):
 
 def run_model_training_from_config(config, feature_file=None, label_file=None,
                                    convert_to_tf=True, model_tag=None, return_model_dir=False,
-                                   calibrate_output=False):
-    model_settings = get_model_settings_from_config(config)
+                                   calibrate_output=False, total_diversity=None):
+    if total_diversity is None:
+        try:
+            r_tmp = config["model_training"]["predict_total_diversity"]
+            if r_tmp == "TRUE":
+                total_diversity = True
+            else:
+                total_diversity = False
+        except:
+            total_diversity = False
+
+    model_settings = get_model_settings_from_config(config, total_diversity=total_diversity)
     sims_path = os.path.join(config["general"]["wd"], config["model_training"]["sims_folder"])
     if feature_file is None:
         feature_file = config["model_training"]["f"]
@@ -396,14 +414,6 @@ def run_model_training_from_config(config, feature_file=None, label_file=None,
         Xt_r = np_to_tf(Xt_r)
         Yt_r = np_to_tf(Yt_r)
 
-    try:
-        r_tmp = config["model_training"]["predict_total_diversity"]
-        if r_tmp == "TRUE":
-            return_sequences = False
-        else:
-            return_sequences = True
-    except:
-        return_sequences = True
 
     if calibrate_output:
         model_config = rnn_config(n_features=Xt_r.shape[2], n_bins=Xt_r.shape[1],
@@ -435,7 +445,7 @@ def run_model_training_from_config(config, feature_file=None, label_file=None,
                           dense_nodes=model_settings[0]['dense_nodes'],
                           loss_f=model_settings[0]['loss_f'],
                           dropout_rate=model_settings[0]['dropout'],
-                          return_sequences=return_sequences)
+                          return_sequences=model_settings[0]['return_sequences'])
 
         verbose = 0
         if model_settings[0]['model_n'] == 0:
@@ -476,7 +486,10 @@ def predict_from_config(config, return_features=False,
                                                           config["empirical_predictions"]["model_folder"]),
                                     model_name_tag=model_tag, model_dir_id=model_dir_id)
 
-    pres_div = config["general"]["present_diversity"]
+    try:
+        pres_div = config["general"]["present_diversity"]
+    except KeyError:
+        pres_div = "NA"
     if pres_div == "NA":
         features = parse_dd_input(dd_input)
     else:
@@ -493,9 +506,12 @@ def predict_from_config(config, return_features=False,
         except:
             pass
 
+    pred_list = np.squeeze(np.array(pred_list))
+    if len(pred_list.shape) == 1:
+        pred_list = np.expand_dims(pred_list, axis=0)
 
     if return_transformed_diversity:
-        pred_div = np.exp(np.squeeze(np.array(pred_list))) - 1
+        pred_div = np.exp(pred_list) - 1
         pred_list = np.hstack((pred_div[:, 0].reshape(pred_div.shape[0], 1), pred_div))
 
     if return_features:

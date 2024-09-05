@@ -10,9 +10,9 @@ if CURRENT_PYTHON < REQUIRED_PYTHON:
 ==========================
 Unsupported Python version
 ==========================
-DeepDive requires Python {}.{}, but you're trying to
-install it on Python {}.{}.
-""".format(*(REQUIRED_PYTHON + CURRENT_PYTHON)))
+DeepDive requires Python %s.%s or higher, but you're trying to
+install it on Python %s.%s.
+""" % (REQUIRED_PYTHON[0], REQUIRED_PYTHON[1], CURRENT_PYTHON[0], CURRENT_PYTHON[1]))
     sys.exit(1)
 
 requirements_list = [
@@ -27,7 +27,7 @@ requirements_list = [
 
 setuptools.setup(
     name="DeepDive",
-    version="1.15",
+    version="1.17c",
     author="Daniele Silvestro",
     description="Diversity estimation using deep learning",
     packages=setuptools.find_packages(),

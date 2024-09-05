@@ -27,6 +27,8 @@ p.add_argument("-calibrated", default=False, action='store_true')
 p.add_argument("-plot_features", default=False, action='store_true')
 p.add_argument('-n_sims', type=int, help='n simulations for plotting', default=100)
 p.add_argument("-autotune", default=False, action='store_true')
+p.add_argument("-total_diversity", default=None, type=bool)
+
 
 args = p.parse_args()
 
@@ -40,5 +42,6 @@ else:
     config_runner.run_config(args.config_file, wd=args.wd, CPU=args.cpu,
                              train_set=args.train_set, test_set=args.test_set,
                              lstm=args.lstm, dense=args.dense, trained_model=args.trained_model,
-                             out_tag=args.out_tag, calibrated=args.calibrated)
+                             out_tag=args.out_tag, calibrated=args.calibrated,
+                             total_diversity=args.total_diversity)
 

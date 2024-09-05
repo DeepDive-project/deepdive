@@ -14,13 +14,23 @@ np.set_printoptions(suppress=True, precision=3)
 
 def run_config(config_file, wd=None, CPU=None, trained_model=None,
                train_set=None, test_set=None, lstm=None, dense=None,
-               out_tag="", calibrated=False
+               out_tag="", calibrated=False, total_diversity=None
                ):
     config = configparser.ConfigParser()
     config.read(config_file)
 
     if wd is not None:
         config["general"]["wd"] = wd
+
+    if total_diversity is None:
+        try:
+            r_tmp = config["model_training"]["predict_total_diversity"]
+            if r_tmp == "TRUE":
+                total_diversity = True
+            else:
+                total_diversity = False
+        except:
+            total_diversity = False
 
     try:
         if config["general"]["calibrate_diversity"] == "TRUE":
@@ -30,15 +40,17 @@ def run_config(config_file, wd=None, CPU=None, trained_model=None,
 
     try:
         if config["general"]["present_diversity"] == "NA":
-            out_tag = "unconditional"
             include_present_diversity = False
         else:
-            out_tag = "conditional"
+            out_tag = "_conditional"
             include_present_diversity = True
             if calibrated:
-                out_tag = "calibrated"
+                out_tag = "_calibrated"
     except:
-        pass
+        include_present_diversity = False
+
+    if total_diversity:
+        out_tag = "_totdiv"
 
     if lstm is not None:
         config["model_training"]["lstm_layers"] = " ".join([str(i) for i in lstm])
@@ -60,14 +72,22 @@ def run_config(config_file, wd=None, CPU=None, trained_model=None,
             with open(auto_tuned_config_file, 'w') as configfile:
                 config.write(configfile)
 
-        feature_file, label_file = run_sim_from_config(config)
+        feature_file, label_file, totdiv_label_file = run_sim_from_config(config)
+        if total_diversity:
+            label_file = totdiv_label_file
 
     if train_set is not None and trained_model is None:
         if "features.npy" in train_set:
             feature_file = train_set
-            label_file = train_set.replace("features.npy", "labels.npy")
+            if total_diversity:
+                label_file = train_set.replace("features.npy", "totdiv.npy")
+            else:
+                label_file = train_set.replace("features.npy", "labels.npy")
         elif "labels.npy" in train_set:
             feature_file = train_set.replace("labels.npy", "features.npy")
+            label_file = train_set
+        elif "totdiv.npy" in train_set:
+            feature_file = train_set.replace("totdiv.npy", "features.npy")
             label_file = train_set
         else:
             sys.exit("No training features or labels files found")
@@ -77,10 +97,16 @@ def run_config(config_file, wd=None, CPU=None, trained_model=None,
     if test_set is not None:
         if "features.npy" in test_set:
             test_feature_file = test_set
-            test_label_file = test_set.replace("features.npy", "labels.npy")
+            if total_diversity:
+                test_label_file = test_set.replace("features.npy", "totdiv.npy")
+            else:
+                test_label_file = test_set.replace("features.npy", "labels.npy")
         elif "labels.npy" in test_set:
             test_feature_file = test_set.replace("labels.npy", "features.npy")
             test_label_file = test_set
+        elif "totdiv.npy" in test_set:
+            feature_file = test_set.replace("totdiv.npy", "features.npy")
+            label_file = test_set
         else:
             sys.exit("No test features or labels files found")
     else:
@@ -88,14 +114,18 @@ def run_config(config_file, wd=None, CPU=None, trained_model=None,
         #     test_feature_file = feature_file
         #     test_label_file = label_file
         if "simulations" in config.sections() and config.getint("simulations", "n_test_simulations"):
-            test_feature_file, test_label_file = run_test_sim_from_config(config)
+            test_feature_file, test_label_file, test_totdiv_label_file = run_test_sim_from_config(config)
+
+        if total_diversity:
+            test_label_file = test_totdiv_label_file
 
     model_dir = None
     if trained_model is None:
         # Train a model
         if feature_file is not None and "model_training" in config.sections():
             model_dir = run_model_training_from_config(config, feature_file=feature_file, label_file=label_file,
-                                           model_tag=out_tag, return_model_dir=True, calibrate_output=calibrated)
+                                                       model_tag=out_tag, return_model_dir=True,
+                                                       calibrate_output=calibrated,  total_diversity=total_diversity)
     else:
         model_dir = trained_model
 
@@ -165,7 +195,8 @@ def run_config(config_file, wd=None, CPU=None, trained_model=None,
 
         print(feat.shape, pred_div.shape)
 
-        plot_dd_predictions(pred_div, time_bins, wd=model_dir, out_tag=out_tag)
+        plot_dd_predictions(pred_div, time_bins, wd=model_dir,
+                            out_tag=out_tag, total_diversity=total_diversity)
 
         mean_features = np.mean(feat, axis=0)
         feat_tbl = pd.DataFrame(mean_features)
@@ -173,8 +204,12 @@ def run_config(config_file, wd=None, CPU=None, trained_model=None,
         feat_tbl.to_csv(os.path.join(model_dir, "Empirical_features_%s.csv" % out_tag),
                            index=False)
 
-        predictions = pd.DataFrame(pred_div)
-        predictions.columns = time_bins
+        if total_diversity:
+            predictions = pd.DataFrame(pred_div.T)
+            predictions.columns = ["total_diversity"]
+        else:
+            predictions = pd.DataFrame(pred_div)
+            predictions.columns = time_bins
         predictions.to_csv(os.path.join(model_dir, "Empirical_predictions_%s.csv" % out_tag),
                            index=False)
 
@@ -213,7 +248,7 @@ def sim_and_plot_features(config_file, wd=None, CPU=None, n_sims=None):
             config.write(configfile)
 
 
-    test_feature_file, test_label_file = run_test_sim_from_config(config)
+    test_feature_file, test_label_file, totdiv_label_file = run_test_sim_from_config(config)
     testset_features = np.load(test_feature_file)
     feature_plot_dir = os.path.join(config["general"]["wd"], "feature_plots")
 

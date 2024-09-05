@@ -48,6 +48,7 @@ def run_sim(args):
         rep, settings_obj = 0, args
     batch_features = []
     batch_labels = []
+    batch_total_diversity = []
 
     # simulate training data
     sim_settings = []
@@ -106,6 +107,7 @@ def run_sim(args):
         sim_y = sim['global_true_trajectory']
         batch_features.append(sim_features)
         batch_labels.append(sim_y)
+        batch_total_diversity.append(sp_x.shape[0])
 
         s = {key: sim[key] for key in settings_obj.keys}
         sim_settings.append(s)
@@ -113,8 +115,10 @@ def run_sim(args):
     #     print("\ndone.\n")
 
     res = {'features': np.array(batch_features),
-            'labels': np.array(batch_labels),
-            'settings': sim_settings}
+           'labels': np.array(batch_labels),
+           'settings': sim_settings,
+           'total_diversity': np.array(batch_total_diversity)
+           }
     return res
 
 def run_sim_parallel(training_set: sim_settings_obj, n_CPUS):
@@ -136,14 +140,17 @@ def run_sim_parallel(training_set: sim_settings_obj, n_CPUS):
 
     features = []
     labels = []
+    tot_diversity = []
     for i in range(n_CPUS):
         features = features + list(res[i]['features'])
         labels = labels + list(res[i]['labels'])
+        tot_diversity = tot_diversity + list(res[i]['total_diversity'])
 
     Xt = np.array(features)
     Yt = np.array(labels)
+    Zt = np.array(tot_diversity)
 
-    res = {'features': Xt, 'labels': Yt}
+    res = {'features': Xt, 'labels': Yt, 'total_diversity': Zt}
     return res
 
 def save_simulations(res, output_path, outname, return_file_names=False):
@@ -153,16 +160,32 @@ def save_simulations(res, output_path, outname, return_file_names=False):
         pass
     np.save(os.path.join(output_path, outname + "_features" + ".npy"), res['features'])
     np.save(os.path.join(output_path, outname + "_labels" + ".npy"), res['labels'])
+    np.save(os.path.join(output_path, outname + "_totdiv" + ".npy"), res['total_diversity'])
     print("Features saved as: \n", os.path.join(output_path, outname + "_features" + ".npy"))
     print("Labels saved as: \n", os.path.join(output_path, outname + "_labels" + ".npy"))
+    print("Total diversity saved as: \n", os.path.join(output_path, outname + "_totdiv" + ".npy"))
 
     if 'settings' in res.keys():
         save_pkl(res['settings'], os.path.join(output_path, outname + "_sim_settings.pkl"))
         print("Settings saved as: \n", os.path.join(output_path, outname + "_sim_settings.pkl"))
+
     if return_file_names:
         return  (os.path.join(output_path, outname + "_features" + ".npy"),
-                 os.path.join(output_path, outname + "_labels" + ".npy"))
+                 os.path.join(output_path, outname + "_labels" + ".npy"),
+                 os.path.join(output_path, outname + "_totdiv" + ".npy"))
 
+
+
+def save_simulations_z_compressed(res, output_path, outname, return_file_names=False):
+    pass
+    # np.savez_compressed(
+    #     file="%s%s.npz" % (data, day_tag),
+    #     features_ali=np.array(features_ali),
+    #     features_tree=np.array(features_tree),
+    #     labels_rates=np.array(labels_rates),
+    #     labels_smodel=np.array(labels_smodel),
+    #     labels_tl=np.array(labels_tl),
+    #     info=np.array(info))
 
 
 def compare_features(empirical_features,
