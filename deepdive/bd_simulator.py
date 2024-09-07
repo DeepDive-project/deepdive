@@ -95,6 +95,10 @@ class bd_simulator():
                 ts.append(root)
                 te.append(0)
 
+        done = True
+        if self.fixed_mass_extinction is not None:
+            done = False
+
         for t in range(root, 0):  # time
             if not dd_model:
                 for j in range(len(timesL) - 1):
@@ -114,6 +118,10 @@ class bd_simulator():
             no = self._rs.random(2)  # draw a random number
             no_extant_lineages = len(te_extant)  # the number of currently extant species
 
+            if no_extant_lineages == 0:
+                # stop loop over time when clade is extinct
+                return -np.array(ts) / self.scale, -np.array(te) / self.scale, done
+
             if dd_model:
                 m = M[0]
                 l = m * k_cap / np.max([1, no_extant_lineages])
@@ -131,6 +139,8 @@ class bd_simulator():
                         print("Mass extinction", t / self.scale, mass_extinction_prob, no[0])
                     # increased loss of species: increased ext probability for this time bin
                     m = self._rs.uniform(self.magnitude_mass_ext[0], self.magnitude_mass_ext[1])
+                    # if the clade reaches the fixed mass extinction then the simulation is successful
+                    done = True
 
             if no[0] < mass_extinction_prob and no_extant_lineages > 10 and t > root:  # mass extinction condition
                 if verbose:
@@ -165,7 +175,7 @@ class bd_simulator():
 
 
 
-        return -np.array(ts) / self.scale, -np.array(te) / self.scale
+        return -np.array(ts) / self.scale, -np.array(te) / self.scale, done
 
     def get_random_settings(self, root):
         root = np.abs(root)
@@ -217,6 +227,7 @@ class bd_simulator():
         LOtrue = [0]
         n_extinct = -0
         n_extant = -0
+        done = False
         if self.p_dd_model > self._rs.random():
             dd_model = True
         else:
@@ -233,13 +244,19 @@ class bd_simulator():
             min_extant = self.minEXTANT_SP
             max_extant = self.maxEXTANT_SP
 
-        while len(LOtrue) < self.minSP or len(LOtrue) > self.maxSP or n_extinct < self.minEX_SP or n_extant < min_extant or n_extant > max_extant:
+        while (len(LOtrue) < self.minSP or
+               len(LOtrue) > self.maxSP or
+               n_extinct < self.minEX_SP or
+               n_extant < min_extant or
+               n_extant > max_extant or
+               done is False):
+
             if isinstance(self.root_r, Iterable):
                 root = -self._rs.uniform(np.min(self.root_r), np.max(self.root_r))  # ROOT AGES
             else:
                 root = -self.root_r
             timesL, timesM, L, M = self.get_random_settings(root)
-            FAtrue, LOtrue = self.simulate(L, M, timesL, timesM, root, dd_model=dd_model, verbose=print_res)
+            FAtrue, LOtrue, done = self.simulate(L, M, timesL, timesM, root, dd_model=dd_model, verbose=print_res)
             n_extinct = len(LOtrue[LOtrue > 0])
             n_extant = len(LOtrue[LOtrue == 0])
 

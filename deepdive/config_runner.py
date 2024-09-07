@@ -63,7 +63,6 @@ def run_config(config_file, wd=None, CPU=None, trained_model=None,
     if "simulations" in config.sections() and train_set is None and test_set is None:
         if CPU is not None:
             config["simulations"]["n_CPUS"] = str(CPU)
-            print("CPU", config["simulations"]["n_CPUS"] , CPU)
 
         if config["general"]["autotune"] == "TRUE":
             print("Running autotune...")
