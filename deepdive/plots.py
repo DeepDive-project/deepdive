@@ -1,4 +1,5 @@
 import copy
+import glob
 import os.path
 
 import numpy as np
@@ -66,7 +67,21 @@ def plot_dd_predictions(pred_div, time_bins, wd, out_tag="", total_diversity=Fal
     print("Plot saved as:", file_name)
 
 
-def plot_ensemble_predictions(csv_files, wd, out_tag=""):
+def plot_ensemble_predictions(csv_files=None,
+                              model_wd=None,
+                              empirical_prediction="Empirical_predictions_",
+                              wd=None, out_tag=""):
+    if model_wd is not None:
+        csv_files = []
+        model_folders = glob.glob(os.path.join(model_wd, "*"))
+        for i in model_folders:
+            f = glob.glob(os.path.join(i,
+                                       "*%s*.csv" %  empirical_prediction))
+            csv_files.append(f[0])
+
+        print("Found %s files" % len(csv_files))
+        print(csv_files)
+
     pred_div_list = None
     for f in csv_files:
         f_pd = pd.read_csv(f)
