@@ -26,3 +26,6 @@ from .simulation_utilities import *
 
 from . import deepdiver_utilities
 from .deepdiver_utilities import *
+
+from . import div_rates
+from .div_rates import *

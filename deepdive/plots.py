@@ -69,18 +69,21 @@ def plot_dd_predictions(pred_div, time_bins, wd, out_tag="", total_diversity=Fal
 
 def plot_ensemble_predictions(csv_files=None,
                               model_wd=None,
-                              empirical_prediction="Empirical_predictions_",
-                              wd=None, out_tag=""):
+                              empirical_prediction_tag="Empirical_predictions_",
+                              wd=None, out_tag="",
+                              save_predictions=True,
+                              verbose=False):
     if model_wd is not None:
         csv_files = []
         model_folders = glob.glob(os.path.join(model_wd, "*"))
         for i in model_folders:
             f = glob.glob(os.path.join(i,
-                                       "*%s*.csv" %  empirical_prediction))
+                                       "*%s*.csv" %  empirical_prediction_tag))
             csv_files.append(f[0])
 
         print("Found %s files" % len(csv_files))
-        print(csv_files)
+        if verbose:
+            print(csv_files)
 
     pred_div_list = None
     for f in csv_files:
@@ -91,6 +94,12 @@ def plot_ensemble_predictions(csv_files=None,
         else:
             pred_div_list = np.vstack((pred_div_list, f_pd.to_numpy().astype(float)))
 
+    if save_predictions:
+        pred_div_list_pd = pd.DataFrame(pred_div_list)
+        pred_div_list_pd.columns = time_bins
+        pred_div_list_pd.to_csv(os.path.join(wd,
+                                             "Empirical_predictions_%s.csv" % out_tag),
+                                index=False)
     plot_dd_predictions(pred_div_list, time_bins, wd, out_tag)
 
 
