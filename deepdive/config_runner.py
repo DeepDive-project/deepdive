@@ -14,7 +14,8 @@ np.set_printoptions(suppress=True, precision=3)
 
 def run_config(config_file, wd=None, CPU=None, trained_model=None,
                train_set=None, test_set=None, lstm=None, dense=None,
-               out_tag="", calibrated=False, total_diversity=None
+               out_tag="", calibrated=False, total_diversity=None,
+               rescale_labels=None
                ):
     config = configparser.ConfigParser()
     config.read(config_file)
@@ -51,6 +52,12 @@ def run_config(config_file, wd=None, CPU=None, trained_model=None,
 
     if total_diversity:
         out_tag = "_totdiv"
+
+
+    if rescale_labels is None:
+        label_rescaler = None
+    else:
+        label_rescaler = rescale_labels
 
     if lstm is not None:
         config["model_training"]["lstm_layers"] = " ".join([str(i) for i in lstm])
@@ -124,7 +131,8 @@ def run_config(config_file, wd=None, CPU=None, trained_model=None,
         if feature_file is not None and "model_training" in config.sections():
             model_dir = run_model_training_from_config(config, feature_file=feature_file, label_file=label_file,
                                                        model_tag=out_tag, return_model_dir=True,
-                                                       calibrate_output=calibrated,  total_diversity=total_diversity)
+                                                       calibrate_output=calibrated,  total_diversity=total_diversity,
+                                                       label_rescaler=label_rescaler)
     else:
         model_dir = trained_model
 
@@ -135,7 +143,8 @@ def run_config(config_file, wd=None, CPU=None, trained_model=None,
                                                                           test_label_file,
                                                                           calibrated=calibrated,
                                                                           return_features=True,
-                                                                          model_dir=model_dir
+                                                                          model_dir=model_dir,
+                                                                          label_rescaler=label_rescaler
                                                                           )
         # print("test_pred", test_pred, test_feature_file, test_label_file)
         print("\nTest set MSE:", np.mean((test_pred - labels) ** 2))

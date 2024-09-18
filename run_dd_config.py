@@ -28,6 +28,7 @@ p.add_argument("-plot_features", default=False, action='store_true')
 p.add_argument('-n_sims', type=int, help='n simulations for plotting', default=100)
 p.add_argument("-autotune", default=False, action='store_true')
 p.add_argument("-total_diversity", default=None, type=bool)
+p.add_argument("-rescale_labels", default=None, type=int)
 
 
 args = p.parse_args()

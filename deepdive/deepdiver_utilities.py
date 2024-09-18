@@ -415,7 +415,7 @@ def run_model_training_from_config(config, feature_file=None, label_file=None,
     if label_rescaler is None:
         Yt_r = normalize_labels(Yt, rescaler=1, log=True)
     else:
-        Yt_r = normalize_labels(Yt, rescaler=label_rescaler[0], log=label_rescaler[1])
+        Yt_r = normalize_labels(Yt, rescaler=label_rescaler, log=False)
 
     if convert_to_tf:
         # convert to tf tensors
@@ -485,7 +485,8 @@ def run_model_training_from_config(config, feature_file=None, label_file=None,
 
 def predict_from_config(config, return_features=False,
                         model_tag="", model_dir_id="rnn_model", calibrated=False,
-                        return_transformed_diversity=False, model_dir=None):
+                        return_transformed_diversity=False, model_dir=None,
+                        label_rescaler=None):
     dd_input = os.path.join(config["general"]["wd"], config["empirical_predictions"]["empirical_input_file"])
     if model_dir is not None:
         loaded_models = load_models(model_wd=model_dir)
@@ -519,8 +520,12 @@ def predict_from_config(config, return_features=False,
         pred_list = np.expand_dims(pred_list, axis=0)
 
     if return_transformed_diversity:
-        pred_div = np.exp(pred_list) - 1
-        pred_list = np.hstack((pred_div[:, 0].reshape(pred_div.shape[0], 1), pred_div))
+        if label_rescaler is None:
+            pred_div = np.exp(pred_list) - 1
+        else:
+            pred_div = pred_list * label_rescaler
+
+    pred_list = np.hstack((pred_div[:, 0].reshape(pred_div.shape[0], 1), pred_div))
 
     if return_features:
         return pred_list, features
@@ -529,7 +534,7 @@ def predict_from_config(config, return_features=False,
 
 def predict_testset_from_config(config, test_feature_file, test_label_file,
                                 model_tag="", model_dir_id="rnn_model", calibrated=False,
-                                return_features=False, model_dir=None):
+                                return_features=False, model_dir=None, label_rescaler=None):
     if model_dir is not None:
         loaded_models = load_models(model_wd=model_dir)
     else:
@@ -540,8 +545,10 @@ def predict_testset_from_config(config, test_feature_file, test_label_file,
 
     features = np.load(test_feature_file)
     labels = np.load(test_label_file)
-    labels = normalize_labels(labels, rescaler=1, log=True)
-
+    if label_rescaler is None:
+        labels = normalize_labels(labels, rescaler=1, log=True)
+    else:
+        labels = normalize_labels(labels, rescaler=label_rescaler, log=False)
     pred_list = []
     for model_i in range(len(loaded_models)):
         model = loaded_models[model_i]['model']
