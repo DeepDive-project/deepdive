@@ -44,5 +44,5 @@ else:
                              train_set=args.train_set, test_set=args.test_set,
                              lstm=args.lstm, dense=args.dense, trained_model=args.trained_model,
                              out_tag=args.out_tag, calibrated=args.calibrated,
-                             total_diversity=args.total_diversity)
+                             total_diversity=args.total_diversity, rescale_labels=args.rescale_labels)
 
