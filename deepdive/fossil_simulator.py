@@ -274,9 +274,6 @@ class fossil_simulator():
 
         ### SKYLINE MODEL
         if self._rs.random() > self.fraction_skyline_sampling:
-
-
-
             mu = np.einsum('a, t -> at', slope, self.mid_time_bins) + np.log(intercept)
             # print(mu)
             loc_rates = self._rs.normal(loc=mu, scale=sd_through_time)
@@ -417,6 +414,8 @@ class fossil_simulator():
         # product of probabilities (in log space to use einsum)
         p_no_fossil_in_locality = np.exp(np.einsum('sat -> at', np.log(p_3d_no_fossil)))
         expected_n_localities_with_fossils = self._rs.binomial(number_of_localities, 1 - p_no_fossil_in_locality)
+        # print("expected_n_localities_with_fossils",
+        #       np.einsum('at -> t', expected_n_localities_with_fossils))
         # expected_n_localities_with_fossils.shape = (at)
         # ---
         # print("number_of_localities", number_of_localities.shape, number_of_localities.dtype)
@@ -453,6 +452,9 @@ class fossil_simulator():
                 expected_n_localities_with_fossils > max_n_loc] = max_n_loc[
                 expected_n_localities_with_fossils > max_n_loc] + 0
 
+        # print("fossils_per_area",
+        #           np.einsum('sat -> t', fossils_per_area),
+        #       np.einsum('sat -> t', p_3d))
 
         # fossils_per_area is the number of localities per area in which a species is sampled
         return fossils_per_area, expected_n_localities_with_fossils

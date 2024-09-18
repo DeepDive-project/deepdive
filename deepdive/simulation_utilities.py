@@ -3,6 +3,7 @@ from collections.abc import Iterable
 import numpy as np
 import pandas as pd
 import os
+
 from .utilities import print_update, save_pkl, set_area_constraints
 from .feature_extraction import extract_sim_features, get_features_names
 from .plots import plot_feature_hists
@@ -19,7 +20,8 @@ class sim_settings_obj():
                  keys=None,
                  verbose=False,
                  include_present_diversity=False,
-                 area_constraint=None
+                 area_constraint=None,
+                 min_n_occurrences=1
                  ):
         self.bd_sim = bd_sim
         self.fossil_sim = fossil_sim
@@ -38,6 +40,7 @@ class sim_settings_obj():
         self.verbose = verbose
         self.include_present_diversity = include_present_diversity
         self.area_constraint = area_constraint
+        self.min_n_occurrences = min_n_occurrences
 
 
 
@@ -59,10 +62,11 @@ def run_sim(args):
     fossil_sim.reset_seed(settings_obj.seed + rep)
     rs = np.random.default_rng(settings_obj.seed + rep)
 
-    for i in range(settings_obj.n_simulations):
-        if i % 1 == 0 and rep == 0:
+    sim_i = 0
+    while sim_i != settings_obj.n_simulations:
+        if sim_i % 1 == 0 and rep == 0:
             if settings_obj.verbose is False:
-                print_update("Running simulation %s of %s" % (i + 1, settings_obj.n_simulations))
+                print_update("Running simulation %s of %s" % (sim_i + 1, settings_obj.n_simulations))
 
         sp_x = bd_sim.run_simulation(print_res=settings_obj.verbose)
 
@@ -102,17 +106,18 @@ def run_sim(args):
             fossil_sim.set_carrying_capacity_multiplier(m_species_origin=c1, m_sp_area_time=c2)
 
         sim = fossil_sim.run_simulation(sp_x, min_age=settings_obj.min_age, max_age=settings_obj.max_age)
-        sim_features = extract_sim_features(sim,
-                                            include_present_div=settings_obj.include_present_diversity)
-        sim_y = sim['global_true_trajectory']
-        batch_features.append(sim_features)
-        batch_labels.append(sim_y)
-        batch_total_diversity.append(sp_x.shape[0])
+        if np.sum(sim['fossil_data']) >= settings_obj.min_n_occurrences:
+            sim_features = extract_sim_features(sim,
+                                                include_present_div=settings_obj.include_present_diversity)
+            sim_y = sim['global_true_trajectory']
+            batch_features.append(sim_features)
+            batch_labels.append(sim_y)
+            batch_total_diversity.append(sp_x.shape[0])
 
-        s = {key: sim[key] for key in settings_obj.keys}
-        sim_settings.append(s)
-    # if rep == 0:
-    #     print("\ndone.\n")
+            s = {key: sim[key] for key in settings_obj.keys}
+            sim_settings.append(s)
+            sim_i += 1
+
 
     res = {'features': np.array(batch_features),
            'labels': np.array(batch_labels),

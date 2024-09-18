@@ -193,12 +193,18 @@ def run_sim_from_config(config):
     if n_cpus > 1:
         n_simulations = int(np.ceil(n_simulations / n_cpus))
 
+    try:
+        min_n_occurrences = config.getint("simulations", "min_n_occurrences")
+    except:
+        min_n_occurrences = 1
+
     training_set = sim_settings_obj(bd_sim, fossil_sim, n_simulations=n_simulations,
                                     min_age=np.min(list(map(float, config["general"]["time_bins"].split()))),
                                     max_age=np.max(list(map(float, config["general"]["time_bins"].split()))),
                                     seed=config.getint("simulations", "training_seed"), keys=[],
                                     include_present_diversity=include_present_diversity,
-                                    area_constraint=area_constraint
+                                    area_constraint=area_constraint,
+                                    min_n_occurrences=min_n_occurrences
                                     )
 
     res = run_sim_parallel(training_set, n_CPUS=config.getint("simulations", "n_CPUS"))
@@ -361,7 +367,8 @@ def get_model_settings_from_config(config, total_diversity=False):
 
 def run_model_training_from_config(config, feature_file=None, label_file=None,
                                    convert_to_tf=True, model_tag=None, return_model_dir=False,
-                                   calibrate_output=False, total_diversity=None):
+                                   calibrate_output=False, total_diversity=None,
+                                   label_rescaler=None):
     if total_diversity is None:
         try:
             r_tmp = config["model_training"]["predict_total_diversity"]
@@ -405,9 +412,10 @@ def run_model_training_from_config(config, feature_file=None, label_file=None,
     feature_rescaler = FeatureRescaler(Xt, log_last=include_present_div)
     Xt_r = feature_rescaler.feature_rescale(Xt)
 
-
-
-    Yt_r = normalize_labels(Yt, rescaler=1, log=True)
+    if label_rescaler is None:
+        Yt_r = normalize_labels(Yt, rescaler=1, log=True)
+    else:
+        Yt_r = normalize_labels(Yt, rescaler=label_rescaler[0], log=label_rescaler[1])
 
     if convert_to_tf:
         # convert to tf tensors
@@ -677,7 +685,8 @@ def config_autotune(config_init, target_n_occs_range=10):
     if config["simulations"]["s_species"] == "NA":
         config["simulations"]["s_species"] = config["simulations"]["dd_K"]
 
-
+    config["simulations"]["min_n_occurrences"] = str(np.sum(n_occs) * 0.5)
+    # print("min_n_occurrences set to ", np.sum(n_occs) * 0.5)
 
     config["general"]["autotune"] = "FALSE"
 
