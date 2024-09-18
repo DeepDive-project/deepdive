@@ -38,6 +38,10 @@ def calculate_global_trajectory(species_space_time):
     return np.einsum('st -> t', x)  # set to float and not integer for low res dating features
 
 
+def calculate_sampled_turnover(species_space_time=None):
+    species_space_time = np.random.binomial(1, 0.5, size=(5, 10))
+
+
 def calculate_local_trajectory(species_space_time):
     # return a 2D matrix, areas by time bins
     x = species_space_time + 0  # turn n. of occs per species per area > 1 to 1
@@ -91,7 +95,7 @@ def count_endemics(sim):
     return endemics  # run a small simulation and check numbers are correct
 
 
-def get_range_through_diversity(sim):
+def get_range_through_lineages(sim):
     global_records = np.einsum('sat -> st', sim['fossil_data'])
     # rm unsampled species
     record_sampled = global_records[np.where(np.sum(global_records, 1) > 0)[0], :]
@@ -101,8 +105,35 @@ def get_range_through_diversity(sim):
         fa = np.max(occ)
         la = np.min(occ)
         d_traj[sp, np.arange(la, fa+1)] = 1
+    return d_traj
+
+def get_orig_ext_events(d_traj):
+    d_traj_rev = np.flip(d_traj, axis=0) # temporarily reverse time axis from old to young
+    d = np.diff(d_traj_rev, axis=1)
+    # append first column
+    events = np.hstack((np.expand_dims(d_traj_rev[:, 0], axis=1), d))
+    # +1 : origination, -1: extinction
+    originations_per_bin = np.sum(events > 0, axis=0)  # shape: (t)
+    extinctions_per_bin = np.sum(events < 0, axis=0)  # shape: (t)
+    return originations_per_bin[::-1], extinctions_per_bin[::-1]
+
+
+# test get_orig_ext_events()
+# rs = np.random.default_rng(123)
+# x = rs.binomial(1, p=0.3, size= (10,1,15))
+# x[8,0,0] = 0 # make one speices appear in the last bin
+# np.squeeze(x)
+# sim = {'fossil_data': x}
+# z = get_range_through_lineages(sim).astype(int)
+# get_orig_ext_events(z)
+
+def get_range_through_diversity(sim, return_d_traj=False):
+    d_traj = get_range_through_lineages(sim)
     ltt = np.sum(d_traj, 0)
-    return ltt
+    if return_d_traj:
+        return ltt, d_traj
+    else:
+        return ltt
 ###---- end 1D FEATURES ----###
 
 
@@ -130,14 +161,17 @@ def count_localities(sim):
 
 # EXTRACT FEATURES
 def extract_features_1D(sim):
-    properties = np.zeros((sim["n_bins"], 7))
+    properties = np.zeros((sim["n_bins"], 9))
     properties[:, 0] = count_species(sim)
     properties[:, 1] = count_occurrences(sim)
     properties[:, 2] = count_singletons(sim)
     properties[:, 3] = count_endemics(sim)
     properties[:, 4] = time_bins_duration(sim)
-    properties[:, 5] = get_range_through_diversity(sim)
+    properties[:, 5], d_traj = get_range_through_diversity(sim, return_d_traj=True)
     properties[:, 6] = count_sampled_localities(sim)
+    a, b = get_orig_ext_events(d_traj)
+    properties[:, 7] = a
+    properties[:, 8] = b
     return properties
 
 
@@ -200,7 +234,8 @@ def normalize_labels(Yt, rescaler=0, log=False):
 
 def get_features_names(n_areas, include_present_div=False, as_dataframe=False):
     global_features = ["n_species", "n_occs", "n_singletons", "n_endemics",
-                       "time_bin_duration", "range_through_div", "n_localities"]
+                       "time_bin_duration", "range_through_div", "n_localities",
+                       "origination_events", "extinction_events"]
 
     sp_area = ["n_species_area_%s" % i for i in range(1, 1 + n_areas)]
     occs_area = ["n_occs_area_%s" % i for i in range(1, 1 + n_areas)]
