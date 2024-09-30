@@ -134,9 +134,18 @@ def run_sim_parallel(training_set: sim_settings_obj, n_CPUS):
         training_args = [[i, training_set] for i in range(n_CPUS)]
         print("\nSimulating %s datasets (parallelized on %s CPUs)..." % (n_CPUS * training_set.n_simulations,  n_CPUS))
 
-        p = get_context("fork").Pool(n_CPUS)
-        res = p.map(run_sim, training_args)
-        p.close()
+        # Choose the appropriate multiprocessing method based on the OS
+        if os.name == 'posix':  # For Unix-based systems (macOS, Linux)
+            ctx = multiprocessing.get_context('fork')
+        else:  # For Windows
+            ctx = multiprocessing.get_context('spawn')
+
+        with ctx.Pool(n_CPUS) as pool:
+            res = pool.map(run_sim, training_args)
+
+        # p = get_context("fork").Pool(n_CPUS)
+        # res = p.map(run_sim, training_args)
+        # p.close()
         # pool = multiprocessing.Pool()
         # res = pool.map(run_sim, training_args)
         # pool.close()
