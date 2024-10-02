@@ -111,7 +111,7 @@ def parse_dd_input(dd_input, present_diversity=None):
         mid_points_rev = tbl_rep[np.where(tbl_rep[:,1] =='bin_mid')[0][0], 3:].astype(float)[::-1]
 
         tbl_occs = tbl_rep[np.where(tbl_rep[:, 1] == "occs")[0]]
-        areas = tbl_occs[:, 2]
+        areas = tbl_occs[:, 2].astype(str)
         area_counts = []
         for area in np.unique(areas):
             area_counts_tmp = tbl_occs[areas == area, 3:].astype(int)
