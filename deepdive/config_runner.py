@@ -65,7 +65,7 @@ def run_config(config_file, wd=None, CPU=None, trained_model=None,
         config["model_training"]["dense_layer"] = " ".join([str(i) for i in dense])
 
     if n_training_sims is not None:
-        config["simulations"]["n_training_sims"] = str(n_training_sims)
+        config["simulations"]["n_training_simulations"] = str(n_training_sims)
 
     # Run simulations in parallel
     feature_file = None
