@@ -15,7 +15,7 @@ np.set_printoptions(suppress=True, precision=3)
 def run_config(config_file, wd=None, CPU=None, trained_model=None,
                train_set=None, test_set=None, lstm=None, dense=None,
                out_tag="", calibrated=False, total_diversity=None,
-               rescale_labels=None
+               rescale_labels=None, n_training_sims=None
                ):
     config = configparser.ConfigParser()
     config.read(config_file)
@@ -63,6 +63,9 @@ def run_config(config_file, wd=None, CPU=None, trained_model=None,
         config["model_training"]["lstm_layers"] = " ".join([str(i) for i in lstm])
     if dense is not None:
         config["model_training"]["dense_layer"] = " ".join([str(i) for i in dense])
+
+    if n_training_sims is not None:
+        config["model_training"]["n_training_sims"] = n_training_sims
 
     # Run simulations in parallel
     feature_file = None
