@@ -692,7 +692,7 @@ def config_autotune(config_init, target_n_occs_range=10):
     if config["simulations"]["s_species"] == "NA":
         config["simulations"]["s_species"] = config["simulations"]["dd_K"]
 
-    config["simulations"]["min_n_occurrences"] = str(np.sum(n_occs) * 0.5)
+    config["simulations"]["min_n_occurrences"] = str(np.sum(n_occs) * 0.1)
     # print("min_n_occurrences set to ", np.sum(n_occs) * 0.5)
 
     config["general"]["autotune"] = "FALSE"
