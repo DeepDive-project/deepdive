@@ -108,14 +108,16 @@ def get_range_through_lineages(sim):
     return d_traj
 
 def get_orig_ext_events(d_traj):
-    d_traj_rev = np.flip(d_traj, axis=0) # temporarily reverse time axis from old to young
+    # print("d_traj", d_traj)
+    d_traj_rev = np.flip(d_traj, axis=1) # temporarily reverse time axis from old to young
+    # print("d_traj_rev", d_traj_rev)
     d = np.diff(d_traj_rev, axis=1)
     # append first column
     events = np.hstack((np.expand_dims(d_traj_rev[:, 0], axis=1), d))
-    # +1 : origination, -1: extinction
-    originations_per_bin = np.sum(events > 0, axis=0)  # shape: (t)
-    extinctions_per_bin = np.sum(events < 0, axis=0)  # shape: (t)
-    return originations_per_bin[::-1], extinctions_per_bin[::-1]
+    # +1 : origination, -1: extinction |-> then reverse time axis again
+    originations_per_bin = np.sum(events > 0, axis=0)[::-1]  # shape: (t)
+    extinctions_per_bin = np.sum(events < 0, axis=0)[::-1]  # shape: (t)
+    return originations_per_bin, extinctions_per_bin
 
 
 # test get_orig_ext_events()
