@@ -87,6 +87,8 @@ class bd_simulator():
             mass_speciation_prob = self.p_mass_speciation / self.scale
 
         if isinstance(self.s_species, Iterable):
+            if self.s_species[0] == self.s_species[1]:
+                self.s_species[1] = self.s_species[0] + 1
             s_species = self._rs.integers(self.s_species[0], self.s_species[1])
             ts = list(np.zeros(s_species) + root)
             te = list(np.zeros(s_species))
