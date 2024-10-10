@@ -90,4 +90,9 @@ def plot_empirical_diversification(res_wd, dd_estimate_file,
     div_plot = matplotlib.backends.backend_pdf.PdfPages(file_name)
     div_plot.savefig(fig)
     div_plot.close()
+
+    res = np.vstack((-time_bins_mid[1:], div_rate))
+    pd.DataFrame(res).to_csv(str(file_name).replace(".pdf", ".csv"),
+                             index=False)
+    
     print("Plot saved as", file_name)
