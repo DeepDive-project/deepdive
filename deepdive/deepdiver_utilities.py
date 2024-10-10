@@ -635,7 +635,8 @@ def config_autotune(config_init, target_n_occs_range=10):
     config["simulations"]["sd_through_time_skyline"] = "%s" % np.std(np.log(n_localities_area + 1))
 
     # re-set carrying capacity
-    config["simulations"]["dd_K"] = "%s %s" % (int(np.mean(range_through_div) / 2), int(np.max(range_through_div) * 5))
+    config["simulations"]["dd_K"] = "%s %s" % (int(np.mean(range_through_div[range_through_div > 0]) / 2),
+                                               np.maximum(pres_div * 2, int(np.max(range_through_div) * 5)))
 
     # re-set per-species sampling rate
     m = (n_species - n_singletons)[range_through_div > 0] / range_through_div[range_through_div > 0]
