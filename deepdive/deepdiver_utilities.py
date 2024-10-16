@@ -657,12 +657,14 @@ def config_autotune(config_init, target_n_occs_range=10):
 
     # pres_species = int(config["general"]["present_diversity"])
     if pres_div is not None:
-        config["simulations"]["extant_sp"] = "%s %s" % (int(pres_div / 2),
-                                                        int(pres_div * 10))
-        if pres_div == 0:
-            config["simulations"]["pr_extant_clade"] = "0"
-        else:
-            config["simulations"]["pr_extant_clade"] = "1"
+        if pres_div > 0:
+            config["simulations"]["extant_sp"] = "%s %s" % (int(pres_div / 2),
+                                                            int(pres_div * 10))
+    # if pres_div == 0:
+    #     config["simulations"]["pr_extant_clade"] = "0"
+    # else:
+    #     config["simulations"]["pr_extant_clade"] = "1"
+
     config["simulations"]["total_sp"] = "%s %s" % (int(np.max(n_species) * 2), int(np.sum(n_species) * 20))
 
     config["simulations"]["target_n_occs"] = "%s" % np.sum(n_occs)
@@ -699,7 +701,7 @@ def config_autotune(config_init, target_n_occs_range=10):
     config["simulations"]["bin_sampling"] = "0.67" # 50% of simulations overall with empirical loc rates
 
     if config["simulations"]["s_species"] == "NA":
-        config["simulations"]["s_species"] = config["simulations"]["dd_K"]
+        config["simulations"]["s_species"] = "1 %s" % np.maximum(min_div, int(np.max(range_through_div) * 5))
 
     config["simulations"]["min_n_occurrences"] = str(np.sum(n_occs) * 0.1)
     # print("min_n_occurrences set to ", np.sum(n_occs) * 0.5)

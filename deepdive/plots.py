@@ -73,7 +73,8 @@ def plot_ensemble_predictions(csv_files=None,
                               wd=None, out_tag="",
                               save_predictions=True,
                               verbose=False,
-                              tot_div=False):
+                              tot_div=False,
+                              return_file_name=False):
     if model_wd is not None:
         csv_files = []
         if tot_div:
@@ -112,6 +113,9 @@ def plot_ensemble_predictions(csv_files=None,
                                 index=False)
     if tot_div is False:
         plot_dd_predictions(pred_div_list, time_bins, wd, out_tag)
+
+    if return_file_name:
+        return os.path.join(wd, "Empirical_predictions_%s.csv" % out_tag)
 
 
 

@@ -79,13 +79,13 @@ def plot_empirical_diversification(res_wd, dd_estimate_file,
     # plt.show()
 
     if out_file is None:
-        out_file = ""
+        out_file = os.path.basename(dd_estimate_file)
     else:
-        out_file = out_file + "_"
+        out_file = out_file
     if plot_per_lineage_rate:
-        out_file = "%sDiversification_rates.pdf" % out_file
+        out_file = "%s_diversification_rates.pdf" % out_file
     else:
-        out_file = "%sDiversity_change.pdf" % out_file
+        out_file = "%s_diversity_change.pdf" % out_file
     file_name = os.path.join(res_wd, out_file)
     div_plot = matplotlib.backends.backend_pdf.PdfPages(file_name)
     div_plot.savefig(fig)
