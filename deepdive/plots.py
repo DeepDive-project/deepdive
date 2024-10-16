@@ -72,10 +72,15 @@ def plot_ensemble_predictions(csv_files=None,
                               empirical_prediction_tag="Empirical_predictions_",
                               wd=None, out_tag="",
                               save_predictions=True,
-                              verbose=False):
+                              verbose=False,
+                              tot_div=False):
     if model_wd is not None:
         csv_files = []
-        model_folders = glob.glob(os.path.join(model_wd, "*"))
+        if tot_div:
+            model_folders = glob.glob(os.path.join(model_wd, "*_totdiv"))
+        else:
+            model_folders = np.array(glob.glob(os.path.join(model_wd, "*")))
+            model_folders = model_folders[["_totdiv" not in i for i in model_folders]]
         for i in model_folders:
             f = glob.glob(os.path.join(i,
                                        "*%s*.csv" %  empirical_prediction_tag))
@@ -88,19 +93,25 @@ def plot_ensemble_predictions(csv_files=None,
     pred_div_list = None
     for f in csv_files:
         f_pd = pd.read_csv(f)
-        time_bins = f_pd.columns.to_numpy().astype(float)
+        if tot_div:
+            time_bins = ["total_diversity"]
+        else:
+            time_bins = f_pd.columns.to_numpy().astype(float)
         if pred_div_list is None:
             pred_div_list = f_pd.to_numpy().astype(float)
         else:
             pred_div_list = np.vstack((pred_div_list, f_pd.to_numpy().astype(float)))
 
     if save_predictions:
+        if tot_div:
+            out_tag = out_tag + "_totdiv"
         pred_div_list_pd = pd.DataFrame(pred_div_list)
         pred_div_list_pd.columns = time_bins
         pred_div_list_pd.to_csv(os.path.join(wd,
                                              "Empirical_predictions_%s.csv" % out_tag),
                                 index=False)
-    plot_dd_predictions(pred_div_list, time_bins, wd, out_tag)
+    if tot_div is False:
+        plot_dd_predictions(pred_div_list, time_bins, wd, out_tag)
 
 
 

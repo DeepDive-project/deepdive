@@ -1,4 +1,5 @@
 import os
+from os import system
 import pandas as pd
 import numpy as np
 import scipy.stats
@@ -15,7 +16,9 @@ np.set_printoptions(suppress=True, precision=3)
 def run_config(config_file, wd=None, CPU=None, trained_model=None,
                train_set=None, test_set=None, lstm=None, dense=None,
                out_tag="", calibrated=False, total_diversity=None,
-               rescale_labels=None, n_training_sims=None
+               rescale_labels=None,
+               n_training_sims=None, n_test_sims=None,
+               return_file_names=False
                ):
     config = configparser.ConfigParser()
     config.read(config_file)
@@ -67,9 +70,13 @@ def run_config(config_file, wd=None, CPU=None, trained_model=None,
     if n_training_sims is not None:
         config["simulations"]["n_training_simulations"] = str(n_training_sims)
 
+    if n_test_sims is not None:
+        config["simulations"]["n_test_simulations"] = str(n_test_sims)
+
     # Run simulations in parallel
     feature_file = None
     label_file = None
+    totdiv_label_file = None
     if "simulations" in config.sections() and train_set is None and test_set is None:
         if CPU is not None:
             config["simulations"]["n_CPUS"] = str(CPU)
@@ -155,6 +162,11 @@ def run_config(config_file, wd=None, CPU=None, trained_model=None,
         np.save(os.path.join(model_dir, pred_file), test_pred)
         print("Saved testset predictions in:\n",
               os.path.join(model_dir, pred_file))
+
+        with open(file=os.path.join(model_dir,
+                                    pred_file.replace('.npy', 'MSA.txt')),
+                  mode='w') as f:
+            f.write("Test set MSE: %s" % np.mean((test_pred - labels) ** 2))
     else:
         testset_features = None
 
@@ -223,6 +235,20 @@ def run_config(config_file, wd=None, CPU=None, trained_model=None,
             predictions.columns = time_bins
         predictions.to_csv(os.path.join(model_dir, "Empirical_predictions_%s.csv" % out_tag),
                            index=False)
+
+
+        if return_file_names:
+            out_files = {
+                'training_features': feature_file,
+                'test_features': test_feature_file,
+                'training_labels': label_file,
+                'test_labels': test_label_file,
+                'training_tot_div': totdiv_label_file,
+                'test_total_dov': test_totdiv_label_file,
+                'model_dir': model_dir
+
+            }
+            return out_files
 
 
 def sim_and_plot_features(config_file, wd=None, CPU=None, n_sims=None):
