@@ -67,6 +67,50 @@ def plot_dd_predictions(pred_div, time_bins, wd, out_tag="", total_diversity=Fal
     print("Plot saved as:", file_name)
 
 
+
+def plot_sampling_fraction(sampling_fraction, time_bins, out_tag):
+    fig = plt.figure(figsize=(12, 8))
+    plt.fill_between(-time_bins,
+                     y1=np.max(sampling_fraction, axis=0).T,
+                     y2=np.min(sampling_fraction, axis=0).T,
+                     step="pre",
+                     color="mediumturquoise",
+                     alpha=0.2)
+
+    plt.fill_between(-time_bins,
+                     y1=np.quantile(sampling_fraction, q=0.975, axis=0).T,
+                     y2=np.quantile(sampling_fraction, q=0.025, axis=0).T,
+                     step="pre",
+                     color="mediumturquoise",
+                      alpha=0.2)
+
+    plt.fill_between(-time_bins,
+                      y1=np.quantile(sampling_fraction, q=0.75, axis=0).T,
+                      y2=np.quantile(sampling_fraction, q=0.25, axis=0).T,
+                      step="pre",
+                      color="mediumturquoise",
+                      alpha=0.2)
+    fraction = np.mean(sampling_fraction, axis=0)
+    plt.step(-time_bins,
+             fraction.T,
+             label="Mean prediction",
+             linewidth=2,
+             c="mediumturquoise",
+             alpha=1)
+
+    add_geochrono_no_labels(0, -0.1 * np.max(fraction), max_ma=-(np.max(time_bins) * 1.05), min_ma=0)
+    plt.ylim(bottom=-0.1 * np.max(fraction), top=np.max(sampling_fraction) * 1.05)
+    plt.xlim(-(np.max(time_bins) * 1.05), -np.min(time_bins) + 2)
+    plt.ylabel("Estimated sampling fraction", fontsize=15)
+    plt.xlabel("Time (Ma)", fontsize=15)
+
+    file_name = os.path.join(wd, "Sampling_fractions_%s.pdf" % out_tag)
+    div_plot = matplotlib.backends.backend_pdf.PdfPages(file_name)
+    div_plot.savefig(fig)
+    div_plot.close()
+    print("Plot saved as:", os.path.join(wd, file_name))
+
+
 def plot_ensemble_predictions(csv_files=None,
                               model_wd=None,
                               empirical_prediction_tag="Empirical_predictions_",
