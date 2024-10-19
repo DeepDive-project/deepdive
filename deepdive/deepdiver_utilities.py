@@ -673,8 +673,10 @@ def config_autotune(config_init, target_n_occs_range=10):
     #     config["simulations"]["pr_extant_clade"] = "1"
 
     # Add condition on minimum clade duration
-    min_age_with_occurrences = np.min(time_bins[:-1][n_occs > 0])
-    config["simulations"]["survive_age_condition"] = "%s" % min_age_with_occurrences
+    if pres_div is not None:
+        if pres_div == 0:
+            min_age_with_occurrences = np.min(time_bins[:-1][n_occs > 0])
+            config["simulations"]["survive_age_condition"] = "%s" % min_age_with_occurrences
 
 
     config["simulations"]["total_sp"] = "%s %s" % (int(np.max(n_species) * 2), int(np.sum(n_species) * 20))
