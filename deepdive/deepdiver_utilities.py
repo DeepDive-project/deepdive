@@ -34,6 +34,12 @@ def create_sim_obj_from_config(config, rseed=None):
     else:
         fixed_mass_extinction = None
 
+    if "survive_age_condition" in config["simulations"]:
+        survive_age_condition = float(config["simulations"]["survive_age_condition"])
+    else:
+        survive_age_condition = None
+
+
     if rseed is None:
         rseed = config.getint("simulations", "training_seed")
     bd_sim = bd_simulator(s_species=s_species,  # number of starting species
@@ -55,6 +61,7 @@ def create_sim_obj_from_config(config, rseed=None):
                           dd_maxL=config.getfloat("simulations", "dd_maxl"),
                           dd_K=list(map(float, config["simulations"]["dd_k"].split())),
                           pr_extant_clade=float(config["simulations"]["pr_extant_clade"]),
+                          survive_age_condition=survive_age_condition,
                           poiL=config.getfloat("simulations", "poil"),  # expected number of birth rate shifts
                           poiM=config.getfloat("simulations", "poim"),  # expected number of death rate shifts
                           seed=rseed,  # if > 0 fixes the random seed to make simulations reproducible
@@ -664,6 +671,11 @@ def config_autotune(config_init, target_n_occs_range=10):
     #     config["simulations"]["pr_extant_clade"] = "0"
     # else:
     #     config["simulations"]["pr_extant_clade"] = "1"
+
+    # Add condition on minimum clade duration
+    min_age_with_occurrences = np.min(time_bins[:-1][n_occs > 0])
+    config["simulations"]["survive_age_condition"] = "%s" % min_age_with_occurrences
+
 
     config["simulations"]["total_sp"] = "%s %s" % (int(np.max(n_species) * 2), int(np.sum(n_species) * 20))
 

@@ -33,6 +33,7 @@ class bd_simulator():
                  dd_K=100,
                  dd_maxL=None, # max speciation rate
                  log_uniform_rates=False,
+                 survive_age_condition=0,
                  seed=None,
                  vectorize=False):
         self.s_species = s_species
@@ -61,8 +62,8 @@ class bd_simulator():
         self.dd_maxL = dd_maxL
         self.log_uniform_rates = log_uniform_rates
         self.vectorize = vectorize
+        self.survive_age_condition = survive_age_condition
         self._rs = get_rnd_gen(seed)
-
 
     def reset_seed(self, seed):
         self._rs = get_rnd_gen(seed)
@@ -101,6 +102,9 @@ class bd_simulator():
         if self.fixed_mass_extinction is not None:
             done = False
 
+        if self.survive_age_condition is not None:
+            done = False
+
         for t in range(root, 0):  # time
             if not dd_model:
                 for j in range(len(timesL) - 1):
@@ -131,8 +135,17 @@ class bd_simulator():
                     l = np.min([l, self.dd_maxL / self.scale])
                 # print("DD", l, m, no_extant_lineages)
 
+            if self.survive_age_condition is not None:
+                delta_from_condition = np.min(
+                    np.abs(np.abs(t) - np.array(self.survive_age_condition) * self.scale))
+                if delta_from_condition < 1:
+                    done = True
+
             if self.fixed_mass_extinction is not None:
-                if np.min(np.abs(np.abs(t) - np.array(self.fixed_mass_extinction) * self.scale)) < 1:
+                delta_from_condition = np.min(
+                    np.abs(np.abs(t) - np.array(self.fixed_mass_extinction) * self.scale))
+
+                if delta_from_condition < 1:
                     no[0] = 0
                     # print(np.abs(t), np.array(self.fixed_mass_extinction) * self.scale,
                     #       self.scale , no[0])
