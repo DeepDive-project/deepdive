@@ -234,14 +234,21 @@ def normalize_labels(Yt, rescaler=0, log=False):
     return Yt_r
 
 
-def get_features_names(n_areas, include_present_div=False, as_dataframe=False):
+def get_features_names(n_areas, include_present_div=False, as_dataframe=False, area_names=None):
     global_features = ["n_species", "n_occs", "n_singletons", "n_endemics",
                        "time_bin_duration", "range_through_div", "n_localities",
                        "origination_events", "extinction_events"]
 
-    sp_area = ["n_species_area_%s" % i for i in range(1, 1 + n_areas)]
-    occs_area = ["n_occs_area_%s" % i for i in range(1, 1 + n_areas)]
-    loc_area = ["n_locs_area_%s" % i for i in range(1, 1 + n_areas)]
+    if area_names is None:
+        sp_area = ["n_species_area_%s" % i for i in range(1, 1 + n_areas)]
+        occs_area = ["n_occs_area_%s" % i for i in range(1, 1 + n_areas)]
+        loc_area = ["n_locs_area_%s" % i for i in range(1, 1 + n_areas)]
+    else:
+        sp_area = ["n_species_%s" % i for i in area_names]
+        occs_area = ["n_occs_%s" % i for i in area_names]
+        loc_area = ["n_locs_%s" % i for i in area_names]
+
+
     features_names = global_features + sp_area + occs_area + loc_area
     if include_present_div:
         features_names = features_names + ["present_diversity"]

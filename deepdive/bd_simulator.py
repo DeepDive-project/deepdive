@@ -33,7 +33,7 @@ class bd_simulator():
                  dd_K=100,
                  dd_maxL=None, # max speciation rate
                  log_uniform_rates=False,
-                 survive_age_condition=0,
+                 survive_age_condition=None,
                  seed=None,
                  vectorize=False):
         self.s_species = s_species
