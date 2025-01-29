@@ -47,3 +47,25 @@ The DeepDive library can now be imported after starting a Python console using:
 >>> import deepdive as dd
 >>> dd.__version__ # check version number
 ```
+
+
+## Running a DeepDiveR configuration file
+
+Configuration files (.ini) generated in DeepDiveR can be executed in the terminal window (MacOS and Linux) or command prompt (Windows):
+
+```
+python run_dd_config.py your_path/config_file.ini
+```
+
+On Windows use `py` instead of `python`. Note that, if you have multiple versions of Python installed you might have to use e.g. `python3` or `python3.10` to select the desired version for the installation. 
+
+The `run_dd_config.py` file referenced here reads variables from the file and passess settings to wrapper functions that carry out the workflow in an automated pipeline. Outputs will be saved to the directory designated in the configuration file unless specified otherwise.
+
+The working directory and numbr of CPUs can be direclty adjusted in the command prompt. The number of simulations can be directly adjusted, for example to produce small batches of simulations and check the features are as expected: 
+
+```
+python run_dd_config.py your_path/config_file.ini -wd your_directory -cpu 10 plot_features -n_sims 100
+```
+
+
+
