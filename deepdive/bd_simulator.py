@@ -73,6 +73,8 @@ class bd_simulator():
         te = list()
         L, M, root = L / self.scale, M / self.scale, int(root * self.scale)
 
+        # print(L, M, root)
+
         if dd_model:
             M = self._rs.uniform(np.min(self.rangeM), np.max(self.rangeM), 1)  / self.scale
             if isinstance(self.dd_K, Iterable):
@@ -250,15 +252,16 @@ class bd_simulator():
 
         if self.pr_extant_clade is not None:
             if self._rs.random() < self.pr_extant_clade:
-                min_extant = np.maximum(1, self.minEXTANT_SP) # clade is extant
-                max_extant = self.maxEXTANT_SP
+                min_extant = np.maximum(1, self.minEXTANT_SP) + 0 # clade is extant
+                max_extant = self.maxEXTANT_SP + 0
             else:
                 min_extant = 0
                 max_extant = 0
         else:
-            min_extant = self.minEXTANT_SP
-            max_extant = self.maxEXTANT_SP
+            min_extant = self.minEXTANT_SP + 0
+            max_extant = self.maxEXTANT_SP + 0
 
+        counter = 0
         while (len(LOtrue) < self.minSP or
                len(LOtrue) > self.maxSP or
                n_extinct < self.minEX_SP or
@@ -266,14 +269,23 @@ class bd_simulator():
                n_extant > max_extant or
                done is False):
 
+            if counter > 100:
+                if self._rs.random() < 0.5:
+                    min_extant = self.minEXTANT_SP
+                    max_extant = self.maxEXTANT_SP
+                else:
+                    dd_model = False
+
             if isinstance(self.root_r, Iterable):
                 root = -self._rs.uniform(np.min(self.root_r), np.max(self.root_r))  # ROOT AGES
             else:
-                root = -self.root_r
+                root = -self.root_r + 0
             timesL, timesM, L, M = self.get_random_settings(root)
             FAtrue, LOtrue, done = self.simulate(L, M, timesL, timesM, root, dd_model=dd_model, verbose=print_res)
-            n_extinct = len(LOtrue[LOtrue > 0])
-            n_extant = len(LOtrue[LOtrue == 0])
+            n_extinct = len(LOtrue[LOtrue > 0]) + 0
+            n_extant = len(LOtrue[LOtrue == 0]) + 0
+            # print('prm', n_extinct, len(LOtrue), n_extant, min_extant, max_extant, self.minEXTANT_SP, self.maxEXTANT_SP)
+            counter += 1
 
         ts_te = np.array([FAtrue, LOtrue])
         if print_res:
