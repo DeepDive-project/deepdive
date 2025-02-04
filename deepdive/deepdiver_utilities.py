@@ -418,6 +418,9 @@ def run_model_training_from_config(config, feature_file=None, label_file=None,
         if config["model_training"]["f"] == "NULL":
             sys.exit("No feature or label files specified, provide to run_model_training or in the config (see R)")
     model_wd = os.path.join(config["general"]["wd"], config["model_training"]["model_folder"]).replace("\\", "/")
+    # Fix: Use the actual feature file name that was generated
+    feature_file = os.path.basename(feature_file)
+    label_file = os.path.basename(label_file)
     Xt = np.load(os.path.join(sims_path, feature_file))
     Yt = np.load(os.path.join(sims_path, label_file))
     infile_name = os.path.basename(feature_file).split('.npy')[0].replace("_training_features", "")
