@@ -19,6 +19,29 @@ from .rnn_builder import *
 from .plots import plot_training_history
 from .simulation_utilities import *
 
+def convert_r_to_python_style(config):
+    """Convert R-style syntax to Python-style in config object"""
+    for section in config.sections():
+        for key in config[section]:
+            value = config[section][key]
+            if isinstance(value, str):
+                # Convert R booleans
+                if value.upper() == "TRUE":
+                    config[section][key] = "True"
+                elif value.upper() == "FALSE":
+                    config[section][key] = "False"
+                # Convert R NA
+                elif value.upper() == "NA":
+                    config[section][key] = "None"
+                # Convert R c() vectors
+                elif value.strip().startswith("c(") and value.strip().endswith(")"):
+                    # Extract values between c( and ), split by comma, strip whitespace
+                    values = value.strip()[2:-1].split(",")
+                    values = [v.strip() for v in values]
+                    # Join with spaces
+                    config[section][key] = " ".join(values)
+    return config
+
 # create simulator object
 def create_sim_obj_from_config(config, rseed=None):
 
@@ -142,7 +165,7 @@ def create_sim_obj_from_config(config, rseed=None):
     return bd_sim, fossil_sim
 
 
-def run_sim_from_config(config):
+def run_sim_from_config(config):    
     # simulate training data
     bd_sim, fossil_sim = create_sim_obj_from_config(config, rseed=config.getint("simulations", "training_seed"))
 
@@ -226,7 +249,7 @@ def run_sim_from_config(config):
     return f, l, d
 
 
-def run_test_sim_from_config(config):
+def run_test_sim_from_config(config):    
     # simulate test data
     bd_sim, fossil_sim = create_sim_obj_from_config(config, rseed=config.getint("simulations", "test_seed"))
 
@@ -395,6 +418,9 @@ def run_model_training_from_config(config, feature_file=None, label_file=None,
         if config["model_training"]["f"] == "NULL":
             sys.exit("No feature or label files specified, provide to run_model_training or in the config (see R)")
     model_wd = os.path.join(config["general"]["wd"], config["model_training"]["model_folder"]).replace("\\", "/")
+    # Fix: Use the actual feature file name that was generated
+    feature_file = os.path.basename(feature_file)
+    label_file = os.path.basename(label_file)
     Xt = np.load(os.path.join(sims_path, feature_file))
     Yt = np.load(os.path.join(sims_path, label_file))
     infile_name = os.path.basename(feature_file).split('.npy')[0].replace("_training_features", "")
@@ -495,6 +521,7 @@ def predict_from_config(config, return_features=False,
                         model_tag="", model_dir_id="rnn_model", calibrated=False,
                         return_transformed_diversity=False, model_dir=None,
                         label_rescaler=None):
+
     dd_input = os.path.join(config["general"]["wd"], config["empirical_predictions"]["empirical_input_file"])
     if model_dir is not None:
         loaded_models = load_models(model_wd=model_dir)
@@ -543,6 +570,7 @@ def predict_from_config(config, return_features=False,
 def predict_testset_from_config(config, test_feature_file, test_label_file,
                                 model_tag="", model_dir_id="rnn_model", calibrated=False,
                                 return_features=False, model_dir=None, label_rescaler=None):
+
     if model_dir is not None:
         loaded_models = load_models(model_wd=model_dir)
     else:
