@@ -488,37 +488,37 @@ def features_through_time(features_names, time_bins, sim_features, empirical_fea
 def features_pca(features_names, sim_features, empirical_features, wd):
     try:
         from sklearn.decomposition import PCA
+
+        # print("sim_features.shape", sim_features.shape) #= ('rep', 'time bin', 'feature')
+
+        pca = PCA(n_components=2)
+
+        flattened_features = sim_features.reshape((-1, sim_features.shape[1] * sim_features.shape[2]))
+        flattened_features_rescale = flattened_features / (1 + np.std(flattened_features, axis=0))
+        pca.fit(flattened_features_rescale)
+
+        pca_embed_features = pca.transform(flattened_features_rescale)
+        pca_embed_empirical = pca.transform(
+            empirical_features.flatten().reshape(1, -1) / (1 + np.std(flattened_features, axis=0)))
+
+        fig = plt.figure(figsize=(12, 8))
+        plt.scatter(pca_embed_features[:, 0], pca_embed_features[:, 1], c='C1')
+
+        plt.axvline(pca_embed_empirical[:, 0], linestyle='--', color='C0', label='Early stopping point')
+        plt.axhline(pca_embed_empirical[:, 1], linestyle='--', color='C0', label='Early stopping point')
+
+        plt.scatter(pca_embed_empirical[:, 0], pca_embed_empirical[:, 1], c='C0')
+
+        plt.ylabel("PCA2", fontsize=15)
+        plt.xlabel("PCA1", fontsize=15)
+        c0 = mpatches.Patch(color='C0', label="Empirical feature")
+        c1 = mpatches.Patch(color='C1', label='Mean simulated feature')
+        plt.legend(handles=[c0, c1])
+        file_name = os.path.join(wd, "feature_pca.pdf")
+        plot = matplotlib.backends.backend_pdf.PdfPages(file_name)
+        plot.savefig(fig)
+        plot.close()
+        plt.close()
     except ImportError:
-        print("Cannot plot feature PCA, please install sklearn")
-
-    # print("sim_features.shape", sim_features.shape) #= ('rep', 'time bin', 'feature')
-
-    pca = PCA(n_components=2)
-
-    flattened_features = sim_features.reshape((-1, sim_features.shape[1] * sim_features.shape[2]))
-    flattened_features_rescale = flattened_features / (1 + np.std(flattened_features, axis=0))
-    pca.fit(flattened_features_rescale)
-
-    pca_embed_features = pca.transform(flattened_features_rescale)
-    pca_embed_empirical = pca.transform(
-        empirical_features.flatten().reshape(1, -1) / (1 +np.std(flattened_features, axis=0)))
-
-    fig = plt.figure(figsize=(12, 8))
-    plt.scatter(pca_embed_features[:, 0], pca_embed_features[:, 1], c='C1')
-
-    plt.axvline(pca_embed_empirical[:, 0], linestyle='--', color='C0', label='Early stopping point')
-    plt.axhline(pca_embed_empirical[:, 1], linestyle='--', color='C0', label='Early stopping point')
-
-
-    plt.scatter(pca_embed_empirical[:, 0], pca_embed_empirical[:, 1], c='C0')
-
-    plt.ylabel("PCA2", fontsize=15)
-    plt.xlabel("PCA1", fontsize=15)
-    c0 = mpatches.Patch(color='C0', label="Empirical feature")
-    c1 = mpatches.Patch(color='C1', label='Mean simulated feature')
-    plt.legend(handles=[c0, c1])
-    file_name = os.path.join(wd, "feature_pca.pdf")
-    plot = matplotlib.backends.backend_pdf.PdfPages(file_name)
-    plot.savefig(fig)
-    plot.close()
-    plt.close()
+        print("Cannot plot feature PCA, please install scikit-learn")
+        print("https://scikit-learn.org/stable/install.html")
