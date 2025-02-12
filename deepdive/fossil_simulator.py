@@ -146,6 +146,8 @@ class fossil_simulator():
             mid_time_bins.append(mid_time_i)
         self.mid_time_bins = np.array(mid_time_bins)
 
+        # print("self.mid_time_bins ", self.mid_time_bins )
+
     def simulate_geo_ranges(self,
                             prob_origination_area=None,  # if None : random
                             distance_matrix=None,

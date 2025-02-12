@@ -59,7 +59,10 @@ python run_dd_config.py your_path/config_file.ini
 
 On Windows use `py` instead of `python`. Note that, if you have multiple versions of Python installed you might have to use e.g. `python3` or `python3.10` to select the desired version for the installation. 
 
-The `run_dd_config.py` file referenced here reads variables from the file and passess settings to wrapper functions that carry out the workflow in an automated pipeline. Outputs will be saved to the directory designated in the configuration file unless specified otherwise.
+The `run_dd_config.py` file referenced here reads variables from the config file and passess settings to wrapper functions that carry out the workflow in an automated pipeline. 
+The program will automatically run an **autotuning** function that adjusts the parameters of the simulations to reflect the nature of the empirical data. A new config file will be saved in the same directory with the name tag `_autotuned.ini`. 
+Details about the autotuning functions are provided in this [table](https://github.com/DeepDive-project/deepdive/blob/application_note/deepdive/deepdive_autotuning.md).
+The output files of the DeepDive analysis (simulations, feature plots, and predictions) will be saved to the directory designated in the configuration file unless specified otherwise using the `-wd` command.
 
 The working directory and numbr of CPUs can be direclty adjusted in the command prompt. The number of simulations can be directly adjusted, for example to produce small batches of simulations and check the features are as expected: 
 

@@ -35,7 +35,9 @@ def create_sim_obj_from_config(config, rseed=None):
         fixed_mass_extinction = None
 
     if "survive_age_condition" in config["simulations"]:
-        survive_age_condition = float(config["simulations"]["survive_age_condition"])
+        try:
+            survive_age_condition = float(config["simulations"]["survive_age_condition"])
+        except ValueError: survive_age_condition = None
     else:
         survive_age_condition = None
 
@@ -101,7 +103,7 @@ def create_sim_obj_from_config(config, rseed=None):
         species_per_locality_multiplier = None
 
     time_bins = np.sort(np.array(list(map(float, config["general"]["time_bins"].split()))))
-    fossil_sim = fossil_simulator(n_areas=config.getint("general", "n_areas"),
+    fossil_sim = fossil_simulator(n_areas=config.getint("general", "n_regions"),
                                   n_bins=len(list(map(float, config["general"]["time_bins"].split())))-1,  # number of time bins
                                   time_bins=time_bins,
                                   eta=list(map(float, config["simulations"]["eta"].split())),  # area-sp stochasticity
@@ -110,11 +112,11 @@ def create_sim_obj_from_config(config, rseed=None):
                                   max_dist=config.getfloat("simulations", "max_dist"),
                                   disp_rate_mean=list(map(float, config["simulations"]["disp_rate_mean"].split())),
                                   disp_rate_variance=config.getfloat("simulations", "disp_rate_variance"),
-                                  area_mean=config.getfloat("simulations", "area_mean"),
-                                  area_variance=config.getfloat("simulations", "area_variance"),
+                                  area_mean=config.getfloat("simulations", "region_mean"),
+                                  area_variance=config.getfloat("simulations", "region_variance"),
                                   size_concentration_parameter=list(map(float, config["simulations"]["size_concentration_parameter"].split())),
                                   # single value or array of length n_areas
-                                  link_area_size_carrying_capacity=list(map(float, config["simulations"]["link_area_size_carrying_capacity"].split())),
+                                  link_area_size_carrying_capacity=list(map(float, config["simulations"]["link_region_size_carrying_capacity"].split())),
                                   # positive, larger numbers = stronger link between area size and carrying capacity
                                   p_origination_a_slope_mean=config.getfloat("simulations", "p_origination_a_slope_mean"),
                                   # mean slope of probability of origination area mean
@@ -153,13 +155,13 @@ def run_sim_from_config(config):
         include_present_diversity = False
 
     # AREA CONSTRAINTS
-    area_start = [i for i in config['simulations'] if 'area_start' in i]
-    area_end = [i for i in config['simulations'] if 'area_end' in i]
+    area_start = [i for i in config['region_constraints'] if 'region_start' in i]
+    area_end = [i for i in config['region_constraints'] if 'region_end' in i]
 
     # print("area_start", area_start, area_end)
     area_tbl = None
     area_tbl_max = None
-    n_areas = int(config['general']['n_areas'])
+    n_areas = int(config['general']['n_regions'])
     if len(area_start):
         area_tbl = np.ones((n_areas, 3))
         area_tbl[:, 0] = np.arange(n_areas)  # set areas IDs
@@ -167,11 +169,12 @@ def run_sim_from_config(config):
         area_tbl_max = area_tbl + 0
 
         for i in range(len(area_start)):
-            val = list(map(float, config["simulations"][area_start[i]].split()))
-            min_val = np.min(val)
-            max_val = np.max(val)
-            area_tbl[i, 1] = min_val
-            area_tbl_max[i, 1] = max_val
+            if config["region_constraints"][area_start[i]] != "NA":
+                val = list(map(float, config["region_constraints"][area_start[i]].split()))
+                min_val = np.min(val)
+                max_val = np.max(val)
+                area_tbl[i, 1] = min_val
+                area_tbl_max[i, 1] = max_val
 
 
     if len(area_end):
@@ -182,11 +185,12 @@ def run_sim_from_config(config):
             area_tbl_max = area_tbl + 0
 
         for i in range(len(area_end)):
-            val = list(map(float, config["simulations"][area_end[i]].split()))
-            min_val = np.min(val)
-            max_val = np.max(val)
-            area_tbl[i, 2] = min_val
-            area_tbl_max[i, 2] = max_val
+            if config["region_constraints"][area_end[i]] != "NA":
+                val = list(map(float, config["region_constraints"][area_end[i]].split()))
+                min_val = np.min(val)
+                max_val = np.max(val)
+                area_tbl[i, 2] = min_val
+                area_tbl_max[i, 2] = max_val
 
     if area_tbl is not None:
         area_constraint = {
@@ -231,40 +235,44 @@ def run_test_sim_from_config(config):
     bd_sim, fossil_sim = create_sim_obj_from_config(config, rseed=config.getint("simulations", "test_seed"))
 
     # AREA CONSTRAINTS
-    area_start = [i for i in config['simulations'] if 'area_start' in i]
-    area_end = [i for i in config['simulations'] if 'area_end' in i]
-
-    # print("area_start", area_start, area_end)
     area_tbl = None
     area_tbl_max = None
-    n_areas = int(config['general']['n_areas'])
-    if len(area_start):
-        area_tbl = np.ones((n_areas, 3))
-        area_tbl[:, 0] = np.arange(n_areas)  # set areas IDs
-        area_tbl[:, 1:] = -1  # set all values to -1 (all areas exist throughout)
-        area_tbl_max = area_tbl + 0
+    n_areas = int(config['general']['n_regions'])
 
-        for i in range(len(area_start)):
-            val = list(map(float, config["simulations"][area_start[i]].split()))
-            min_val = np.min(val)
-            max_val = np.max(val)
-            area_tbl[i, 1] = min_val
-            area_tbl_max[i, 1] = max_val
+    if "region_constraints" in config.sections():
+        area_start = [i for i in config['region_constraints'] if 'region_start' in i]
+        area_end = [i for i in config['region_constraints'] if 'region_end' in i]
 
-
-    if len(area_end):
-        if area_tbl is None:
+        # print("area_start", area_start, area_end)
+        if len(area_start):
             area_tbl = np.ones((n_areas, 3))
             area_tbl[:, 0] = np.arange(n_areas)  # set areas IDs
             area_tbl[:, 1:] = -1  # set all values to -1 (all areas exist throughout)
             area_tbl_max = area_tbl + 0
 
-        for i in range(len(area_end)):
-            val = list(map(float, config["simulations"][area_end[i]].split()))
-            min_val = np.min(val)
-            max_val = np.max(val)
-            area_tbl[i, 2] = min_val
-            area_tbl_max[i, 2] = max_val
+            for i in range(len(area_start)):
+                if config["region_constraints"][area_start[i]] != "NA":
+                    val = list(map(float, config["region_constraints"][area_start[i]].split()))
+                    min_val = np.min(val)
+                    max_val = np.max(val)
+                    area_tbl[i, 1] = min_val
+                    area_tbl_max[i, 1] = max_val
+
+
+        if len(area_end):
+            if area_tbl is None:
+                area_tbl = np.ones((n_areas, 3))
+                area_tbl[:, 0] = np.arange(n_areas)  # set areas IDs
+                area_tbl[:, 1:] = -1  # set all values to -1 (all areas exist throughout)
+                area_tbl_max = area_tbl + 0
+
+            for i in range(len(area_end)):
+                if config["region_constraints"][area_end[i]] != "NA":
+                    val = list(map(float, config["region_constraints"][area_end[i]].split()))
+                    min_val = np.min(val)
+                    max_val = np.max(val)
+                    area_tbl[i, 2] = min_val
+                    area_tbl_max[i, 2] = max_val
 
     if area_tbl is not None:
         area_constraint = {
@@ -307,12 +315,12 @@ def run_test_sim_from_config(config):
     return f, l, d
 
 
-def get_model_settings_from_config(config, total_diversity=False):
+def get_model_settings_from_config(config, total_diversity=False, model_number=1):
     if total_diversity:
         return_sequences = False
     else: return_sequences = True
 
-    lstm_nodes = np.array(list(map(int, config["model_training"]["lstm_layers"].split())))
+    lstm_nodes = np.array(list(map(int, config["model_training"]["lstm_model_%s" % model_number].split())))
     arrays = [[lstm_nodes[0]]]
     indx = 0
     for i in range(1, len(lstm_nodes)):
@@ -324,7 +332,7 @@ def get_model_settings_from_config(config, total_diversity=False):
     print(arrays)
     lstm_nodes = arrays
 
-    dense_nodes = np.array(list(map(int, config["model_training"]["dense_layer"].split())))
+    dense_nodes = np.array(list(map(int, config["model_training"]["dense_model_%s" % model_number].split())))
     arrays = [[dense_nodes[0]]]
     indx = 0
     for i in range(1, len(dense_nodes)):
@@ -340,7 +348,7 @@ def get_model_settings_from_config(config, total_diversity=False):
     loss_f = ['mse']
 
     list_settings = []
-    model_n = 0
+    model_n = model_number
     try:
         if config["model_training"]["model_tag"] == "NA":
             model_tag = ""
@@ -373,10 +381,18 @@ def get_model_settings_from_config(config, total_diversity=False):
 
     return list_settings
 
+def parse_multiple_models(config):
+    lstm_l = [i for i in config["model_training"].keys() if "lstm_model_" in i]
+    dense_l = [i for i in config["model_training"].keys() if "dense_model_" in i]
+
+    n_models = len(lstm_l)
+    return n_models
+
 def run_model_training_from_config(config, feature_file=None, label_file=None,
                                    convert_to_tf=True, model_tag=None, return_model_dir=False,
                                    calibrate_output=False, total_diversity=None,
-                                   label_rescaler=None):
+                                   label_rescaler=None,
+                                   model_number=1):
     if total_diversity is None:
         try:
             r_tmp = config["model_training"]["predict_total_diversity"]
@@ -387,7 +403,7 @@ def run_model_training_from_config(config, feature_file=None, label_file=None,
         except:
             total_diversity = False
 
-    model_settings = get_model_settings_from_config(config, total_diversity=total_diversity)
+    model_settings = get_model_settings_from_config(config, total_diversity=total_diversity, model_number=model_number)
     sims_path = os.path.join(config["general"]["wd"], config["model_training"]["sims_folder"])
     if feature_file is None:
         feature_file = config["model_training"]["f"]
@@ -414,7 +430,7 @@ def run_model_training_from_config(config, feature_file=None, label_file=None,
         #         calibrate_output = True
         # else:
         # remove present diversity if it was included
-        Xt = Xt[:, :, 0:len(get_features_names(n_areas=config.getint("general", "n_areas")))]
+        Xt = Xt[:, :, 0:len(get_features_names(n_areas=config.getint("general", "n_regions")))]
 
     # Xt_r, feature_rescaler = normalize_features(Xt, log_last=log_last)
     feature_rescaler = FeatureRescaler(Xt, log_last=include_present_div)
@@ -577,7 +593,7 @@ def predict_testset_from_config(config, test_feature_file, test_label_file,
 
 def config_autotune(config_init, target_n_occs_range=10):
     config = copy.deepcopy(config_init)
-    n_areas = int(config["general"]["n_areas"])
+    n_areas = int(config["general"]["n_regions"])
     # load empirical
     dd_input = os.path.join(config["general"]["wd"], config["empirical_predictions"]["empirical_input_file"])
 
@@ -605,7 +621,8 @@ def config_autotune(config_init, target_n_occs_range=10):
     n_singletons = feat_emp[0][:, feat_names.index("n_singletons")]
     n_endemics = feat_emp[0][:,feat_names.index("n_endemics")]
     prop_endemics = np.mean(n_endemics / (n_species + 1))
-    config["simulations"]["disp_rate_mean"] = "%s %s" % (0.2 * (1 - prop_endemics), 5 * (1 - prop_endemics))
+    if config["simulations"]["disp_rate_mean"] == "NA":
+        config["simulations"]["disp_rate_mean"] = "%s %s" % (0.2 * (1 - prop_endemics), 5 * (1 - prop_endemics))
 
     indx = np.array([i for i in range(len(feat_names)) if "n_locs_area_" in feat_names[i]])
     # print(feat_names)
@@ -626,45 +643,56 @@ def config_autotune(config_init, target_n_occs_range=10):
         intercepts.append(intercept)
 
     # re-set (log) slopes in locality rates
-    config["simulations"]["slope"] = "%s %s" % (-np.max(np.abs(slopes)) * 2, 0)
+    if config["simulations"]["slope"] == "NA":
+        config["simulations"]["slope"] = "%s %s" % (-np.max(np.abs(slopes)) * 2, 0)
     # re-set intercept in locality rates
-    config["simulations"]["intercept"] = "%s %s" % (np.min(np.exp(intercepts)) / 2, np.max(np.exp(intercepts)) * 2)
+    if config["simulations"]["intercept"] == "NA":
+        config["simulations"]["intercept"] = "%s %s" % (np.min(np.exp(intercepts)) / 2, np.max(np.exp(intercepts)) * 2)
 
     # re-set mean n. localities per area
-    config["simulations"]["area_mean"] = "%s" % np.mean(n_localities_area)
-    config["simulations"]["area_variance"] = "%s" % np.var(n_localities_area)
+    if config["simulations"]["region_mean"] == "NA":
+        config["simulations"]["region_mean"] = "%s" % np.mean(n_localities_area)
+    if config["simulations"]["region_variance"] == "NA":
+        config["simulations"]["region_variance"] = "%s" % np.var(n_localities_area)
 
     # re-set max localities per area
-    config["simulations"]["maximum_localities_per_bin"] = "%s" % int(np.max(n_localities_area))
+    if config["simulations"]["maximum_localities_per_bin"] == "NA":
+        config["simulations"]["maximum_localities_per_bin"] = "%s" % int(np.max(n_localities_area))
 
     # re-set mean skyline sampling
-    config["simulations"]["mean_skyline_sampling"] = "%s %s" % (np.log(np.mean(n_localities_area) / 2),
-                                                                np.log(np.mean(n_localities_area) * 2))
-    config["simulations"]["sd_through_time_skyline"] = "%s" % np.std(np.log(n_localities_area + 1))
+    if config["simulations"]["mean_skyline_sampling"] == "NA":
+        config["simulations"]["mean_skyline_sampling"] = "%s %s" % (np.log(np.mean(n_localities_area) / 2),
+                                                                    np.log(np.mean(n_localities_area) * 2))
+    if config["simulations"]["sd_through_time_skyline"] == "NA":
+        config["simulations"]["sd_through_time_skyline"] = "%s" % np.std(np.log(n_localities_area + 1))
 
     # re-set carrying capacity
     if pres_div is not None:
         min_div = pres_div * 2
     else:
         min_div = 1
-    config["simulations"]["dd_K"] = "%s %s" % (int(np.mean(range_through_div[range_through_div > 0]) / 2),
-                                               np.maximum(min_div, int(np.max(range_through_div) * 5)))
+    if config["simulations"]["dd_K"] == "NA":
+        config["simulations"]["dd_K"] = "%s %s" % (int(np.mean(range_through_div[range_through_div > 0]) / 2),
+                                                   np.maximum(min_div, int(np.max(range_through_div) * 5)))
 
     # re-set per-species sampling rate
     m = (n_species - n_singletons)[range_through_div > 0] / range_through_div[range_through_div > 0]
-    config["simulations"]["sp_mean"] = "%s %s" % (np.min(m) / 2, np.mean(m))
+    if config["simulations"]["sp_mean"] == "NA":
+        config["simulations"]["sp_mean"] = "%s %s" % (np.min(m) / 2, np.mean(m))
 
     # re-set prob gap
-    config["simulations"]["p_gap"] = "%s %s" % (0, np.sum(n_occs_area == 0) / np.size(n_occs_area))
+    if config["simulations"]["p_gap"] == "NA":
+        config["simulations"]["p_gap"] = "%s %s" % (0, np.sum(n_occs_area == 0) / np.size(n_occs_area))
 
     # reset freq singletons
     f_singl_m = np.mean(n_singletons[n_species > 0] / n_species[n_species > 0])
     f_singl_M = np.max(n_singletons[n_species > 1] / n_species[n_species > 1])
-    config["simulations"]["singletons_frequency"] = "%s %s" % (f_singl_m, f_singl_M)
+    if config["simulations"]["singletons_frequency"] == "NA":
+        config["simulations"]["singletons_frequency"] = "%s %s" % (f_singl_m, f_singl_M)
 
     # pres_species = int(config["general"]["present_diversity"])
     if pres_div is not None:
-        if pres_div > 0:
+        if pres_div > 0 and config["simulations"]["extant_sp"] == "NA":
             config["simulations"]["extant_sp"] = "%s %s" % (int(pres_div / 2),
                                                             int(pres_div * 10))
     # if pres_div == 0:
@@ -674,15 +702,18 @@ def config_autotune(config_init, target_n_occs_range=10):
 
     # Add condition on minimum clade duration
     if pres_div is not None:
-        if pres_div == 0:
+        if pres_div == 0 and config["simulations"]["survive_age_condition"] == "NA":
             min_age_with_occurrences = np.min(time_bins[:-1][n_occs > 0])
             config["simulations"]["survive_age_condition"] = "%s" % min_age_with_occurrences
 
+    if config["simulations"]["total_sp"] == "NA":
+        config["simulations"]["total_sp"] = "%s %s" % (int(np.max(n_species) * 2), int(np.sum(n_species) * 20))
 
-    config["simulations"]["total_sp"] = "%s %s" % (int(np.max(n_species) * 2), int(np.sum(n_species) * 20))
+    if config["simulations"]["target_n_occs"] == "NA":
+        config["simulations"]["target_n_occs"] = "%s" % np.sum(n_occs)
 
-    config["simulations"]["target_n_occs"] = "%s" % np.sum(n_occs)
-    config["simulations"]["target_n_occs_range"] = "%s" % target_n_occs_range
+    if config["simulations"]["target_n_occs_range"] == "NA":
+        config["simulations"]["target_n_occs_range"] = "%s" % target_n_occs_range
 
     mean_bin_rates = np.mean(n_localities_area, axis=1)
     mean_bin_rates[mean_bin_rates == 0] = np.min(mean_bin_rates[mean_bin_rates > 0])
@@ -691,7 +722,8 @@ def config_autotune(config_init, target_n_occs_range=10):
     s = ""
     for i in list_feat:
         s = s + "%s " % i
-    config["simulations"]["bin_mean_rates"] = s
+    if config["simulations"]["bin_mean_rates"] == "NA":
+        config["simulations"]["bin_mean_rates"] = s
 
     var_bin_rates = np.std(np.log(1 + n_localities_area), axis=1)
     var_bin_rates[var_bin_rates == 0] = np.mean(var_bin_rates[var_bin_rates > 0])
@@ -700,7 +732,8 @@ def config_autotune(config_init, target_n_occs_range=10):
     s = ""
     for i in list_feat:
         s = s + "%s " % i
-    config["simulations"]["bin_std_rates"] = s
+    if config["simulations"]["bin_std_rates"] == "NA":
+        config["simulations"]["bin_std_rates"] = s
 
     n_localities_area[n_localities_area == 0] = np.nan
     mean_loc_area = np.nanmean(n_localities_area, axis=0)
@@ -709,15 +742,20 @@ def config_autotune(config_init, target_n_occs_range=10):
     s = ""
     for i in mean_loc_area_r:
         s = s + "%s " % i
-    config["simulations"]["locality_rate_multiplier"] = s
+    if config["simulations"]["locality_rate_multiplier"] == "NA":
+        config["simulations"]["locality_rate_multiplier"] = s
 
-    config["simulations"]["fraction_skyline_sampling"] = "0.75"
-    config["simulations"]["bin_sampling"] = "0.67" # 50% of simulations overall with empirical loc rates
+    if config["simulations"]["fraction_skyline_sampling"] == "NA":
+        config["simulations"]["fraction_skyline_sampling"] = "0.75"
+
+    if config["simulations"]["bin_sampling"] == "NA":
+        config["simulations"]["bin_sampling"] = "0.67" # 50% of simulations overall with empirical loc rates
 
     if config["simulations"]["s_species"] == "NA":
         config["simulations"]["s_species"] = "1 %s" % np.maximum(min_div, int(np.max(range_through_div) * 5))
 
-    config["simulations"]["min_n_occurrences"] = str(np.sum(n_occs) * 0.1)
+    if config["simulations"]["min_n_occurrences"] == "NA":
+        config["simulations"]["min_n_occurrences"] = str(np.sum(n_occs) * 0.1)
     # print("min_n_occurrences set to ", np.sum(n_occs) * 0.5)
 
     config["general"]["autotune"] = "FALSE"
