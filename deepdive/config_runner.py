@@ -231,6 +231,8 @@ def run_config(config_file, wd=None, CPU=None, trained_model=None,
                                       sim_features=testset_features,
                                       empirical_features=feat[0], wd=feature_plot_dir)
 
+                features_pca(features_names=features_names, sim_features=testset_features, empirical_features=feat[0],
+                             wd=feature_plot_dir)
 
             print(feat.shape, pred_div.shape)
 
