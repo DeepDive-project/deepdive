@@ -443,10 +443,17 @@ def features_through_time(features_names, time_bins, sim_features, empirical_fea
         # retrieve simulated features for plotting
         n_feat = np.mean(sim_features[:, :, i], axis=0)
         n_feat = np.insert(n_feat, -len(n_feat), values=n_feat[0])
-        feat_10 = np.percentile(sim_features[:, :, i], q=1, axis=0)
-        feat_10 = np.insert(feat_10, -len(feat_10), values=feat_10[0])
-        feat_90 = np.percentile(sim_features[:, :, i], q=99, axis=0)
-        feat_90 = np.insert(feat_90, -len(feat_90), values=feat_90[0])
+        feat_01 = np.percentile(sim_features[:, :, i], q=1, axis=0)
+        feat_01 = np.insert(feat_01, -len(feat_01), values=feat_01[0])
+        feat_99 = np.percentile(sim_features[:, :, i], q=99, axis=0)
+        feat_99 = np.insert(feat_99, -len(feat_99), values=feat_99[0])
+
+        feat_05 = np.percentile(sim_features[:, :, i], q=5, axis=0)
+        feat_05 = np.insert(feat_05, -len(feat_05), values=feat_05[0])
+        feat_95 = np.percentile(sim_features[:, :, i], q=95, axis=0)
+        feat_95 = np.insert(feat_95, -len(feat_95), values=feat_95[0])
+
+
 
         fig = plt.figure(figsize=(12, 8))
 
@@ -465,8 +472,16 @@ def features_through_time(features_names, time_bins, sim_features, empirical_fea
                  color="C1")
 
         plt.fill_between(-time_bins,
-                         feat_10,
-                         feat_90,
+                         feat_01,
+                         feat_99,
+                         linewidth=2,
+                         step="pre",
+                         alpha=0.2,
+                         color="C1")
+
+        plt.fill_between(-time_bins,
+                         feat_05,
+                         feat_95,
                          linewidth=2,
                          step="pre",
                          alpha=0.2,
