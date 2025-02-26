@@ -309,7 +309,8 @@ def sim_and_plot_features(config_file, wd=None, CPU=None, n_sims=None):
 
     test_feature_file, test_label_file, totdiv_label_file = run_test_sim_from_config(config)
     testset_features = np.load(test_feature_file)
-    feature_plot_dir = os.path.join(config["general"]["wd"], "feature_plots")
+    feature_plot_dir = os.path.join(config["general"]["wd"],
+                                    config["empirical_predictions"]["output_file"] + "_feature_plots")
 
     # load empirical features
     # parse area names
@@ -317,11 +318,11 @@ def sim_and_plot_features(config_file, wd=None, CPU=None, n_sims=None):
     tbl = pd.read_csv(dd_input)
     area_col = tbl.to_numpy()
     area_names = np.unique(area_col[area_col[:,0] == 1][3:, 2])
-    print("area_names", area_names)
+    # print("area_names", area_names)
 
     features_names = get_features_names(n_areas=int(config['general']['n_regions']),
                                         include_present_div=include_present_diversity, area_names=area_names)
-    print("features", features_names)
+    # print("features", features_names)
 
     time_bins = np.sort(list(map(float, config["general"]["time_bins"].split())))
 
@@ -354,9 +355,9 @@ def sim_and_plot_features(config_file, wd=None, CPU=None, n_sims=None):
                        wd=feature_plot_dir,
                        output_name="Feature_plot")
 
-    print(time_bins[:-1].shape, testset_features.shape,feat[0].shape)
+    # print(time_bins[:-1].shape, testset_features.shape,feat[0].shape)
 
-    print("sim_features.shape", testset_features.shape, feat[0].shape)
+    # print("sim_features.shape", testset_features.shape, feat[0].shape)
 
 
     features_through_time(features_names=features_names, time_bins=time_bins,

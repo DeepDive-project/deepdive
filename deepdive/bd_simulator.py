@@ -78,9 +78,10 @@ class bd_simulator():
         if dd_model:
             M = self._rs.uniform(np.min(self.rangeM), np.max(self.rangeM), 1)  / self.scale
             if isinstance(self.dd_K, Iterable):
-                k_cap = self._rs.integers(np.min(self.dd_K), np.max(self.dd_K))
+                k_cap_vec = self._rs.integers(np.min(self.dd_K), np.max(self.dd_K), len(timesL) - 1)
             else:
-                k_cap = self.dd_K
+                k_cap_vec = np.ones(len(timesL) - 1) * (self.dd_K)
+            # print("k_cap_vec", k_cap_vec)
 
         if isinstance(self.p_mass_extinction, Iterable):
             mass_extinction_prob = self._rs.choice(self.p_mass_extinction) / self.scale
@@ -131,6 +132,11 @@ class bd_simulator():
                 return -np.array(ts) / self.scale, -np.array(te) / self.scale, done
 
             if dd_model:
+                for j in range(len(timesL) - 1):
+                    if -t / self.scale <= timesL[j] and -t / self.scale > timesL[j + 1]:
+                        k_cap = k_cap_vec[j]
+
+
                 m = M[0]
                 l = m * k_cap / np.max([1, no_extant_lineages])
                 if self.dd_maxL is not None:
