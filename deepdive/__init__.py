@@ -1,4 +1,4 @@
-__version__ = '1.21'
+__version__ = '1.22'
 
 from . import bd_simulator
 from .bd_simulator import *

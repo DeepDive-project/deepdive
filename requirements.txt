@@ -5,3 +5,4 @@ scipy~=1.8.1
 tensorflow~=2.8.0
 seaborn~=0.11.2
 keras~=2.8.0
+scikit-learn>=1.6.1
