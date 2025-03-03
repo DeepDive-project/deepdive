@@ -155,42 +155,47 @@ def run_sim_from_config(config):
         include_present_diversity = False
 
     # AREA CONSTRAINTS
-    area_start = [i for i in config['region_constraints'] if 'region_start' in i]
-    area_end = [i for i in config['region_constraints'] if 'region_end' in i]
-
-    # print("area_start", area_start, area_end)
     area_tbl = None
     area_tbl_max = None
     n_areas = int(config['general']['n_regions'])
-    if len(area_start):
-        area_tbl = np.ones((n_areas, 3))
-        area_tbl[:, 0] = np.arange(n_areas)  # set areas IDs
-        area_tbl[:, 1:] = -1  # set all values to -1 (all areas exist throughout)
-        area_tbl_max = area_tbl + 0
 
-        for i in range(len(area_start)):
-            if config["region_constraints"][area_start[i]] != "NA":
-                val = list(map(float, config["region_constraints"][area_start[i]].split()))
-                min_val = np.min(val)
-                max_val = np.max(val)
-                area_tbl[i, 1] = min_val
-                area_tbl_max[i, 1] = max_val
+    if "region_constraints" in config.sections():
+        area_start = [i for i in config['region_constraints'] if 'region_start' in i]
+        area_end = [i for i in config['region_constraints'] if 'region_end' in i]
 
-
-    if len(area_end):
-        if area_tbl is None:
+        # print("area_start", area_start, area_end)
+        area_tbl = None
+        area_tbl_max = None
+        n_areas = int(config['general']['n_regions'])
+        if len(area_start):
             area_tbl = np.ones((n_areas, 3))
             area_tbl[:, 0] = np.arange(n_areas)  # set areas IDs
             area_tbl[:, 1:] = -1  # set all values to -1 (all areas exist throughout)
             area_tbl_max = area_tbl + 0
 
-        for i in range(len(area_end)):
-            if config["region_constraints"][area_end[i]] != "NA":
-                val = list(map(float, config["region_constraints"][area_end[i]].split()))
-                min_val = np.min(val)
-                max_val = np.max(val)
-                area_tbl[i, 2] = min_val
-                area_tbl_max[i, 2] = max_val
+            for i in range(len(area_start)):
+                if config["region_constraints"][area_start[i]] != "NA":
+                    val = list(map(float, config["region_constraints"][area_start[i]].split()))
+                    min_val = np.min(val)
+                    max_val = np.max(val)
+                    area_tbl[i, 1] = min_val
+                    area_tbl_max[i, 1] = max_val
+
+
+        if len(area_end):
+            if area_tbl is None:
+                area_tbl = np.ones((n_areas, 3))
+                area_tbl[:, 0] = np.arange(n_areas)  # set areas IDs
+                area_tbl[:, 1:] = -1  # set all values to -1 (all areas exist throughout)
+                area_tbl_max = area_tbl + 0
+
+            for i in range(len(area_end)):
+                if config["region_constraints"][area_end[i]] != "NA":
+                    val = list(map(float, config["region_constraints"][area_end[i]].split()))
+                    min_val = np.min(val)
+                    max_val = np.max(val)
+                    area_tbl[i, 2] = min_val
+                    area_tbl_max[i, 2] = max_val
 
     if area_tbl is not None:
         area_constraint = {

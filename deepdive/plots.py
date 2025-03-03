@@ -500,7 +500,7 @@ def features_through_time(features_names, time_bins, sim_features, empirical_fea
 
 
 
-def features_pca(features_names, sim_features, empirical_features, wd):
+def features_pca(features_names, sim_features, empirical_features, wd, instance_acccuracy=None):
     try:
         from sklearn.decomposition import PCA
 
@@ -516,18 +516,29 @@ def features_pca(features_names, sim_features, empirical_features, wd):
         pca_embed_empirical = pca.transform(
             empirical_features.flatten().reshape(1, -1) / (1 + np.std(flattened_features, axis=0)))
 
-        fig = plt.figure(figsize=(12, 8))
-        plt.scatter(pca_embed_features[:, 0], pca_embed_features[:, 1], c='C1')
 
-        plt.axvline(pca_embed_empirical[:, 0], linestyle='--', color='C0', label='Early stopping point')
-        plt.axhline(pca_embed_empirical[:, 1], linestyle='--', color='C0', label='Early stopping point')
+        if instance_acccuracy is not None:
+            fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(12, 8))
+            p = ax.scatter(pca_embed_features[:, 0], pca_embed_features[:, 1], c=instance_acccuracy, cmap='viridis',
+                           label="Instance accuracy (R^2)")
+            fig.colorbar(p, ax=ax, orientation='vertical', label="Instance accuracy (R^2)")
+            c0 = 'gray'
+            c1 = 'darkcyan'
 
-        plt.scatter(pca_embed_empirical[:, 0], pca_embed_empirical[:, 1], c='C0')
+        else:
+            fig = plt.figure(figsize=(8, 8))
+            plt.scatter(pca_embed_features[:, 0], pca_embed_features[:, 1], c='C1')
+            c0 = 'C0'
+            c1 = 'C1'
+
+        plt.axvline(pca_embed_empirical[:, 0], linestyle='--', color=c0)
+        plt.axhline(pca_embed_empirical[:, 1], linestyle='--', color=c0)
+        plt.scatter(pca_embed_empirical[:, 0], pca_embed_empirical[:, 1], c=c0)
 
         plt.ylabel("PCA2", fontsize=15)
         plt.xlabel("PCA1", fontsize=15)
-        c0 = mpatches.Patch(color='C0', label="Empirical feature")
-        c1 = mpatches.Patch(color='C1', label='Mean simulated feature')
+        c0 = mpatches.Patch(color=c0, label="Empirical feature")
+        c1 = mpatches.Patch(color=c1, label='Mean simulated feature')
         plt.legend(handles=[c0, c1])
         file_name = os.path.join(wd, "feature_pca.pdf")
         plot = matplotlib.backends.backend_pdf.PdfPages(file_name)

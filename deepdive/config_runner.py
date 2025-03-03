@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 from .deepdiver_utilities import *
 from .plots import add_geochrono_no_labels
 from .plots import features_through_time, plot_dd_predictions, plot_ensemble_predictions, features_pca
+from .utilities import get_r_squared
 
 np.set_printoptions(suppress=True, precision=3)
 
@@ -154,6 +155,7 @@ def run_config(config_file, wd=None, CPU=None, trained_model=None,
 
     # run test set
     if test_feature_file is not None and model_dir is not None:
+        instance_acccuracy = []
         for model_i in range(len(model_dir)):
             test_pred, labels, testset_features = predict_testset_from_config(config,
                                                                               test_feature_file,
@@ -174,6 +176,10 @@ def run_config(config_file, wd=None, CPU=None, trained_model=None,
                                         pred_file.replace('.npy', 'MSA.txt')),
                       mode='w') as f:
                 f.write("Model %s Test set MSE: %s" % (model_i, np.mean((test_pred - labels) ** 2)))
+
+
+            instance_acccuracy_m = get_r_squared(test_pred, labels)
+            instance_acccuracy.append(instance_acccuracy_m)
 
     else:
         testset_features = None
@@ -200,39 +206,42 @@ def run_config(config_file, wd=None, CPU=None, trained_model=None,
                                                  return_transformed_diversity=True,
                                                  model_dir=model_dir[model_i])
 
-            if testset_features is not None and model_i == 0:
+            if testset_features is not None:
                 feature_plot_dir = os.path.join(model_dir[model_i], "feature_plots")
                 try:
                     os.mkdir(feature_plot_dir)
                 except FileExistsError:
                     pass
-                plot_feature_hists(test_features=testset_features,
-                                   empirical_features=feat[0],
-                                   show=False,
-                                   n_bins=30,
-                                   features_names=features_names,
-                                   log_occurrences=True,
-                                   wd=feature_plot_dir,
-                                   output_name="Feature_plot_log" + out_tag)
+                if model_i == 0:
+                    plot_feature_hists(test_features=testset_features,
+                                       empirical_features=feat[0],
+                                       show=False,
+                                       n_bins=30,
+                                       features_names=features_names,
+                                       log_occurrences=True,
+                                       wd=feature_plot_dir,
+                                       output_name="Feature_plot_log" + out_tag)
 
-                plot_feature_hists(test_features=testset_features,
-                                   empirical_features=feat[0],
-                                   show=False,
-                                   n_bins=30,
-                                   features_names=features_names,
-                                   log_occurrences=False,
-                                   wd=feature_plot_dir,
-                                   output_name="Feature_plot_" + out_tag)
+                    plot_feature_hists(test_features=testset_features,
+                                       empirical_features=feat[0],
+                                       show=False,
+                                       n_bins=30,
+                                       features_names=features_names,
+                                       log_occurrences=False,
+                                       wd=feature_plot_dir,
+                                       output_name="Feature_plot_" + out_tag)
 
-                print(time_bins[:-1].shape, testset_features.shape,feat[0].shape)
+                    print(time_bins[:-1].shape, testset_features.shape,feat[0].shape)
 
 
-                features_through_time(features_names=features_names, time_bins=time_bins,
-                                      sim_features=testset_features,
-                                      empirical_features=feat[0], wd=feature_plot_dir)
-
-                features_pca(features_names=features_names, sim_features=testset_features, empirical_features=feat[0],
-                             wd=feature_plot_dir)
+                    features_through_time(features_names=features_names, time_bins=time_bins,
+                                          sim_features=testset_features,
+                                          empirical_features=feat[0], wd=feature_plot_dir)
+                # plot PCA with accuracy for each model
+                features_pca(features_names=features_names, sim_features=testset_features,
+                             empirical_features=feat[0],
+                             wd=feature_plot_dir,
+                             instance_acccuracy=instance_acccuracy[model_i])
 
             print(feat.shape, pred_div.shape)
 
@@ -364,7 +373,8 @@ def sim_and_plot_features(config_file, wd=None, CPU=None, n_sims=None):
                           sim_features=testset_features,
                           empirical_features=feat[0], wd=feature_plot_dir)
 
-    features_pca(features_names=features_names, sim_features=testset_features, empirical_features=feat[0], wd=feature_plot_dir)
+    features_pca(features_names=features_names, sim_features=testset_features,
+                 empirical_features=feat[0], wd=feature_plot_dir)
 
     print("Feature plots saved in {}".format(feature_plot_dir))
 

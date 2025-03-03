@@ -301,3 +301,10 @@ def calcCI(data, level=0.95):
                 i = k
     assert 0 <= i <= i+nIn-1 < len(d)
     return (d[i], d[i+nIn-1])
+
+
+def get_r_squared(y_true, y_pred):
+    acc = np.array([scipy.stats.linregress(
+        x=y_true[i], y=y_pred[i])[2] for i in range(len(y_true))]) ** 2
+
+    return acc
