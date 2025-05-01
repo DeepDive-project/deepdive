@@ -36,13 +36,10 @@ or on Windows:
 .\desired_path_to_env\dd_env\Scripts\activate
 ```  
 
-3) [Download DeepDive](https://github.com/DeepDive-project/deepdive/archive/refs/heads/main.zip) and store the unzipped `deepdive-main` e.g. in your application folder  
-
-4) Install DeepDive in the virtual env (on Windows use `py` instead of `python`) after replacing `your_path` with the correct path to the `deepdive` directory:
+3) Install DeepDive in the virtual env (on Windows use `py` instead of `python`) 
 
 ```
-python -m pip install --upgrade pip 
-python -m pip install your_path/deepdive-main/. 
+python -m pip install git+https://github.com/DeepDive-project/deepdive
 ```
 
 The DeepDive library can now be imported after starting a Python console using:
