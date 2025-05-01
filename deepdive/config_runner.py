@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 from .deepdiver_utilities import *
 from .plots import add_geochrono_no_labels
 from .plots import features_through_time, plot_dd_predictions, plot_ensemble_predictions, features_pca
-from .utilities import get_r_squared
+from .utilities import get_r_squared, get_instance_mse
 
 np.set_printoptions(suppress=True, precision=3)
 
@@ -19,7 +19,9 @@ def run_config(config_file, wd=None, CPU=None, trained_model=None,
                out_tag="", calibrated=False, total_diversity=None,
                rescale_labels=None,
                n_training_sims=None, n_test_sims=None,
-               return_file_names=False
+               return_file_names=False,
+               verbose=1,
+max_iter=None
                ):
     config = configparser.ConfigParser()
     config.read(config_file)
@@ -78,6 +80,7 @@ def run_config(config_file, wd=None, CPU=None, trained_model=None,
     feature_file = None
     label_file = None
     totdiv_label_file = None
+    auto_tuned_config_file = None
     if "simulations" in config.sections() and train_set is None and test_set is None:
         if CPU is not None:
             config["simulations"]["n_CPUS"] = str(CPU)
@@ -89,7 +92,19 @@ def run_config(config_file, wd=None, CPU=None, trained_model=None,
             with open(auto_tuned_config_file, 'w') as configfile:
                 config.write(configfile)
 
-        feature_file, label_file, totdiv_label_file = run_sim_from_config(config)
+        if config["general"]["autotune"] == "TRUE":
+            feature_file, label_file, totdiv_label_file = run_sim_from_config(config)
+        else:
+            try:
+                feature_file, label_file, totdiv_label_file = run_sim_from_config(config)
+            except(ValueError):
+                sys.exit("""
+    Error: Could not run config file - some parameters are missing. 
+           Set autotune=TRUE in the config file or replace all NAs 
+           with appropriate parameter values. 
+           """)
+
+
         if total_diversity:
             label_file = totdiv_label_file
 
@@ -148,6 +163,7 @@ def run_config(config_file, wd=None, CPU=None, trained_model=None,
                                                            model_tag=out_tag, return_model_dir=True,
                                                            calibrate_output=calibrated,  total_diversity=total_diversity,
                                                            label_rescaler=label_rescaler,
+                                                           verbose=verbose,
                                                            model_number=model_i + 1)
                 model_dir.append(model_tmp)
     else:
@@ -178,8 +194,13 @@ def run_config(config_file, wd=None, CPU=None, trained_model=None,
                 f.write("Model %s Test set MSE: %s" % (model_i, np.mean((test_pred - labels) ** 2)))
 
 
-            instance_acccuracy_m = get_r_squared(test_pred, labels)
-            instance_acccuracy.append(instance_acccuracy_m)
+            if total_diversity is False:
+                instance_acccuracy_m = np.array([get_r_squared(test_pred, labels), get_instance_mse(test_pred, labels)]).T
+                instance_acccuracy.append(instance_acccuracy_m)
+            else:
+                instance_acccuracy_m = np.array([np.ones(len(labels)), (test_pred - labels) ** 2]).T
+                instance_acccuracy.append(instance_acccuracy_m)
+
 
     else:
         testset_features = None
@@ -231,7 +252,7 @@ def run_config(config_file, wd=None, CPU=None, trained_model=None,
                                        wd=feature_plot_dir,
                                        output_name="Feature_plot_" + out_tag)
 
-                    print(time_bins[:-1].shape, testset_features.shape,feat[0].shape)
+                    # print(time_bins[:-1].shape, testset_features.shape,feat[0].shape)
 
 
                     features_through_time(features_names=features_names, time_bins=time_bins,
@@ -243,7 +264,7 @@ def run_config(config_file, wd=None, CPU=None, trained_model=None,
                              wd=feature_plot_dir,
                              instance_acccuracy=instance_acccuracy[model_i])
 
-            print(feat.shape, pred_div.shape)
+            # print(feat.shape, pred_div.shape)
 
             plot_dd_predictions(pred_div, time_bins, wd=model_dir[model_i],
                                 out_tag=out_tag, total_diversity=total_diversity)
@@ -263,10 +284,23 @@ def run_config(config_file, wd=None, CPU=None, trained_model=None,
             predictions.to_csv(os.path.join(model_dir[model_i], "Empirical_predictions_%s.csv" % out_tag),
                                index=False)
 
+        print(
+            os.path.join(wd, config["model_training"]["model_folder"]),
+            config["empirical_predictions"]["output_file"],
+            total_diversity,
+            os.path.join(wd, config["model_training"]["model_folder"])
+        )
+
 
         if len(model_dir) > 1:
             plot_ensemble_predictions(model_wd=os.path.join(wd, config["model_training"]["model_folder"]),
-                                      wd=wd)
+                                      out_tag=config["empirical_predictions"]["output_file"],
+                                      tot_div=total_diversity,
+                                      wd=os.path.join(wd, config["model_training"]["model_folder"]))
+
+        # save config used for the analysis in the model folder
+        with open(os.path.join(wd, config["model_training"]["model_folder"], "config_settings.txt"), 'w') as configfile:
+            config.write(configfile)
 
         if return_file_names:
             out_files = {
@@ -386,16 +420,6 @@ def run_autotune(config_file, wd=None):
 
     if wd is not None:
         config["general"]["wd"] = wd
-
-    try:
-        pres_div = config["general"]["present_diversity"]
-    except KeyError:
-        pres_div = "NA"
-
-    if pres_div == "NA":
-        include_present_diversity = False
-    else:
-        include_present_diversity = True
 
     print("Running autotune...")
     config = config_autotune(config, target_n_occs_range=1.2)

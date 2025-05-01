@@ -1,4 +1,9 @@
-__version__ = '1.23b'
+__version__ = '1.0.25'
+
+__citation__ = """
+Cooper RB, Flannery-Sutherland JT, Silvestro D. 
+DeepDive: estimating global biodiversity patterns through time using deep learning. 
+Nature Communications. 2024 May 17;15(1):4199"""
 
 from . import bd_simulator
 from .bd_simulator import *

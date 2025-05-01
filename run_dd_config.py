@@ -30,6 +30,7 @@ p.add_argument("-autotune", default=False, action='store_true')
 p.add_argument("-total_diversity", default=None, type=bool)
 p.add_argument("-rescale_labels", default=None, type=int)
 p.add_argument("-n_training_sims", default=None, type=int, help='overwrites n_training_simulations')
+p.add_argument("-verbose", default=1, type=bool)
 
 
 args = p.parse_args()
@@ -46,5 +47,6 @@ else:
                              lstm=args.lstm, dense=args.dense, trained_model=args.trained_model,
                              out_tag=args.out_tag, calibrated=args.calibrated,
                              total_diversity=args.total_diversity, rescale_labels=args.rescale_labels,
-                             n_training_sims=args.n_training_sims)
+                             n_training_sims=args.n_training_sims,
+                             verbose=args.verbose)
 

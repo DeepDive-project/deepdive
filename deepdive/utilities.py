@@ -308,3 +308,7 @@ def get_r_squared(y_true, y_pred):
         x=y_true[i], y=y_pred[i])[2] for i in range(len(y_true))]) ** 2
 
     return acc
+
+def get_instance_mse(y_true, y_pred):
+    mse = np.mean((y_true - y_pred)**2, axis=1)
+    return mse
