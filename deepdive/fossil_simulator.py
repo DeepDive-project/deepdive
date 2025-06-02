@@ -174,9 +174,14 @@ class fossil_simulator():
             exp_pr = np.log(prob_origination_area + SMALL_NUMBER)  # intercept at time 0
             slope_pr = self._rs.normal(self.p_origination_a_slope_mean, self.p_origination_a_slope_sd, self.n_areas)
             time_of_origination = self.sp_x[:, 0]
+            # print("prob_origination_area", prob_origination_area, self.carrying_capacity_multiplier,
+            #       np.einsum('s,a -> sa', time_of_origination, slope_pr))
             exp_pr_at_origination = np.einsum('s,a -> sa', time_of_origination, slope_pr) + exp_pr
             if self.carrying_capacity_multiplier is not None:
                 exp_pr_at_origination *= np.log(self.carrying_capacity_multiplier[0] + SMALL_NUMBER)
+            # print("\n\n", exp_pr_at_origination, "\n\n")
+            if np.nanmax(exp_pr_at_origination) > 100:
+                exp_pr_at_origination /= np.nanmax(exp_pr_at_origination)
 
             pr_at_origination = np.einsum('sa, s -> sa', np.exp(exp_pr_at_origination),
                                           1 / (np.sum(np.exp(exp_pr_at_origination), 1)))
@@ -189,7 +194,8 @@ class fossil_simulator():
                 p_tmp = self.carrying_capacity_multiplier[0] + SMALL_NUMBER
                 pr_at_origination = np.einsum('sa, s -> sa', p_tmp,
                                               1 / (np.sum(p_tmp, 1)))
-                print(pr_at_origination, "overflow prevented!")
+                if self.verbose:
+                    print(pr_at_origination, "overflow prevented!")
         else:
             sys.exit('fixed prob_origination_area not implemented')
         if distance_matrix is None:

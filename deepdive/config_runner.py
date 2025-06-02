@@ -95,14 +95,14 @@ max_iter=None
         if config["general"]["autotune"] == "TRUE":
             feature_file, label_file, totdiv_label_file = run_sim_from_config(config)
         else:
-            try:
-                feature_file, label_file, totdiv_label_file = run_sim_from_config(config)
-            except(ValueError):
-                sys.exit("""
-    Error: Could not run config file - some parameters are missing. 
-           Set autotune=TRUE in the config file or replace all NAs 
-           with appropriate parameter values. 
-           """)
+            # try:
+            feature_file, label_file, totdiv_label_file = run_sim_from_config(config)
+    #         except(ValueError):
+    #             sys.exit("""
+    # Error: Could not run config file - some parameters are missing.
+    #        Set autotune=TRUE in the config file or replace all NAs
+    #        with appropriate parameter values.
+    #        """)
 
 
         if total_diversity:
