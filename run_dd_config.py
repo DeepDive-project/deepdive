@@ -35,18 +35,21 @@ p.add_argument("-verbose", default=1, type=bool)
 
 args = p.parse_args()
 
+def run():
+    if args.plot_features:
+        config_runner.sim_and_plot_features(args.config_file, wd=args.wd, CPU=args.cpu, n_sims=args.n_sims)
+    elif args.autotune:
+        config_runner.run_autotune(args.config_file)
+    else:
+        # config_init = configparser.ConfigParser()
+        config_runner.run_config(args.config_file, wd=args.wd, CPU=args.cpu,
+                                 train_set=args.train_set, test_set=args.test_set,
+                                 lstm=args.lstm, dense=args.dense, trained_model=args.trained_model,
+                                 out_tag=args.out_tag, calibrated=args.calibrated,
+                                 total_diversity=args.total_diversity, rescale_labels=args.rescale_labels,
+                                 n_training_sims=args.n_training_sims,
+                                 verbose=args.verbose)
+    
 
-if args.plot_features:
-    config_runner.sim_and_plot_features(args.config_file, wd=args.wd, CPU=args.cpu, n_sims=args.n_sims)
-elif args.autotune:
-    config_runner.run_autotune(args.config_file)
-else:
-    # config_init = configparser.ConfigParser()
-    config_runner.run_config(args.config_file, wd=args.wd, CPU=args.cpu,
-                             train_set=args.train_set, test_set=args.test_set,
-                             lstm=args.lstm, dense=args.dense, trained_model=args.trained_model,
-                             out_tag=args.out_tag, calibrated=args.calibrated,
-                             total_diversity=args.total_diversity, rescale_labels=args.rescale_labels,
-                             n_training_sims=args.n_training_sims,
-                             verbose=args.verbose)
-
+if __name__ == '__main__':
+    run()
