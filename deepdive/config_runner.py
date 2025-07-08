@@ -285,21 +285,21 @@ max_iter=None
                                index=False)
 
         print(
-            os.path.join(wd, config["model_training"]["model_folder"]),
+            os.path.join(config["general"]["wd"], config["model_training"]["model_folder"]),
             config["empirical_predictions"]["output_file"],
             total_diversity,
-            os.path.join(wd, config["model_training"]["model_folder"])
+            os.path.join(config["general"]["wd"], config["model_training"]["model_folder"])
         )
 
 
         if len(model_dir) > 1:
-            plot_ensemble_predictions(model_wd=os.path.join(wd, config["model_training"]["model_folder"]),
+            plot_ensemble_predictions(model_wd=os.path.join(config["general"]["wd"], config["model_training"]["model_folder"]),
                                       out_tag=config["empirical_predictions"]["output_file"],
                                       tot_div=total_diversity,
-                                      wd=os.path.join(wd, config["model_training"]["model_folder"]))
+                                      wd=os.path.join(config["general"]["wd"], config["model_training"]["model_folder"]))
 
         # save config used for the analysis in the model folder
-        with open(os.path.join(wd, config["model_training"]["model_folder"], "config_settings.txt"), 'w') as configfile:
+        with open(os.path.join(config["general"]["wd"], config["model_training"]["model_folder"], "config_settings.txt"), 'w') as configfile:
             config.write(configfile)
 
         if return_file_names:
