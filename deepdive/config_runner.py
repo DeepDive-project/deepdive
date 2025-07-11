@@ -194,13 +194,15 @@ max_iter=None
                 f.write("Model %s Test set MSE: %s" % (model_i, np.mean((test_pred - labels) ** 2)))
 
 
-            if total_diversity is False:
-                instance_acccuracy_m = np.array([get_r_squared(test_pred, labels), get_instance_mse(test_pred, labels)]).T
-                instance_acccuracy.append(instance_acccuracy_m)
-            else:
-                instance_acccuracy_m = np.array([np.ones(len(labels)), (test_pred - labels) ** 2]).T
-                instance_acccuracy.append(instance_acccuracy_m)
-
+            try:
+                if total_diversity is False:
+                    instance_acccuracy_m = np.array([get_r_squared(test_pred, labels), get_instance_mse(test_pred, labels)]).T
+                    instance_acccuracy.append(instance_acccuracy_m)
+                else:
+                    instance_acccuracy_m = np.array([np.ones(len(labels)), (test_pred - labels) ** 2]).T
+                    instance_acccuracy.append(instance_acccuracy_m)
+            except:
+                instance_acccuracy = None
 
     else:
         testset_features = None

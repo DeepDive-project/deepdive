@@ -23,6 +23,7 @@ class bd_simulator():
                  root_r=[30., 100],  # range root ages
                  rangeL=[0.2, 0.5],
                  rangeM=[0.2, 0.5],
+                 rangeI=None,
                  scale=100.,
                  p_mass_extinction=[0, 0.00924],
                  magnitude_mass_ext=[0.8, 0.95],
@@ -54,6 +55,7 @@ class bd_simulator():
         self.root_r = root_r
         self.rangeL = rangeL
         self.rangeM = rangeM
+        self.rangeI = rangeI
         self.scale = scale
         self.p_mass_extinction = p_mass_extinction
         self.magnitude_mass_ext = np.sort(magnitude_mass_ext)
@@ -85,6 +87,7 @@ class bd_simulator():
         ts = list()
         te = list()
         L, M, root = L / self.scale, M / self.scale, int(root * self.scale)
+        I_events = 0
 
         # print(L, M, root)
 
@@ -107,6 +110,13 @@ class bd_simulator():
         else:
             mass_extinction_prob = self.p_mass_extinction / self.scale
             mass_speciation_prob = self.p_mass_speciation / self.scale
+
+        if self.rangeI is not None:
+            if isinstance(self.rangeI, Iterable):
+                immigration_rate = self._rs.uniform(np.min(self.rangeI), np.max(self.rangeI), 1) / self.scale
+            else:
+                immigration_rate = self.rangeI / self.scale
+
 
         if isinstance(self.s_species, Iterable):
             if self.log_uniform_species:
@@ -132,6 +142,12 @@ class bd_simulator():
             done = False
 
         for t in range(root, 0):  # time
+            if self.rangeI is not None:
+                if self._rs.random() < immigration_rate:
+                    te.append(0)  # add species
+                    ts.append(t)  # sp time
+                    I_events += 1
+
             if not dd_model:
                 for j in range(len(timesL) - 1):
                     if -t / self.scale <= timesL[j] and -t / self.scale > timesL[j + 1]:
@@ -150,7 +166,7 @@ class bd_simulator():
             no = self._rs.random(2)  # draw a random number
             no_extant_lineages = len(te_extant)  # the number of currently extant species
 
-            if no_extant_lineages == 0:
+            if no_extant_lineages == 0 and self.rangeI is None:
                 # stop loop over time when clade is extinct
                 return -np.array(ts) / self.scale, -np.array(te) / self.scale, done
 
@@ -219,7 +235,8 @@ class bd_simulator():
                         te[j] = t
 
 
-
+        if verbose:
+            print("Immigration events:", I_events)
 
         return -np.array(ts) / self.scale, -np.array(te) / self.scale, done
 
