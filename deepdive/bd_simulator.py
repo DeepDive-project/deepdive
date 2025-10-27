@@ -7,18 +7,23 @@ from .feature_extraction import *
 from .utilities import get_rnd_gen
 SMALL_NUMBER = 1e-10
 
+class custom_bd():
+    def transform_rates(self, timesL, timesM, L, M):
+        return timesL, timesM, L, M
+
 
 class bd_simulator():
     def __init__(self,
                  s_species=1,  # number of starting species (can be a range)
-                 rangeSP=[100, 1000],  # min/max size data set
-                 minEX_SP=0,  # minimum number of extinct lineages allowed
-                 minEXTANT_SP=0,
-                 maxEXTANT_SP=np.inf,
+                 total_species=[100, 1000],  # min/max size data set
+                 min_extinct_species=0,  # minimum number of extinct lineages allowed
+                 min_extant_sp=0,
+                 max_extant_sp=np.inf,
                  pr_extant_clade=None,
                  root_r=[30., 100],  # range root ages
                  rangeL=[0.2, 0.5],
                  rangeM=[0.2, 0.5],
+                 rangeI=None,
                  scale=100.,
                  p_mass_extinction=[0, 0.00924],
                  magnitude_mass_ext=[0.8, 0.95],
@@ -33,20 +38,24 @@ class bd_simulator():
                  dd_K=100,
                  dd_maxL=None, # max speciation rate
                  log_uniform_rates=False,
+                 log_uniform_species=False,
                  survive_age_condition=None,
                  seed=None,
-                 vectorize=False):
+                 vectorize=False,
+                 max_iter=10000,
+                 bd_alter_obj = None):
         self.s_species = s_species
-        self.rangeSP = rangeSP
-        self.minSP = np.min(rangeSP)
-        self.maxSP = np.max(rangeSP)
-        self.minEX_SP = minEX_SP
-        self.minEXTANT_SP = minEXTANT_SP
-        self.maxEXTANT_SP = maxEXTANT_SP
+        self.total_species = total_species
+        self.minSP = np.min(total_species)
+        self.maxSP = np.max(total_species)
+        self.min_extinct_species = min_extinct_species
+        self.min_extant_sp = min_extant_sp
+        self.max_extant_sp = max_extant_sp
         self.pr_extant_clade = pr_extant_clade
         self.root_r = root_r
         self.rangeL = rangeL
         self.rangeM = rangeM
+        self.rangeI = rangeI
         self.scale = scale
         self.p_mass_extinction = p_mass_extinction
         self.magnitude_mass_ext = np.sort(magnitude_mass_ext)
@@ -61,9 +70,15 @@ class bd_simulator():
         self.dd_K = dd_K
         self.dd_maxL = dd_maxL
         self.log_uniform_rates = log_uniform_rates
+        self.log_uniform_species = log_uniform_species
         self.vectorize = vectorize
+        self.max_iter = max_iter
         self.survive_age_condition = survive_age_condition
         self._rs = get_rnd_gen(seed)
+        self._bd_alter_obj = bd_alter_obj
+        if log_uniform_species:
+            self.dd_K = np.log(self.dd_K)
+            self.s_species = np.log(self.s_species)
 
     def reset_seed(self, seed):
         self._rs = get_rnd_gen(seed)
@@ -72,13 +87,19 @@ class bd_simulator():
         ts = list()
         te = list()
         L, M, root = L / self.scale, M / self.scale, int(root * self.scale)
+        I_events = 0
 
         # print(L, M, root)
 
         if dd_model:
             M = self._rs.uniform(np.min(self.rangeM), np.max(self.rangeM), 1)  / self.scale
             if isinstance(self.dd_K, Iterable):
-                k_cap_vec = self._rs.integers(np.min(self.dd_K), np.max(self.dd_K), len(timesL) - 1)
+                if self.log_uniform_species:
+                    k_cap_vec = np.exp(self._rs.uniform(np.min(self.dd_K),
+                                                        np.max(self.dd_K),
+                                                        len(timesL) - 1)).astype(int)
+                else:
+                    k_cap_vec = self._rs.integers(np.min(self.dd_K), np.max(self.dd_K), len(timesL) - 1)
             else:
                 k_cap_vec = np.ones(len(timesL) - 1) * (self.dd_K)
             # print("k_cap_vec", k_cap_vec)
@@ -90,10 +111,22 @@ class bd_simulator():
             mass_extinction_prob = self.p_mass_extinction / self.scale
             mass_speciation_prob = self.p_mass_speciation / self.scale
 
+        if self.rangeI is not None:
+            if isinstance(self.rangeI, Iterable):
+                immigration_rate = self._rs.uniform(np.min(self.rangeI), np.max(self.rangeI), 1) / self.scale
+            else:
+                immigration_rate = self.rangeI / self.scale
+
+
         if isinstance(self.s_species, Iterable):
-            if self.s_species[0] == self.s_species[1]:
-                self.s_species[1] = self.s_species[0] + 1
-            s_species = self._rs.integers(self.s_species[0], self.s_species[1])
+            if self.log_uniform_species:
+                s_species = int(np.exp(
+                    self._rs.uniform(self.s_species[0],
+                                     self.s_species[1])))
+            else:
+                if self.s_species[0] == self.s_species[1]:
+                    self.s_species[1] = self.s_species[0] + 1
+                s_species = self._rs.integers(self.s_species[0], self.s_species[1])
             ts = list(np.zeros(s_species) + root)
             te = list(np.zeros(s_species))
         else:
@@ -109,6 +142,12 @@ class bd_simulator():
             done = False
 
         for t in range(root, 0):  # time
+            if self.rangeI is not None:
+                if self._rs.random() < immigration_rate:
+                    te.append(0)  # add species
+                    ts.append(t)  # sp time
+                    I_events += 1
+
             if not dd_model:
                 for j in range(len(timesL) - 1):
                     if -t / self.scale <= timesL[j] and -t / self.scale > timesL[j + 1]:
@@ -127,7 +166,7 @@ class bd_simulator():
             no = self._rs.random(2)  # draw a random number
             no_extant_lineages = len(te_extant)  # the number of currently extant species
 
-            if no_extant_lineages == 0:
+            if no_extant_lineages == 0 and self.rangeI is None:
                 # stop loop over time when clade is extinct
                 return -np.array(ts) / self.scale, -np.array(te) / self.scale, done
 
@@ -196,7 +235,8 @@ class bd_simulator():
                         te[j] = t
 
 
-
+        if verbose:
+            print("Immigration events:", I_events)
 
         return -np.array(ts) / self.scale, -np.array(te) / self.scale, done
 
@@ -246,7 +286,7 @@ class bd_simulator():
 
         return timesL, timesM, L, M
 
-    def run_simulation(self, print_res=False, return_bd_settings=False):
+    def run_simulation(self, print_res=False, return_bd_settings=False, fixed_bd_settings=None):
         LOtrue = [0]
         n_extinct = -0
         n_extant = -0
@@ -258,42 +298,57 @@ class bd_simulator():
 
         if self.pr_extant_clade is not None:
             if self._rs.random() < self.pr_extant_clade:
-                min_extant = np.maximum(1, self.minEXTANT_SP) + 0 # clade is extant
-                max_extant = self.maxEXTANT_SP + 0
+                min_extant = np.maximum(1, self.min_extant_sp) + 0 # clade is extant
+                max_extant = self.max_extant_sp + 0
             else:
                 min_extant = 0
                 max_extant = 0
         else:
-            min_extant = self.minEXTANT_SP + 0
-            max_extant = self.maxEXTANT_SP + 0
+            min_extant = self.min_extant_sp + 0
+            max_extant = self.max_extant_sp + 0
 
         counter = 0
         while (len(LOtrue) < self.minSP or
                len(LOtrue) > self.maxSP or
-               n_extinct < self.minEX_SP or
+               n_extinct < self.min_extinct_species or
                n_extant < min_extant or
                n_extant > max_extant or
                done is False):
 
             if counter > 100:
                 if self._rs.random() < 0.5:
-                    min_extant = self.minEXTANT_SP
-                    max_extant = self.maxEXTANT_SP
+                    min_extant = self.min_extant_sp
+                    max_extant = self.max_extant_sp
                 else:
                     dd_model = False
+            if counter == self.max_iter:
+                print(f"""
+                Warning: DeepDive failed to run a birth-death simulations after {counter} iterations. 
+                Consider changing the simulation settings.              
+                """)
 
             if isinstance(self.root_r, Iterable):
                 root = -self._rs.uniform(np.min(self.root_r), np.max(self.root_r))  # ROOT AGES
             else:
                 root = -self.root_r + 0
-            timesL, timesM, L, M = self.get_random_settings(root)
+
+            if fixed_bd_settings is not None:
+                [timesL, timesM, L, M] = fixed_bd_settings
+            else:
+                timesL, timesM, L, M = self.get_random_settings(root)
+            if self._bd_alter_obj is not None:
+                timesL, timesM, L, M = self._bd_alter_obj.transform_rates(timesL, timesM, L, M)
+                dd_model = False
+                # print("timesL, timesM, L, M ", timesL, timesM, L, M )
             FAtrue, LOtrue, done = self.simulate(L, M, timesL, timesM, root, dd_model=dd_model, verbose=print_res)
             n_extinct = len(LOtrue[LOtrue > 0]) + 0
             n_extant = len(LOtrue[LOtrue == 0]) + 0
-            # print('prm', n_extinct, len(LOtrue), n_extant, min_extant, max_extant, self.minEXTANT_SP, self.maxEXTANT_SP)
+            # print('prm', n_extinct, len(LOtrue), n_extant, min_extant, max_extant, self.min_extant_sp, self.max_extant_sp)
             counter += 1
 
+        # print("timesL, timesM, L, M ", timesL, timesM, L, M)
         ts_te = np.array([FAtrue, LOtrue])
+        # print_res = True
         if print_res:
             print("L", L, "M", M, "tL", timesL, "tM", timesM)
             print("N. species", len(LOtrue))
@@ -315,4 +370,7 @@ class bd_simulator():
 
     def reset_s_species(self, s):
         self.s_species = s
+
+    def set_bd_alter_obj(self, f: custom_bd):
+        self._bd_alter_obj = f
 

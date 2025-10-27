@@ -11,7 +11,7 @@ from matplotlib.backends import backend_pdf  # saves pdfs
 from datetime import datetime
 
 from .rnn_builder import fit_rnn
-from .bd_simulator import bd_simulator
+from .bd_simulator import bd_simulator, custom_bd
 from .fossil_simulator import fossil_simulator
 from .utilities import *
 from .feature_extraction import *
@@ -41,33 +41,37 @@ def create_sim_obj_from_config(config, rseed=None):
     else:
         survive_age_condition = None
 
+    try:
+        log_uniform_species = config.getboolean("simulations", "log_uniform_species")
+    except:
+        log_uniform_species = False
+
 
     if rseed is None:
         rseed = config.getint("simulations", "training_seed")
-    bd_sim = bd_simulator(s_species=s_species,  # number of starting species
-                          rangeSP=list(map(float, config["simulations"]["total_sp"].split())),  # min/max size data set
-                          minEX_SP=config.getint("simulations", "min_extinct_sp"),  # list(map(float, config["simulations"]["minex_sp"].split())),  # minimum number of extinct lineages
-                          root_r=list(map(float, config["simulations"]["root_r"].split())),  # range root ages
-                          minEXTANT_SP=np.min(list(map(float, config["simulations"]["extant_sp"].split()))), # min number of living species
-                          maxEXTANT_SP=np.max(list(map(float, config["simulations"]["extant_sp"].split()))),
-                          rangeL=list(map(float, config["simulations"]["rangel"].split())),  # range of birth rates
-                          rangeM=list(map(float, config["simulations"]["rangem"].split())),  # range of death rates
-                          log_uniform_rates=config.getboolean("simulations", "log_uniform_rates"),
-                          p_mass_extinction=float(config["simulations"]["p_mass_extinction"]),  # probability of mass extinction per my
+    bd_sim = bd_simulator(s_species=s_species,
+                          total_species=list(map(float, config["simulations"]["total_sp"].split())),
+                          min_extinct_species=config.getint("simulations", "min_extinct_sp"),
+                          min_extant_sp=np.min(list(map(float, config["simulations"]["extant_sp"].split()))),
+                          max_extant_sp=np.max(list(map(float, config["simulations"]["extant_sp"].split()))),
+                          pr_extant_clade=float(config["simulations"]["pr_extant_clade"]),
+                          root_r=list(map(float, config["simulations"]["root_r"].split())),
+                          rangeL=list(map(float, config["simulations"]["rangel"].split())),
+                          rangeM=list(map(float, config["simulations"]["rangem"].split())),
+                          scale=config.getfloat("simulations", "scale"),
+                          p_mass_extinction=float(config["simulations"]["p_mass_extinction"]),
                           magnitude_mass_ext=list(map(float, config["simulations"]["magnitude_mass_ext"].split())),
                           fixed_mass_extinction=fixed_mass_extinction,
                           p_mass_speciation=float(config["simulations"]["p_mass_speciation"]),
-                          p_equilibrium=config.getfloat("simulations", "p_equilibrium"),
+                          poiL=config.getfloat("simulations", "poil"), poiM=config.getfloat("simulations", "poim"),
                           p_constant_bd=config.getfloat("simulations", "p_constant_bd"),
+                          p_equilibrium=config.getfloat("simulations", "p_equilibrium"),
                           p_dd_model=config.getfloat("simulations", "p_dd_model"),
-                          dd_maxL=config.getfloat("simulations", "dd_maxl"),
                           dd_K=list(map(float, config["simulations"]["dd_k"].split())),
-                          pr_extant_clade=float(config["simulations"]["pr_extant_clade"]),
-                          survive_age_condition=survive_age_condition,
-                          poiL=config.getfloat("simulations", "poil"),  # expected number of birth rate shifts
-                          poiM=config.getfloat("simulations", "poim"),  # expected number of death rate shifts
-                          seed=rseed,  # if > 0 fixes the random seed to make simulations reproducible
-                          scale=config.getfloat("simulations", "scale"),
+                          dd_maxL=config.getfloat("simulations", "dd_maxl"),
+                          log_uniform_rates=config.getboolean("simulations", "log_uniform_rates"),
+                          log_uniform_species=log_uniform_species,
+                          survive_age_condition=survive_age_condition, seed=rseed,
                           vectorize=config.getboolean("simulations", "vectorize"))
 
     # create fossil simulator object
@@ -141,12 +145,17 @@ def create_sim_obj_from_config(config, rseed=None):
                                   target_n_occs=target_n_occs,
                                   target_n_occs_range=target_n_occs_range,
                                   seed=rseed)  # if > 0 fixes the random seed to make simulations reproducible
+
     return bd_sim, fossil_sim
 
 
-def run_sim_from_config(config):
+def run_sim_from_config(config, customize_bd_obj: custom_bd = None):
     # simulate training data
     bd_sim, fossil_sim = create_sim_obj_from_config(config, rseed=config.getint("simulations", "training_seed"))
+
+    if customize_bd_obj is not None:
+        # apply custom rules to BD simulation
+        bd_sim.set_bd_alter_obj(customize_bd_obj)
 
     try:
         _ = int(config['general']['present_diversity'])
@@ -210,10 +219,10 @@ def run_sim_from_config(config):
     if n_cpus > 1:
         n_simulations = int(np.ceil(n_simulations / n_cpus))
 
-    try:
+    if 1: #try:
         min_n_occurrences = config.getint("simulations", "min_n_occurrences")
-    except:
-        min_n_occurrences = 1
+    # except:
+    #     min_n_occurrences = 1
 
     training_set = sim_settings_obj(bd_sim, fossil_sim, n_simulations=n_simulations,
                                     min_age=np.min(list(map(float, config["general"]["time_bins"].split()))),
@@ -235,9 +244,15 @@ def run_sim_from_config(config):
     return f, l, d
 
 
-def run_test_sim_from_config(config):
+def run_test_sim_from_config(config,
+                             customize_bd_obj: custom_bd = None):
     # simulate test data
     bd_sim, fossil_sim = create_sim_obj_from_config(config, rseed=config.getint("simulations", "test_seed"))
+
+    if customize_bd_obj is not None:
+        # apply custom rules to BD simulation
+        bd_sim.set_bd_alter_obj(customize_bd_obj)
+
 
     # AREA CONSTRAINTS
     area_tbl = None
@@ -298,6 +313,7 @@ def run_test_sim_from_config(config):
     if n_cpus > 1:
         n_simulations = int(np.ceil(n_simulations / n_cpus))
 
+    min_n_occurrences = config.getint("simulations", "min_n_occurrences")
 
     test_set = sim_settings_obj(bd_sim, fossil_sim, n_simulations=n_simulations,
                                 min_age=np.min(list(map(float, config["general"]["time_bins"].split()))),
@@ -310,7 +326,8 @@ def run_test_sim_from_config(config):
                                 'link_area_size_carrying_capacity', 'slope_log_sampling',
                                 'intercept_initial_sampling', 'sd_through_time', 'additional_info'],
                                 include_present_diversity=include_present_diversity,
-                                area_constraint=area_constraint
+                                area_constraint=area_constraint,
+                                min_n_occurrences=min_n_occurrences
                                 )
 
     res = run_sim_parallel(test_set, n_CPUS=config.getint("simulations", "n_CPUS"))
@@ -396,7 +413,7 @@ def parse_multiple_models(config):
 def run_model_training_from_config(config, feature_file=None, label_file=None,
                                    convert_to_tf=True, model_tag=None, return_model_dir=False,
                                    calibrate_output=False, total_diversity=None,
-                                   label_rescaler=None,
+                                   label_rescaler=None, verbose=1,
                                    model_number=1):
     if total_diversity is None:
         try:
@@ -466,9 +483,6 @@ def run_model_training_from_config(config, feature_file=None, label_file=None,
             "present_div": np_to_tf(present_div_vec)
         }
 
-        verbose = 0
-        if model_settings[0]['model_n'] == 0:
-            verbose = 1
         history = fit_rnn(dict_inputs, Yt_r, model, verbose=verbose,
                           max_epochs=config.getint("model_training", "max_epochs"),
                           patience=config.getint("model_training", "patience"),
@@ -484,9 +498,6 @@ def run_model_training_from_config(config, feature_file=None, label_file=None,
                           dropout_rate=model_settings[0]['dropout'],
                           return_sequences=model_settings[0]['return_sequences'])
 
-        verbose = 0
-        if model_settings[0]['model_n'] == 0:
-            verbose = 1
         history = fit_rnn(Xt_r, Yt_r, model, verbose=verbose,
                           max_epochs=config.getint("model_training", "max_epochs"),
                           patience=config.getint("model_training", "patience"),
@@ -629,6 +640,11 @@ def config_autotune(config_init, target_n_occs_range=10):
     if config["simulations"]["disp_rate_mean"] == "NA":
         config["simulations"]["disp_rate_mean"] = "%s %s" % (0.2 * (1 - prop_endemics), 5 * (1 - prop_endemics))
 
+    # print(feat_names)
+    # print(len(feat_names))
+    # print(feat_emp.shape)
+    # print(feat_names_df)
+
     indx = np.array([i for i in range(len(feat_names)) if "n_locs_area_" in feat_names[i]])
     # print(feat_names)
     n_localities_area = feat_emp[0][:,indx]
@@ -760,7 +776,7 @@ def config_autotune(config_init, target_n_occs_range=10):
         config["simulations"]["s_species"] = "1 %s" % np.maximum(min_div, int(np.max(range_through_div) * 5))
 
     if config["simulations"]["min_n_occurrences"] == "NA":
-        config["simulations"]["min_n_occurrences"] = str(np.sum(n_occs) * 0.1)
+        config["simulations"]["min_n_occurrences"] = str(int(np.sum(n_occs) * 0.2))
     # print("min_n_occurrences set to ", np.sum(n_occs) * 0.5)
 
     config["general"]["autotune"] = "FALSE"

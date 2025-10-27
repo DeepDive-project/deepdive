@@ -81,16 +81,19 @@ def plot_ensemble_predictions(csv_files=None,
         if tot_div:
             model_folders = glob.glob(os.path.join(model_wd, "*_totdiv"))
         else:
-            model_folders = np.array(glob.glob(os.path.join(model_wd, "*")))
+            # model_folders = np.array(glob.glob(os.path.join(model_wd, "*")))
+            model_folders = np.array([os.path.join(model_wd, i) for i in next(os.walk(model_wd))[1]])
             model_folders = model_folders[["_totdiv" not in i for i in model_folders]]
         for i in model_folders:
-            f = glob.glob(os.path.join(i,
-                                       "*%s*.csv" %  empirical_prediction_tag))
+            # print(os.path.join(i, "*%s*.csv" %  empirical_prediction_tag))
+            f = glob.glob(os.path.join(i, "*%s*.csv" %  empirical_prediction_tag))
+            print_update("Found %s files" % len(csv_files))
             csv_files.append(f[0])
 
-        print("Found %s files" % len(csv_files))
         if verbose:
             print(csv_files)
+
+        print("\n")
 
     pred_div_list = None
     for f in csv_files:
@@ -110,13 +113,13 @@ def plot_ensemble_predictions(csv_files=None,
         pred_div_list_pd = pd.DataFrame(pred_div_list)
         pred_div_list_pd.columns = time_bins
         pred_div_list_pd.to_csv(os.path.join(wd,
-                                             "Empirical_predictions%s.csv" % out_tag),
+                                             "Empirical_predictions_%s.csv" % out_tag),
                                 index=False)
     if tot_div is False:
         plot_dd_predictions(pred_div_list, time_bins, wd, out_tag)
 
     if return_file_name:
-        return os.path.join(wd, "Empirical_predictions%s.csv" % out_tag)
+        return os.path.join(wd, "Empirical_predictions_%s.csv" % out_tag)
 
 
 
@@ -519,9 +522,9 @@ def features_pca(features_names, sim_features, empirical_features, wd, instance_
 
         if instance_acccuracy is not None:
             fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(12, 8))
-            p = ax.scatter(pca_embed_features[:, 0], pca_embed_features[:, 1], c=instance_acccuracy, cmap='viridis',
-                           label="Instance accuracy (R^2)")
-            fig.colorbar(p, ax=ax, orientation='vertical', label="Instance accuracy (R^2)")
+            p = ax.scatter(pca_embed_features[:, 0], pca_embed_features[:, 1], c=instance_acccuracy[:, 0], cmap='viridis',
+                           label="R^2")
+            fig.colorbar(p, ax=ax, orientation='vertical', label="R^2")
             c0 = 'gray'
             c1 = 'darkcyan'
 
@@ -545,6 +548,41 @@ def features_pca(features_names, sim_features, empirical_features, wd, instance_
         plot.savefig(fig)
         plot.close()
         plt.close()
+
+        # plot vs MSE
+        if instance_acccuracy is not None:
+            fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(12, 8))
+            p = ax.scatter(pca_embed_features[:, 0], pca_embed_features[:, 1], c=instance_acccuracy[:, 1], cmap='viridis_r',
+                           label="MSE")
+            fig.colorbar(p, ax=ax, orientation='vertical', label="MSE")
+            c0 = 'gray'
+            c1 = 'darkcyan'
+
+
+            plt.axvline(pca_embed_empirical[:, 0], linestyle='--', color=c0)
+            plt.axhline(pca_embed_empirical[:, 1], linestyle='--', color=c0)
+            plt.scatter(pca_embed_empirical[:, 0], pca_embed_empirical[:, 1], c=c0)
+
+            plt.ylabel("PCA2", fontsize=15)
+            plt.xlabel("PCA1", fontsize=15)
+            c0 = mpatches.Patch(color=c0, label="Empirical feature")
+            c1 = mpatches.Patch(color=c1, label='Mean simulated feature')
+            plt.legend(handles=[c0, c1])
+            file_name = os.path.join(wd, "feature_pca_MSE.pdf")
+            plot = matplotlib.backends.backend_pdf.PdfPages(file_name)
+            plot.savefig(fig)
+            plot.close()
+            plt.close()
+
+
+        if instance_acccuracy is not None:
+            res = np.hstack((pca_embed_features, instance_acccuracy))
+            x = np.ones(4) * np.nan
+            x[:2] = pca_embed_empirical
+            res = np.vstack((x, res))
+            res_pd = pd.DataFrame(res, columns=["PCA1", "PCA2", "R2", "MSE"])
+            res_pd.to_csv(file_name.replace(".pdf", ".csv"))
+
     except ImportError:
         print("Cannot plot feature PCA, please install scikit-learn")
         print("https://scikit-learn.org/stable/install.html")

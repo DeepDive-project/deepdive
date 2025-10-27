@@ -10,7 +10,7 @@ Note that the required [Tensorflow library](https://www.tensorflow.org) does not
 You can then install DeepDive and all dependencies within your default Python environment running this command in a Terminal or Command prompt window:
 
 ```
-python -m pip install git+https://github.com/DeepDive-project/deepdive
+python -m pip install git+https://github.com/DeepDive-project/deepdive@v.1.0
 ```
 
 On Windows use `py` instead of `python`. Note that, if you have multiple versions of Python installed you might have to use e.g. `python3` or `python3.10` to select the desired version for the installation. 
@@ -36,13 +36,10 @@ or on Windows:
 .\desired_path_to_env\dd_env\Scripts\activate
 ```  
 
-3) [Download DeepDive](https://github.com/DeepDive-project/deepdive/archive/refs/heads/main.zip) and store the unzipped `deepdive-main` e.g. in your application folder  
-
-4) Install DeepDive in the virtual env (on Windows use `py` instead of `python`) after replacing `your_path` with the correct path to the `deepdive` directory:
+3) Install DeepDive in the virtual env (on Windows use `py` instead of `python`) 
 
 ```
-python -m pip install --upgrade pip 
-python -m pip install your_path/deepdive-main/. 
+python -m pip install git+https://github.com/DeepDive-project/deepdive@v.1.0
 ```
 
 The DeepDive library can now be imported after starting a Python console using:

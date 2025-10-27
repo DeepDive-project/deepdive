@@ -174,9 +174,14 @@ class fossil_simulator():
             exp_pr = np.log(prob_origination_area + SMALL_NUMBER)  # intercept at time 0
             slope_pr = self._rs.normal(self.p_origination_a_slope_mean, self.p_origination_a_slope_sd, self.n_areas)
             time_of_origination = self.sp_x[:, 0]
+            # print("prob_origination_area", prob_origination_area, self.carrying_capacity_multiplier,
+            #       np.einsum('s,a -> sa', time_of_origination, slope_pr))
             exp_pr_at_origination = np.einsum('s,a -> sa', time_of_origination, slope_pr) + exp_pr
             if self.carrying_capacity_multiplier is not None:
                 exp_pr_at_origination *= np.log(self.carrying_capacity_multiplier[0] + SMALL_NUMBER)
+            # print("\n\n", exp_pr_at_origination, "\n\n")
+            if np.nanmax(exp_pr_at_origination) > 100:
+                exp_pr_at_origination /= np.nanmax(exp_pr_at_origination)
 
             pr_at_origination = np.einsum('sa, s -> sa', np.exp(exp_pr_at_origination),
                                           1 / (np.sum(np.exp(exp_pr_at_origination), 1)))
@@ -189,7 +194,8 @@ class fossil_simulator():
                 p_tmp = self.carrying_capacity_multiplier[0] + SMALL_NUMBER
                 pr_at_origination = np.einsum('sa, s -> sa', p_tmp,
                                               1 / (np.sum(p_tmp, 1)))
-                print(pr_at_origination, "overflow prevented!")
+                if self.verbose:
+                    print(pr_at_origination, "overflow prevented!")
         else:
             sys.exit('fixed prob_origination_area not implemented')
         if distance_matrix is None:
@@ -333,8 +339,9 @@ class fossil_simulator():
         else:
             p_gap = self.p_gap
 
-        # binomial(n=1) -> Bernoulli
-        a_var_0_1 = self._rs.binomial(n=1, p=1 - p_gap, size=(self.n_areas, self.n_bins))
+        # # binomial(n=1) -> Bernoulli
+        # a_var_0_1 = self._rs.binomial(n=1, p=1 - p_gap, size=(self.n_areas, self.n_bins))
+        a_var_0_1 = np.ones((self.n_areas, self.n_bins))
         a_var_noise, _ = self.multiplier_vector(a_var_0_1, eta_r)
         a_var = a_var_0_1 * a_var_noise
         return a_var, eta_r, p_gap
@@ -356,15 +363,31 @@ class fossil_simulator():
     # draw a no of localities, and within each draw species occurrences. The rate at which you have a fossil site in an
     # area draw as a function of the area rate in time. Poisson distribution with a rate = area rate*area_size x time
     # rate x avar.
-    def draw_localities(self, area_rate, area_size, time_rate, a_var):
+    def draw_localities(self, area_rate, area_size, time_rate, a_var, p_gap=None):
         locality_rate = np.einsum('a, at, at -> at', area_rate * area_size, time_rate, a_var)
         l = locality_rate * self.time_bins_duration
         l[l > self.max_localities] = self.max_localities  # truncate the number of localities that can be drawn per bin
         # locality_rate[locality_rate > self.max_localities] = self.max_localities
+
         if self.locality_rate_multiplier is not None:
             l = np.einsum('at, a -> at', l, self.locality_rate_multiplier)
         # print(self.time_bins_duration)
-        return self._rs.poisson(l), l
+
+        rnd_l = self._rs.poisson(l)
+
+        # apply p_gap
+        if p_gap is not None:
+            # binomial(n=1) -> Bernoulli
+            current_p_gap = np.sum(rnd_l == 0) / rnd_l.size
+            # print("\ncurrent_p_gap", current_p_gap, p_gap)
+            if current_p_gap < p_gap:
+                p_gap = p_gap - current_p_gap
+                a_var_0_1 = self._rs.binomial(n=1, p=1 - p_gap, size=(self.n_areas, self.n_bins))
+                rnd_l = rnd_l * a_var_0_1
+
+            # print("\nnew_p_gap", np.sum(rnd_l == 0) / rnd_l.size)
+
+        return rnd_l, l
 
     def add_singletons(self, p_3d_no_fossil):
         if isinstance(self.singletons_frequency, Iterable):
@@ -568,6 +591,7 @@ class fossil_simulator():
 
         a_var, r_eta, r_p_gap = self.a_variance()  # no. areas x no.bins
 
+
         global_true_trajectory = calculate_global_trajectory(e_species_space_time_table_fraction)
         local_true_trajectory = calculate_local_trajectory(e_species_space_time_table_fraction)
 
@@ -578,7 +602,8 @@ class fossil_simulator():
         #       "\na_var", a_var.shape
         #       )
         number_of_localities, locality_rate = self.draw_localities(area_rate=area_specific_rate, area_size=area_size,
-                                                                   time_rate=time_specific_rate, a_var=a_var)
+                                                                   time_rate=time_specific_rate, a_var=a_var,
+                                                                   p_gap=r_p_gap)
 
         if self.carrying_capacity_multiplier is not None:
             # print(self.carrying_capacity_multiplier[0].shape , number_of_localities.shape)
@@ -586,12 +611,15 @@ class fossil_simulator():
             number_of_localities = self.carrying_capacity_multiplier[1][0].astype(int) * number_of_localities
 
 
-        # set to 0 the number opf localities outside the clade age range
+        # set to 0 the number of localities outside the clade age range
         clade_span = (global_true_trajectory == 0).nonzero()[0]
         number_of_localities[:, clade_span] = 0
         fossils_record, n_localities_w_fossils = self.draw_fossils(species_specific_rate=species_specific_rate,
                                                                    e_species_space_time_table_fraction=e_species_space_time_table_fraction,
                                                                    number_of_localities=number_of_localities)
+
+        # print("np.size(a_var == 0) / np.size(a_var == 0)",
+        #       np.sum(number_of_localities == 0) / np.size(number_of_localities), r_p_gap)
 
         if return_sqs_data == True:
             species_names = ["s%d" % i for i in range(self.n_species)]
@@ -628,6 +656,12 @@ class fossil_simulator():
         n_occurrences = np.sum(occ_sp)
         n_sampled_species = np.sum(occ_sp > 0)
         tot_br_length = np.sum(sp_x[:, 0] - sp_x[:, 1])
+
+        # print("\n\n\n")
+        # print("n_occurrences", n_occurrences)
+        # print("fossils_record", np.sum(fossils_record))
+        # # print("target_n_occs_range", target_n_occs_range)
+        # print("\n\n\n")
 
         d = {'sp_x': sp_x,
              'global_true_trajectory': global_true_trajectory,
