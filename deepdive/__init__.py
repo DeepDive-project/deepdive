@@ -1,4 +1,4 @@
-__version__ = '1.0.26'
+__version__ = '1.0.27'
 
 __citation__ = """
 Cooper RB, Flannery-Sutherland JT, Silvestro D. 
@@ -34,3 +34,6 @@ from .deepdiver_utilities import *
 
 from . import div_rates
 from .div_rates import *
+
+from . import approx_rates
+from .approx_rates import *

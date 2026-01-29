@@ -26,6 +26,9 @@ max_iter=None
     config = configparser.ConfigParser()
     config.read(config_file)
 
+    # if trained_model is None:
+    #     trained_model = config["general"]["trained_model"]
+
     if wd is not None:
         config["general"]["wd"] = wd
 
@@ -221,6 +224,8 @@ max_iter=None
                                             area_names=area_names)
         time_bins = np.sort(list(map(float, config["general"]["time_bins"].split())))
 
+        print("\n\nmodel_dir", model_dir)
+        print("features_names",features_names)
         for model_i in range(len(model_dir)):
             pred_div, feat = predict_from_config(config,
                                                  return_features=True,

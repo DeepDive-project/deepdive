@@ -659,6 +659,7 @@ def config_autotune(config_init, target_n_occs_range=10):
 
     slopes, intercepts = [], []
     for i in range(n_areas):
+        # print("\n\n shapes", time_bins[1:].shape, np.log(n_localities_area[:, i] + 1).shape)
         slope, intercept, _, __, ___ = scipy.stats.linregress(time_bins[1:], np.log(n_localities_area[:, i] + 1))
         slopes.append(slope)
         intercepts.append(intercept)
@@ -708,6 +709,8 @@ def config_autotune(config_init, target_n_occs_range=10):
     # reset freq singletons
     f_singl_m = np.mean(n_singletons[n_species > 0] / n_species[n_species > 0])
     f_singl_M = np.max(n_singletons[n_species > 1] / n_species[n_species > 1])
+    if f_singl_M <= f_singl_m:
+        f_singl_M = np.max(n_singletons[n_species > 0] / n_species[n_species > 0])
     if config["simulations"]["singletons_frequency"] == "NA":
         config["simulations"]["singletons_frequency"] = "%s %s" % (f_singl_m, f_singl_M)
 
