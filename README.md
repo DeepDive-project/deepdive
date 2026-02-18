@@ -39,7 +39,7 @@ or on Windows:
 3) Install DeepDive in the virtual env (on Windows use `py` instead of `python`) 
 
 ```
-python -m pip install git+https://github.com/DeepDive-project/deepdive@v.1.0.27
+python -m pip install git+https://github.com/DeepDive-project/deepdive@v.1.0.28
 ```
 
 The DeepDive library can now be imported after starting a Python console using:
