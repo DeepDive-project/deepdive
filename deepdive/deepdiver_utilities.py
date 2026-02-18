@@ -426,12 +426,24 @@ def run_model_training_from_config(config, feature_file=None, label_file=None,
             total_diversity = False
 
     model_settings = get_model_settings_from_config(config, total_diversity=total_diversity, model_number=model_number)
-    sims_path = os.path.join(config["general"]["wd"], config["model_training"]["sims_folder"])
+    
+    # Fall back to [simulations] sims_folder if [model_training] value is NA or missing
+    sims_folder = config["model_training"]["sims_folder"]
+    if sims_folder == "NA" or sims_folder is None:
+        sims_folder = config["simulations"]["sims_folder"]
+    sims_path = os.path.join(config["general"]["wd"], sims_folder)
+    
     if feature_file is None:
         feature_file = config["model_training"]["f"]
         label_file = config["model_training"]["l"]
         if config["model_training"]["f"] == "NULL":
             sys.exit("No feature or label files specified, provide to run_model_training or in the config (see R)")
+    else:
+        # If feature_file was passed in as a full path, extract just the filename
+        feature_file = os.path.basename(feature_file)
+        if label_file is not None:
+            label_file = os.path.basename(label_file)
+    
     model_wd = os.path.join(config["general"]["wd"], config["model_training"]["model_folder"]).replace("\\", "/")
     Xt = np.load(os.path.join(sims_path, feature_file))
     Yt = np.load(os.path.join(sims_path, label_file))
