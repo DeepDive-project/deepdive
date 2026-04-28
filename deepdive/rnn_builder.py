@@ -31,19 +31,19 @@ def build_rnn(Xt,
         return_sequences_list[-1] = False
 
     model.add(
-        layers.Bidirectional(layers.LSTM(lstm_nodes[0],
+        layers.Bidirectional(layers.LSTM(int(lstm_nodes[0]),
                                          return_sequences=return_sequences_list[0],
                                          activation='tanh',
                                          recurrent_activation='sigmoid'),
                              input_shape=Xt.shape[1:])
     )
     for i in range(1, len(lstm_nodes)):
-        model.add(layers.Bidirectional(layers.LSTM(lstm_nodes[i],
+        model.add(layers.Bidirectional(layers.LSTM(int(lstm_nodes[i]),
                                                    return_sequences=return_sequences_list[i],
                                                    activation='tanh',
                                                    recurrent_activation='sigmoid')))
     for i in range(len(dense_nodes)):
-        model.add(layers.Dense(dense_nodes[i],
+        model.add(layers.Dense(int(dense_nodes[i]),
                                activation=dense_act_f))
 
     if dropout_rate:
