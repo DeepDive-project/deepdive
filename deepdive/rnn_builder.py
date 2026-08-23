@@ -8,7 +8,6 @@ import os, glob
 import pickle as pkl
 import scipy.stats
 from keras.layers import Activation
-from tensorflow.python.keras.utils import generic_utils
 
 def build_rnn(Xt,
               lstm_nodes=None,
