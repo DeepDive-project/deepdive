@@ -14,7 +14,7 @@ from matplotlib.backends import backend_pdf  # saves pdfs
 
 from .bd_simulator import bd_simulator, custom_bd
 from .feature_extraction import *
-from .fossil_simulator import fossil_simulator, fossil_simulator_empirical
+from .fossil_simulator import fossil_simulator
 from .plots import plot_training_history
 from .rnn_builder import *
 from .rnn_builder import fit_rnn
