@@ -468,7 +468,7 @@ class fossil_simulator():
             elif n_fossils < self.target_n_occs / self.target_n_occs_range:
                 m = self.target_n_occs / self.target_n_occs_range
             else:
-                m = 1.
+                m = n_fossils
 
             fossils_per_area = np.round(fossils_per_area / n_fossils * m).astype(int)
             # print("fossils_per_area", fossils_per_area.shape)
