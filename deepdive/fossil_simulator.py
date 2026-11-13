@@ -489,42 +489,43 @@ class fossil_simulator():
     # species_presence_absence_in_time_bin estimates the fraction of each time bin a species is present for
     def species_presence_absence_in_time_bin(self):
         # This is a fraction of how much of the time bin the species exists in.
-        # define an empty array with rows of species and columns of time bins, populated with zeros
+        # [PERF 2026-11-13] The original implementation was a nested
+        #   Python loop over (n_bins x n_species):
+        #   with n_species = 350k and n_bins = 20 that is 7 million iterations
+        #   (each performing an np.min/np.max call), estimated at 30-60 s per
+        #   simulation.
+        #   It is replaced by a single vectorized interval-overlap computation
+        #   per bin; the result is identical element by element (this method
+        #   draws no random numbers).
+        #   To keep the peak memory bounded (the temporary float64 arrays are
+        #   n_species x n_bins), the species are processed in chunks, which
+        #   keeps each temporary array at roughly 8 MB.
         species_presence_absence_data = np.zeros((self.n_species, self.n_bins))
-        # create an array of shape n_bins,n_species
-        for bin_i in range(self.n_bins):
-            for species_i in range(self.n_species):
-                # print(bin_i, species_i)
-                fa_species_i = self.sp_x[species_i, 0]  # FAD for a species index is taken from sp_x table, 0th column
-                la_species_i = self.sp_x[species_i, 1]  # LAD from sp_x 1st column, extinction times.
-                start_time_bin_i = self.time_bins[bin_i + 1]  # start of bin is associated with the next (older) bin
-                # index, as time_bins increase in magnitude along the array, but for bins you count forwards in time
-                end_time_bin_i = self.time_bins[bin_i]  # end of time bin is the age directly associated with bin index
-                # in the object time_bins
 
-                if fa_species_i >= end_time_bin_i and la_species_i <= start_time_bin_i:
-                    # print("species", species_i, "is present in time bin", bin_i)
-                    # species_presence_absence_data[species_i, bin_i] = 1 #if only presence, absence use this line
-                    # calculate the fraction that the species overlaps the time bin
-                    # print("start_time_bin_i:", start_time_bin_i,
-                    #       fa_species_i,
-                    #       end_time_bin_i,
-                    #       la_species_i)
-                    species_duration_in_time_bin_i = np.min([start_time_bin_i, fa_species_i]) - np.max(
-                        [end_time_bin_i, la_species_i])
+        fa_all = self.sp_x[:, 0]   # FAD (origination time)
+        la_all = self.sp_x[:, 1]   # LAD (extinction time)
 
-                    if species_duration_in_time_bin_i == 0: # for species just at the edge
-                        species_duration_in_time_bin_i += SMALL_NUMBER
+        # The interval of bin b is [time_bins[b], time_bins[b+1]) (older end first)
+        starts = self.time_bins[1:]    # (n_bins,)  older end = start of the bin
+        ends   = self.time_bins[:-1]   # (n_bins,)  younger end = end of the bin
+        delta_t = starts - ends
+        delta_t = np.where(delta_t == 0, SMALL_NUMBER, delta_t)
 
-                    delta_t = start_time_bin_i - end_time_bin_i # if a time bin happens to have length 0 (eg rounding error)
-                    if delta_t == 0:
-                        delta_t = SMALL_NUMBER
-                    # print("species_duration_in_time_bin_i", start_time_bin_i - end_time_bin_i,
-                    #       start_time_bin_i, end_time_bin_i , fa_species_i, la_species_i , )
+        chunk = 50000
+        for lo in range(0, self.n_species, chunk):
+            hi = min(lo + chunk, self.n_species)
+            fa = fa_all[lo:hi][:, None]   # (c, 1)
+            la = la_all[lo:hi][:, None]   # (c, 1)
 
-                    relative_duration_in_time_bin_i = species_duration_in_time_bin_i / (
-                                delta_t)
-                    species_presence_absence_data[species_i, bin_i] = relative_duration_in_time_bin_i
+            # Presence condition: fa >= end and la <= start
+            present = (fa >= ends[None, :]) & (la <= starts[None, :])
+
+            # Overlap duration = min(start, fa) - max(end, la)
+            dur = np.minimum(starts[None, :], fa) - np.maximum(ends[None, :], la)
+            dur = np.where(dur == 0, dur + SMALL_NUMBER, dur)
+
+            rel = dur / delta_t[None, :]
+            species_presence_absence_data[lo:hi] = np.where(present, rel, 0.0)
         return species_presence_absence_data
 
     # match geographic ranges to time in a 3D array with no. sp, time bins and areas
