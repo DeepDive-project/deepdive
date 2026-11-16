@@ -259,6 +259,7 @@ def run_config(
             config["empirical_predictions"]["empirical_input_file"],
         )
         tbl = pd.read_csv(dd_input, keep_default_na=False)
+        tbl["Region"] = tbl["Region"].astype(str)
         area_col = tbl.to_numpy()
         area_names = np.unique(area_col[area_col[:, 0] == 1][3:, 2])
 
@@ -453,6 +454,7 @@ def sim_and_plot_features(config_file, wd=None, CPU=None, n_sims=None):
         config["general"]["wd"], config["empirical_predictions"]["empirical_input_file"]
     )
     tbl = pd.read_csv(dd_input, keep_default_na=False)
+    tbl["Region"] = tbl["Region"].astype(str)
     area_col = tbl.to_numpy()
     area_names = np.unique(area_col[area_col[:, 0] == 1][3:, 2])
     # print("area_names", area_names)
